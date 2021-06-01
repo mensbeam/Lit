@@ -1,0 +1,25 @@
+{
+    "name": "dw/highlighter",
+    "type": "library",
+    "description": "The clean and modern RSS server that doesn't give you any crap",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dustin Wilson",
+            "email": "dustin@dustinwilson.com",
+            "homepage": "https://dustinwilson.com/"
+        }
+
+    ],
+    "require": {
+        "php": "^7.4 || ^8.0",
+        "ext-intl": "*",
+        "ext-json": "*",
+        "ext-dom": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "dW\\Highlighter\\": "lib/"
+        }
+    }
+}

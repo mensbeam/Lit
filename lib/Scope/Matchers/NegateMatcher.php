@@ -4,8 +4,8 @@
  * See LICENSE and AUTHORS files for details */
 
 declare(strict_types=1);
-namespace dW\Highlighter\Scope\Matcher;
+namespace dW\Highlighter\Scope;
 
-class NegateMatcher extends dW\Highlighter\Scope\Matcher {
+class NegateMatcher extends Matcher {
     public function __construct(Matcher $groupOrPath) {}
 }

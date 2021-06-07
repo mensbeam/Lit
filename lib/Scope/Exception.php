@@ -9,11 +9,14 @@ namespace dW\Highlighter\Scope;
 class Exception extends \Exception {
     const MESSAGE = '%s expected; found %s';
 
-    public function __construct(array|string $expected, string $found) {
-        if (is_array($expected)) {
-            $expected = array_map(function($n) {
-                return ($n !== false) ? "\"$n\"" : 'end of input';
-            }, $expected);
+    public function __construct(string $expected, string $found) {
+        $strlen = strlen($expected);
+        if ($strlen > 1) {
+            $temp = [];
+            for ($i = 0; $i < $strlen; $i++) {
+                $temp[] = ($expected[$i] !== false) ? "\"{$expected[$i]}\"" : 'end of input';
+            }
+            $expected = $temp;
 
             if (count($expected) > 2) {
                 $last = array_pop($expected);

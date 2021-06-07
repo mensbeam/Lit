@@ -4,8 +4,8 @@
  * See LICENSE and AUTHORS files for details */
 
 declare(strict_types=1);
-namespace dW\Highlighter\Scope\Matcher;
+namespace dW\Highlighter\Scope;
 
-class GroupMatcher extends dW\Highlighter\Scope\Matcher {
+class GroupMatcher extends Matcher {
     public function __construct(string $prefix, Matcher $selector) {}
 }

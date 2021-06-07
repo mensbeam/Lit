@@ -9,7 +9,7 @@ namespace dW\Highlighter\Scope;
 class Data {
     protected string $data;
 
-    protected int $position = 0;
+    protected int $_position = 0;
     protected int $endPosition;
 
     public function __construct(string $data) {
@@ -18,21 +18,21 @@ class Data {
     }
 
     public function consume(int $length = 1): string|bool {
-        if ($this->position === $this->endPosition) {
+        if ($this->_position === $this->endPosition) {
             return false;
         }
 
-        $stop = $this->position + $length;
-        if ($stop >= $this->endPosition) {
+        $stop = $this->_position + $length - 1;
+        if ($stop > $this->endPosition) {
             $stop = $this->endPosition;
         }
 
-        $output = '';
-        for ($i = $this->position; $i <= $stop; $i++) {
-            $output .= $this->data[$this->position++];
+        $result = '';
+        while ($this->_position <= $stop) {
+            $result .= $this->data[$this->_position++];
         }
 
-        return $output;
+        return $result;
     }
 
     public function consumeIf(string $match): string|bool {
@@ -40,11 +40,11 @@ class Data {
     }
 
     public function consumeUntil(string $match, $limit = null): string|bool {
-        if ($this->position === $this->endPosition) {
+        if ($this->_position === $this->endPosition) {
             return false;
         }
 
-        $length = strcspn($this->data, $match, $this->position + 1, $limit);
+        $length = strcspn($this->data, $match, $this->_position, $limit);
         if ($length === 0) {
             return '';
         }
@@ -53,11 +53,11 @@ class Data {
     }
 
     public function consumeWhile(string $match, $limit = null): string|bool {
-        if ($this->position === $this->endPosition) {
+        if ($this->_position === $this->endPosition) {
             return false;
         }
 
-        $length = strspn($this->data, $match, $this->position + 1, $limit);
+        $length = strspn($this->data, $match, $this->_position, $limit);
         if ($length === 0) {
             return '';
         }
@@ -65,29 +65,27 @@ class Data {
         return $this->consume($length);
     }
 
-    public function current(): string|bool {
-        if ($this->position === $this->endPosition) {
-            return false;
-        }
-
-        return $this->data[$this->position];
-    }
-
     public function peek(int $length = 1): string|bool {
-        if ($this->position === $this->endPosition) {
+        if ($this->_position === $this->endPosition) {
             return false;
         }
 
-        $stop = $this->position + $length;
+        $stop = $this->_position + $length - 1;
         if ($stop >= $this->endPosition) {
             $stop = $this->endPosition;
         }
 
         $output = '';
-        for ($i = $this->position; $i <= $stop; $i++) {
+        for ($i = $this->_position; $i <= $stop; $i++) {
             $output .= $this->data[$i];
         }
 
         return $output;
+    }
+
+    public function __get(string $name) {
+        if ($name === 'position') {
+            return $this->_position;
+        }
     }
 }

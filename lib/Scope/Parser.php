@@ -23,15 +23,14 @@ class Parser {
 
     public static function parse(string $selector): Matcher|false {
         self::$instance = new self($selector);
+        self::$debugCount = 1;
 
         $result = false;
-        $s1 = self::parseSpace();
-        if ($s1 !== false) {
-            $s2 = self::parseSelector();
-            if ($s2 !== false) {
-                $s3 = self::parseSpace();
-                $result = $s2;
-            }
+        self::parseSpace();
+        $s2 = self::parseSelector();
+        if ($s2 !== false) {
+            self::parseSpace();
+            $result = $s2;
         }
 
         if ($result === false && self::$instance->lastExceptionData !== []) {
@@ -51,23 +50,16 @@ class Parser {
 
         $s1 = self::parseExpression();
         if ($s1 !== false) {
-            $s2 = self::parseSpace();
-            if ($s2 !== false) {
-                $s3 = self::$instance->data->consumeIf('|&-');
-                if ($s3 === '' || $s3 === false) {
-                    $s3 = false;
-                    self::fail('|&-');
+            self::parseSpace();
+            $s3 = self::$instance->data->consumeIf('|&-');
+            if (in_array($s3, [ '|', '&', '-' ])) {
+                self::parseSpace();
+                $s5 = self::parseComposite();
+                if ($s5 !== false) {
+                    $result = new CompositeMatcher($s1, $s3, $s5);
                 }
-
-                if ($s3 !== false) {
-                    $s4 = self::parseSpace();
-                    if ($s4 !== false) {
-                        $s5 = self::parseComposite();
-                        if ($s5 !== false) {
-                            $result = new CompositeMatcher($s1, $s3, $s5);
-                        }
-                    }
-                }
+            } else {
+                self::fail('|&-');
             }
         }
 
@@ -91,22 +83,15 @@ class Parser {
         $result = false;
 
         $s1 = self::$instance->data->consumeIf('-');
-        if ($s1 === '' || $s1 === false) {
-            $s1 = false;
-            self::fail('-');
-        }
-
-        if ($s1 !== false) {
-            $s2 = self::parseSpace();
-            if ($s2 !== false) {
-                $s3 = self::parseGroup();
-                if ($s3 !== false) {
-                    $s4 = self::parseSpace();
-                    if ($s4 !== false) {
-                        $result = new NegateMatcher($s3);
-                    }
-                }
+        if ($s1 === '-') {
+            self::parseSpace();
+            $s3 = self::parseGroup();
+            if ($s3 !== false) {
+                self::parseSpace();
+                $result = new NegateMatcher($s3);
             }
+        } else {
+            self::fail('-');
         }
 
         if ($result === false) {
@@ -117,15 +102,11 @@ class Parser {
             }
 
             if ($s1 !== false) {
-                $s2 = self::parseSpace();
-                if ($s2 !== false) {
-                    $s3 = self::parsePath();
-                    if ($s3 !== false) {
-                        $s4 = self::parseSpace();
-                        if ($s4 !== false) {
-                            $result = new NegateMatcher($s3);
-                        }
-                    }
+                self::parseSpace();
+                $s3 = self::parsePath();
+                if ($s3 !== false) {
+                    self::parseSpace();
+                    $result = new NegateMatcher($s3);
                 }
             }
 
@@ -160,41 +141,31 @@ class Parser {
 
         if ($s2 !== false) {
             $s3 = self::$instance->data->consumeIf(':');
-            if ($s3 === '' || $s3 === false) {
-                $s3 = false;
-                self::fail(':');
-            }
-
-            if ($s3 !== false) {
+            if ($s3 === ':') {
                 $prefix = "$s2$s3";
+            } else {
+                self::fail(':');
             }
         }
 
         $s2 = self::$instance->data->consumeIf('(');
-        if ($s2 === '' || $s2 === false) {
-            $s2 = false;
-            self::fail('(');
-        }
+        if ($s2 === '(') {
+            self::parseSpace();
+            $s4 = self::parseSelector();
+            if ($s4 !== false) {
+                self::parseSpace();
+                $s6 = self::$instance->data->consumeIf(')');
+                if ($s6 === '' || $s6 === false) {
+                    $s6 = false;
+                    self::fail(')');
+                }
 
-        if ($s2 !== false) {
-            $s3 = self::parseSpace();
-            if ($s3 !== false) {
-                $s4 = self::parseSelector();
-                if ($s4 !== false) {
-                    $s5 = self::parseSpace();
-                    if ($s5 !== false) {
-                        $s6 = self::$instance->data->consumeIf(')');
-                        if ($s6 === '' || $s6 === false) {
-                            $s6 = false;
-                            self::fail(')');
-                        }
-
-                        if ($s6 !== false) {
-                            $result = new GroupMatcher($prefix, $s4);
-                        }
-                    }
+                if ($s6 !== false) {
+                    $result = new GroupMatcher($prefix, $s4);
                 }
             }
+        } else {
+            self::fail('(');
         }
 
         if (self::$debug === true) {
@@ -213,12 +184,7 @@ class Parser {
         $prefix = null;
 
         $s2 = self::$instance->data->consumeIf('LRB');
-        if ($s2 === '' || $s2 === false) {
-            $s2 = false;
-            self::fail('LRB');
-        }
-
-        if ($s2 !== false) {
+        if (in_array($s2, [ 'L', 'R', 'B' ])) {
             $s3 = self::$instance->data->consumeIf(':');
             if ($s3 === '' || $s3 === false) {
                 $s3 = false;
@@ -228,6 +194,8 @@ class Parser {
             if ($s3 !== false) {
                 $prefix = "$s2$s3";
             }
+        } else {
+            self::fail('LRB');
         }
 
         $s2 = self::parseScope();
@@ -236,12 +204,10 @@ class Parser {
 
             do {
                 $s6 = false;
-                $s5 = self::parseSpace();
-                if ($s5 !== false) {
-                    $s6 = self::parseScope();
-                    if ($s6 !== false) {
-                        $s3[] = $s6;
-                    }
+                self::parseSpace();
+                $s6 = self::parseScope();
+                if ($s6 !== false) {
+                    $s3[] = $s6;
                 }
             } while ($s6 !== false);
 
@@ -262,47 +228,36 @@ class Parser {
 
         $result = false;
 
-        $s1 = self::parseSpace();
-        if ($s1 !== false) {
-            $s2 = self::$instance->data->consumeWhile('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+_');
-            if ($s2 === '' || $s2 === false) {
-                $s2 = false;
-                self::fail('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+_');
+        self::parseSpace();
+        $s2 = self::$instance->data->consumeWhile('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+_');
+        if ($s2 === '' || $s2 === false) {
+            $s2 = false;
+            self::fail('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+_');
+        }
+
+        if ($s2 !== false) {
+            $s3 = self::$instance->data->consumeWhile('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+_');
+            if ($s3 === '' || $s2 === false) {
+                $s3 = false;
+                self::fail('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+_');
+            } else {
+                $s2 .= $s3;
             }
+        }
 
-            if ($s2 !== false) {
-                $s3 = self::$instance->data->consumeWhile('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+_');
-                if ($s3 === '' || $s2 === false) {
-                    $s3 = false;
-                    self::fail('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+_');
-                } else {
-                    $s2 .= $s3;
-                }
-            }
+        if ($s2 !== false) {
+            self::parseSpace();
+            $result = new SegmentMatcher($s2);
+        }
 
-            if ($s2 !== false) {
-                $s3 = self::parseSpace();
-                if ($s3 !== false) {
-                    $result = new SegmentMatcher($s2);
-                }
-            }
-
-            if ($result === false) {
-                $s1 = self::parseSpace();
-                if ($s1 !== false) {
-                    $s2 = self::$instance->data->consumeIf('*');
-                    if ($s2 === '' || $s2 === false) {
-                        $s2 = false;
-                        self::fail('*');
-                    }
-
-                    if ($s2 !== false) {
-                        $s3 = self::parseSpace();
-                        if ($s3 !== false) {
-                            $result = new TrueMatcher($s2);
-                        }
-                    }
-                }
+        if ($result === false) {
+            self::parseSpace();
+            $s2 = self::$instance->data->consumeIf('*');
+            if ($s2 === '*') {
+                self::parseSpace();
+                $result = new TrueMatcher($s2);
+            } else {
+                self::fail('*');
             }
         }
 
@@ -323,21 +278,14 @@ class Parser {
 
         $s1 = self::parseComposite();
         if ($s1 !== false) {
-            $s2 = self::parseSpace();
-            if ($s2 !== false) {
-                $s3 = self::$instance->data->consumeIf(',');
-                if ($s3 === '' || $s3 === false) {
-                    $s3 = false;
-                    self::fail(',');
-                }
-
-                if ($s3 !== false) {
-                    $s4 = self::parseSpace();
-                    if ($s4 !== false) {
-                        $s5 = self::parseSelector();
-                        $result = ($s5 === false) ? $s1 : new OrMatcher($s1, $s5);
-                    }
-                }
+            self::parseSpace();
+            $s3 = self::$instance->data->consumeIf(',');
+            if ($s3 === ',') {
+                self::parseSpace();
+                $s5 = self::parseSelector();
+                $result = ($s5 === false) ? $s1 : new OrMatcher($s1, $s5);
+            } else {
+                self::fail(',');
             }
         }
 
@@ -367,16 +315,13 @@ class Parser {
                 $s3 = false;
 
                 $s4 = self::$instance->data->consumeIf('.');
-                if ($s4 === '' || $s4 === false) {
-                    $s4 = false;
-                    self::fail('.');
-                }
-
-                if ($s4 !== false) {
+                if ($s4 === '.') {
                     $s3 = self::parseSegment();
                     if ($s3 !== false) {
                         $s2[] = $s3;
                     }
+                } else {
+                    self::fail('.');
                 }
             } while ($s3 !== false);
 
@@ -397,7 +342,7 @@ class Parser {
 
         $result = self::$instance->data->consumeWhile(" \t");
         if ($result === false) {
-            self::fail(' \t');
+            self::fail(" \t");
         }
 
         if (self::$debug === true) {
@@ -409,10 +354,6 @@ class Parser {
 
 
     protected static function debug() {
-        /*if (self::$debugCount === 2500) {
-            die();
-        }*/
-
         $message = <<<DEBUG
         ------------------------------
         %s

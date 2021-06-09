@@ -9,7 +9,7 @@ namespace dW\Highlighter\Scope;
 class Exception extends \Exception {
     const MESSAGE = '%s expected; found %s';
 
-    public function __construct(string $expected, string $found) {
+    public function __construct(string $expected, string|bool $found) {
         $strlen = strlen($expected);
         if ($strlen > 1) {
             $temp = [];

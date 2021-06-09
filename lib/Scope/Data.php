@@ -14,7 +14,7 @@ class Data {
 
     public function __construct(string $data) {
         $this->data = $data;
-        $this->endPosition = strlen($data) - 1;
+        $this->endPosition = strlen($data);
     }
 
     public function consume(int $length = 1): string|bool {
@@ -37,19 +37,6 @@ class Data {
 
     public function consumeIf(string $match): string|bool {
         return $this->consumeWhile($match, 1);
-    }
-
-    public function consumeUntil(string $match, $limit = null): string|bool {
-        if ($this->_position === $this->endPosition) {
-            return false;
-        }
-
-        $length = strcspn($this->data, $match, $this->_position, $limit);
-        if ($length === 0) {
-            return '';
-        }
-
-        return $this->consume($length);
     }
 
     public function consumeWhile(string $match, $limit = null): string|bool {
@@ -81,6 +68,15 @@ class Data {
         }
 
         return $output;
+    }
+
+    public function unconsumeTo(int $position = 1): bool {
+        if ($position < 0 || $position > $this->endPosition) {
+            return false;
+        }
+
+        $this->_position = $position;
+        return true;
     }
 
     public function __get(string $name) {

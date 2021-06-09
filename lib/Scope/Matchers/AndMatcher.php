@@ -6,7 +6,7 @@
 declare(strict_types=1);
 namespace dW\Highlighter\Scope;
 
-class OrMatcher extends Matcher {
+class AndMatcher extends Matcher {
     protected Matcher $left;
     protected Matcher $right;
 

@@ -11,7 +11,7 @@ class PathMatcher extends Matcher {
     protected array $matchers;
 
     public function __construct(string|null $prefix, Matcher ...$matchers) {
-        $this->prefix = $prefix;
+        $this->prefix = ($prefix !== null) ? $prefix[0] : null;
         $this->matchers = $matchers;
     }
 }

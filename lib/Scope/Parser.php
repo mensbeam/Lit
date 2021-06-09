@@ -30,14 +30,8 @@ class Parser {
             $s2 = self::parseSelector();
             if ($s2 !== false) {
                 $s3 = self::parseSpace();
-                if ($s3 !== false) {
-                    $result = $s2;
-                }
+                $result = $s2;
             }
-        }
-
-        if (self::$debug === true) {
-            echo "------------------------------\n";
         }
 
         if ($result === false && self::$instance->lastExceptionData !== []) {
@@ -53,6 +47,7 @@ class Parser {
         }
 
         $result = false;
+        $position = self::$instance->data->position;
 
         $s1 = self::parseExpression();
         if ($s1 !== false) {
@@ -77,11 +72,12 @@ class Parser {
         }
 
         if ($result === false) {
+            self::$instance->data->unconsumeTo($position);
             $result = self::parseExpression();
         }
 
         if (self::$debug === true) {
-            echo "parseComposite Result: " . var_export($result, true) . "\n";
+            self::debugResult($result);
         }
 
         return $result;
@@ -142,7 +138,7 @@ class Parser {
         }
 
         if (self::$debug === true) {
-            echo "parseExpression Result: " . var_export($result, true) . "\n";
+            self::debugResult($result);
         }
 
         return $result;
@@ -174,29 +170,27 @@ class Parser {
             }
         }
 
-        if ($prefix !== null) {
-            $s2 = self::$instance->data->consumeIf('(');
-            if ($s2 === '' || $s2 === false) {
-                $s2 = false;
-                self::fail('(');
-            }
+        $s2 = self::$instance->data->consumeIf('(');
+        if ($s2 === '' || $s2 === false) {
+            $s2 = false;
+            self::fail('(');
+        }
 
-            if ($s2 !== false) {
-                $s3 = self::parse();
-                if ($s3 !== false) {
-                    $s4 = self::parseSelector();
-                    if ($s4 !== false) {
-                        $s5 = self::parseSpace();
-                        if ($s5 !== false) {
-                            $s6 = self::$instance->data->consumeIf(')');
-                            if ($s6 === '' || $s6 === false) {
-                                $s6 = false;
-                                self::fail(')');
-                            }
+        if ($s2 !== false) {
+            $s3 = self::parseSpace();
+            if ($s3 !== false) {
+                $s4 = self::parseSelector();
+                if ($s4 !== false) {
+                    $s5 = self::parseSpace();
+                    if ($s5 !== false) {
+                        $s6 = self::$instance->data->consumeIf(')');
+                        if ($s6 === '' || $s6 === false) {
+                            $s6 = false;
+                            self::fail(')');
+                        }
 
-                            if ($s6 !== false) {
-                                $result = new GroupMatcher($prefix, $s4);
-                            }
+                        if ($s6 !== false) {
+                            $result = new GroupMatcher($prefix, $s4);
                         }
                     }
                 }
@@ -204,7 +198,7 @@ class Parser {
         }
 
         if (self::$debug === true) {
-            echo "parseGroup Result: " . var_export($result, true) . "\n";
+            self::debugResult($result);
         }
 
         return $result;
@@ -241,7 +235,7 @@ class Parser {
             $s3 = [$s2];
 
             do {
-                $s4 = false;
+                $s6 = false;
                 $s5 = self::parseSpace();
                 if ($s5 !== false) {
                     $s6 = self::parseScope();
@@ -249,13 +243,13 @@ class Parser {
                         $s3[] = $s6;
                     }
                 }
-            } while ($s4 !== false);
+            } while ($s6 !== false);
 
             $result = new PathMatcher($prefix, ...$s3);
         }
 
         if (self::$debug === true) {
-            echo "parsePath Result: " . var_export($result, true) . "\n";
+            self::debugResult($result);
         }
 
         return $result;
@@ -313,7 +307,7 @@ class Parser {
         }
 
         if (self::$debug === true) {
-            echo "parseSegment Result: " . var_export($result, true) . "\n";
+            self::debugResult($result);
         }
 
         return $result;
@@ -325,6 +319,7 @@ class Parser {
         }
 
         $result = false;
+        $position = self::$instance->data->position;
 
         $s1 = self::parseComposite();
         if ($s1 !== false) {
@@ -346,8 +341,13 @@ class Parser {
             }
         }
 
+        if ($result === false) {
+            self::$instance->data->unconsumeTo($position);
+            $result = self::parseComposite();
+        }
+
         if (self::$debug === true) {
-            echo "parseSelector Result: " . var_export($result, true) . "\n";
+            self::debugResult($result);
         }
 
         return $result;
@@ -384,7 +384,7 @@ class Parser {
         }
 
         if (self::$debug === true) {
-            echo "parseScope Result: " . var_export($result, true) . "\n";
+            self::debugResult($result);
         }
 
         return $result;
@@ -401,7 +401,7 @@ class Parser {
         }
 
         if (self::$debug === true) {
-            echo "parseSpace Result: " . var_export($result, true) . "\n";
+            self::debugResult($result);
         }
 
         return $result;
@@ -409,12 +409,16 @@ class Parser {
 
 
     protected static function debug() {
+        /*if (self::$debugCount === 2500) {
+            die();
+        }*/
+
         $message = <<<DEBUG
         ------------------------------
         %s
         Method: %s
         Position: %s
-        Char: '%s'
+        Char: %s
 
         DEBUG;
 
@@ -430,8 +434,14 @@ class Parser {
             self::$debugCount++,
             ltrim($methodTree, '->'),
             self::$instance->data->position,
-            self::$instance->data->peek()
+            var_export(self::$instance->data->peek(), true)
         );
+    }
+
+    protected static function debugResult($result) {
+        printf("%s Result: %s\n",
+            debug_backtrace()[1]['function'],
+            var_export($result, true));
     }
 
     protected static function fail(string $expected) {

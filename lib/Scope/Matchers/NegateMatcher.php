@@ -7,5 +7,9 @@ declare(strict_types=1);
 namespace dW\Highlighter\Scope;
 
 class NegateMatcher extends Matcher {
-    public function __construct(Matcher $groupOrPath) {}
+    protected Matcher $matcher;
+
+    public function __construct(Matcher $matcher) {
+        $this->matcher = $matcher;
+    }
 }

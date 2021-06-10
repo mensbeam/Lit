@@ -6,4 +6,8 @@
 declare(strict_types=1);
 namespace dW\Highlighter\Scope;
 
-abstract class Matcher {}
+abstract class Matcher {
+    public function getPrefix(string $scope) {
+        return null;
+    }
+}

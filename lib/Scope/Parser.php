@@ -371,7 +371,7 @@ class Parser {
         }
 
         printf($message,
-            self::instance->debugCount++,
+            self::$instance->debugCount++,
             ltrim($methodTree, '->'),
             self::$instance->data->position,
             var_export(self::$instance->data->peek(), true)

@@ -12,4 +12,8 @@ class TrueMatcher extends Matcher {
     public function __construct(string $scopeName) {
         $this->scopeName = $scopeName;
     }
+
+    public function matches(string $scope): bool {
+        return true;
+    }
 }

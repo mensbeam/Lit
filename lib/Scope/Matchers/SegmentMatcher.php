@@ -12,4 +12,8 @@ class SegmentMatcher extends Matcher {
     public function __construct(string $segment) {
         $this->segment = $segment;
     }
+
+    public function matches(string $scope): bool {
+        return ($scope === $this->segment);
+    }
 }

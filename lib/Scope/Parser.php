@@ -10,9 +10,9 @@ class Parser {
     public static $debug = false;
 
     protected Data $data;
+    protected int $debugCount = 1;
     protected array $lastExceptionData = [];
 
-    protected static $debugCount = 1;
     protected static Parser $instance;
 
 
@@ -23,7 +23,6 @@ class Parser {
 
     public static function parse(string $selector): Matcher|false {
         self::$instance = new self($selector);
-        self::$debugCount = 1;
 
         $result = false;
         self::parseSpace();
@@ -372,7 +371,7 @@ class Parser {
         }
 
         printf($message,
-            self::$debugCount++,
+            self::instance->debugCount++,
             ltrim($methodTree, '->'),
             self::$instance->data->position,
             var_export(self::$instance->data->peek(), true)

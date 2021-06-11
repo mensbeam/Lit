@@ -12,4 +12,12 @@ class NegateMatcher extends Matcher {
     public function __construct(Matcher $matcher) {
         $this->matcher = $matcher;
     }
+
+    public function matches(array $scopes): bool {
+        return !($this->matcher->matches($scopes));
+    }
+
+    public function getPrefix(array $scopes): null {
+        return null;
+    }
 }

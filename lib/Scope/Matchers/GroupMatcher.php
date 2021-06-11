@@ -14,4 +14,14 @@ class GroupMatcher extends Matcher {
         $this->prefix = ($prefix !== null) ? $prefix[0] : null;
         $this->selector = $selector;
     }
+
+    public function matches(array $scopes): bool {
+        return $this->selector->matches($scope);
+    }
+
+    public function getPrefix(array $scopes): string|null|false {
+        if ($this->selector->matches($scopes)) {
+            return $this->prefix;
+        }
+    }
 }

@@ -22,4 +22,12 @@ class CompositeMatcher extends Matcher {
             break;
         }
     }
+
+    public function matches(array $scopes): bool {
+        return $this->matcher->matches($scopes);
+    }
+
+    public function getPrefix(array $scopes): string|null|false {
+        return $this->matcher->getPrefix($scopes);
+    }
 }

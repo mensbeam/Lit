@@ -14,4 +14,24 @@ class PathMatcher extends Matcher {
         $this->prefix = ($prefix !== null) ? $prefix[0] : null;
         $this->matchers = $matchers;
     }
+
+    public function matches(array $scopes): bool {
+        $count = 0;
+        $matcher = $this->matchers[$count];
+        foreach ($scopes as $scope) {
+            if ($matcher->matches($scope)) {
+                 $matcher = $this->matchers[++$count];
+            }
+            if ($matcher === null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function getPrefix(array $scopes): string|null|false {
+        if ($this->matches($scopes)) {
+            return $this->prefix;
+        }
+    }
 }

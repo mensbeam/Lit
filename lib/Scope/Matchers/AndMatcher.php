@@ -14,4 +14,14 @@ class AndMatcher extends Matcher {
         $this->left = $left;
         $this->right = $right;
     }
+
+    public function matches(array $scopes): bool {
+        return ($this->left->matches($scopes) && $this->right->matches($scopes));
+    }
+
+    public function getPrefix(array $scopes): string|null|false {
+        if ($this->left->matches($scopes) && $this->right->matches($scopes)) {
+            return $this->left->getPrefix($scopes);
+        }
+    }
 }

@@ -131,6 +131,7 @@ class Parser {
 
         $result = false;
         $prefix = null;
+        $position = self::$instance->data->position;
 
         $s2 = self::$instance->data->consumeIf('LRB');
         if ($s2 === '' || $s2 === false) {
@@ -165,6 +166,10 @@ class Parser {
             }
         } else {
             self::fail('(');
+        }
+
+        if ($result === false) {
+            self::$instance->data->unconsumeTo($position);
         }
 
         if (self::$debug === true) {

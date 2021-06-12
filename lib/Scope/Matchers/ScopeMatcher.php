@@ -17,7 +17,7 @@ class ScopeMatcher extends Matcher {
         $lastDotIndex = 0;
         $scopeLen = strlen($scope);
         foreach ($this->segments as $index => $segment) {
-            if ($lastIndex > $scopeLen) {
+            if ($lastDotIndex > $scopeLen) {
                 break;
             }
 

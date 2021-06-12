@@ -16,7 +16,7 @@ class GroupMatcher extends Matcher {
     }
 
     public function matches(array $scopes): bool {
-        return $this->selector->matches($scope);
+        return $this->selector->matches($scopes);
     }
 
     public function getPrefix(array $scopes): string|null|false {

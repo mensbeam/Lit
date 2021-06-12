@@ -16,4 +16,8 @@ class TrueMatcher extends Matcher {
     public function matches(string $scope): bool {
         return true;
     }
+
+    public function getPrefix(string $scope): string|null|false {
+        return null;
+    }
 }

@@ -16,4 +16,8 @@ class SegmentMatcher extends Matcher {
     public function matches(string $scope): bool {
         return ($scope === $this->segment);
     }
+
+    public function getPrefix(string $scope): string|null|false {
+        return null;
+    }
 }

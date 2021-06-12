@@ -17,7 +17,7 @@ class NegateMatcher extends Matcher {
         return !($this->matcher->matches($scopes));
     }
 
-    public function getPrefix(array $scopes): null {
+    public function getPrefix(array $scopes) {
         return null;
     }
 }

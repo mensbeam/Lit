@@ -15,13 +15,13 @@ class AndMatcher extends Matcher {
         $this->right = $right;
     }
 
-    public function matches(array $scopes): bool {
-        return ($this->left->matches($scopes) && $this->right->matches($scopes));
+    public function matches(string ...$scopes): bool {
+        return ($this->left->matches(...$scopes) && $this->right->matches(...$scopes));
     }
 
-    public function getPrefix(array $scopes): string|null|false {
-        if ($this->left->matches($scopes) && $this->right->matches($scopes)) {
-            return $this->left->getPrefix($scopes);
+    public function getPrefix(string ...$scopes): string|null|false {
+        if ($this->left->matches(...$scopes) && $this->right->matches(...$scopes)) {
+            return $this->left->getPrefix(...$scopes);
         }
     }
 }

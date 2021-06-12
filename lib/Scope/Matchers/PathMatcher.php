@@ -15,7 +15,7 @@ class PathMatcher extends Matcher {
         $this->matchers = $matchers;
     }
 
-    public function matches(array $scopes): bool {
+    public function matches(string ...$scopes): bool {
         $count = 0;
         $matcher = $this->matchers[$count];
         foreach ($scopes as $scope) {
@@ -29,7 +29,7 @@ class PathMatcher extends Matcher {
         return false;
     }
 
-    public function getPrefix(array $scopes): string|null|false {
+    public function getPrefix(string ...$scopes): string|null|false {
         if ($this->matches($scopes)) {
             return $this->prefix;
         }

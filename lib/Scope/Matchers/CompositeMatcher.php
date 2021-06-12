@@ -23,11 +23,11 @@ class CompositeMatcher extends Matcher {
         }
     }
 
-    public function matches(array $scopes): bool {
-        return $this->matcher->matches($scopes);
+    public function matches(string ...$scopes): bool {
+        return $this->matcher->matches(...$scopes);
     }
 
-    public function getPrefix(array $scopes): string|null|false {
-        return $this->matcher->getPrefix($scopes);
+    public function getPrefix(string ...$scopes): string|null|false {
+        return $this->matcher->getPrefix(...$scopes);
     }
 }

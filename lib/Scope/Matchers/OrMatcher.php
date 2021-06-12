@@ -15,11 +15,11 @@ class OrMatcher extends Matcher {
         $this->right = $right;
     }
 
-    public function matches(array $scopes): bool {
-        return ($this->left->matches($scopes) || $this->right->matches($scopes));
+    public function matches(string ...$scopes): bool {
+        return ($this->left->matches(...$scopes) || $this->right->matches(...$scopes));
     }
 
-    public function getPrefix(array $scopes): string|null|false {
-        return $this->left->getPrefix($scopes) || $this->right->getPrefix($scopes);
+    public function getPrefix(string ...$scopes): string|null|false {
+        return $this->left->getPrefix(...$scopes) || $this->right->getPrefix(...$scopes);
     }
 }

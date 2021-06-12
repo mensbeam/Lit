@@ -15,12 +15,12 @@ class GroupMatcher extends Matcher {
         $this->selector = $selector;
     }
 
-    public function matches(array $scopes): bool {
-        return $this->selector->matches($scopes);
+    public function matches(string ...$scopes): bool {
+        return $this->selector->matches(...$scopes);
     }
 
-    public function getPrefix(array $scopes): string|null|false {
-        if ($this->selector->matches($scopes)) {
+    public function getPrefix(string ...$scopes): string|null|false {
+        if ($this->selector->matches(...$scopes)) {
             return $this->prefix;
         }
     }

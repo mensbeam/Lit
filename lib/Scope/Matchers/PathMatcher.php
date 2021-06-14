@@ -20,7 +20,7 @@ class PathMatcher extends Matcher {
         $matcher = $this->matchers[$count];
         foreach ($scopes as $scope) {
             if ($matcher->matches($scope)) {
-                 $matcher = $this->matchers[++$count];
+                 $matcher = $this->matchers[++$count] ?? null;
             }
             if ($matcher === null) {
                 return true;

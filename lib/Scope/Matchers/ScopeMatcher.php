@@ -15,8 +15,11 @@ class ScopeMatcher extends Matcher {
 
     public function matches(string $scope): bool {
         $lastDotIndex = 0;
+        $nextDotIndex = 0;
         $scopeLen = strlen($scope);
-        foreach ($this->segments as $index => $segment) {
+
+        for ($i = 0, $len = count($this->segments); $i < $len; $i++) {
+            $matcherSegment = $this->segments[$i];
             if ($lastDotIndex > $scopeLen) {
                 break;
             }
@@ -26,15 +29,15 @@ class ScopeMatcher extends Matcher {
                 $nextDotIndex = $scopeLen;
             }
 
-            $scopeSegment = substr($scope, $lastDotIndex, $nextDotIndex);
-            if (!$segment->matches($scopeSegment)) {
+            $scopeSegment = substr($scope, $lastDotIndex, $nextDotIndex - $lastDotIndex);
+            if (!$matcherSegment->matches($scopeSegment)) {
                 return false;
             }
 
             $lastDotIndex = $nextDotIndex + 1;
         }
 
-        return ($index === count($this->segments));
+        return ($i === count($this->segments));
     }
 
     public function getPrefix(string $scope): string|null|false {

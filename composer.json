@@ -1,7 +1,7 @@
 {
     "name": "dw/highlighter",
     "type": "library",
-    "description": "The clean and modern RSS server that doesn't give you any crap",
+    "description": "TextMate-like syntax highlighting in PHP",
     "license": "MIT",
     "authors": [
         {
@@ -9,7 +9,6 @@
             "email": "dustin@dustinwilson.com",
             "homepage": "https://dustinwilson.com/"
         }
-
     ],
     "require": {
         "php": "^7.4 || ^8.0",

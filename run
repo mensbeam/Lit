@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+cwd=$(pwd)
+PATH="$cwd/node_modules/.bin:$PATH"
+
+fail() {
+    help
+    exit 1
+}
+
+help() {
+    printf "This script is used to build language grammars from Atom's various github
+repositories. To build these grammars the following packages must be installed
+on a unix-based system:
+
+    * bash >=5.0
+    * bash-task-runner >=0.9.0
+    * composer >=2.0.6
+    * coreutils >=8.0
+    * gnu parallel >=20180922
+    * yarn >=1.22.10
+
+Arch Linux:
+\`\`\`
+pacman -S composer parallel yarn
+yarn global add bash-task-runner
+\`\`\`
+
+macOS:
+\`\`\`
+brew install bash composer coreutils parallel yarn
+echo \"/usr/local/bin/bash\" >> /etc/shells
+chsh -s /usr/local/bin/bash
+yarn global add bash-task-runner
+\`\`\`
+
+Building the grammars is then a matter of running the following commands from the project folder:
+
+\`\`\`
+./run init
+./run build
+\`\`\`
+"
+}
+
+shopt -s globstar extglob || fail
+if [ ! -x "$(which parallel)" ]; then fail; fi
+
+# Include runner
+source $HOME/.config/yarn/global/node_modules/bash-task-runner/src/runner.sh || fail
+runner_default_task="build"
+
+task_init() {
+    yarn install
+    mkdir -p "$cwd"/deps
+
+    printf "language-css
+language-html
+language-javascript
+language-php
+language-shellscript
+language-sql
+language-typescript
+language-xml" | parallel "git clone https://github.com/atom/{}.git \"$cwd\"/deps/{}"
+}
+
+task_build() {
+    
+}

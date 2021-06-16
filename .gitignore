@@ -1,7 +1,10 @@
 # Temporary files and dependencies
+/deps/
+/node_modules/
+/vendor/
 test*.php
 *-old.php
-/vendor/
+yarn-error.log
 
 
 # Windows files

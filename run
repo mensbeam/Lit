@@ -1,50 +1,74 @@
 #!/usr/bin/env bash
+
+##? Usage:
+##?     run [build|init|needed]
+##?     run --help
+##?
+##? Options:
+##?     --help     Show this help
+##?
+##?
+##? Requirements:
+##?
+##?     This script is used to build language grammars from Atom's various
+##?     github repositories. They must be built because Atom stupidly uses
+##?     CoffeeScript's pointless CSON format and therefore needs to be converted to
+##?     JSON to be usable. To build these grammars the following packages must be
+##?     installed on a unix-based system:
+##?
+##?         * bash >=5.0
+##?         * composer >=2.0.6
+##?         * docopts >=0.6.3
+##?         * gnu awk >=5.1.0
+##?         * gnu coreutils >=8.0
+##?         * gnu parallel >=20180922
+##?         * yarn >=1.22.10
+##?
+##?     Arch Linux:
+##?     ```
+##?     pacman -S composer docopts parallel yarn
+##?     ```
+##?
+##?     macOS:
+##?     ```
+##?     brew install bash composer coreutils docopts gawk parallel yarn
+##?     echo \"/usr/local/bin/bash\" >> /etc/shells
+##?     chsh -s /usr/local/bin/bash
+##?     ```
+##?
+##?     Building the grammars is then a matter of running the following commands
+##?     from the project folder:
+##?
+##?     ```
+##?     ./run init
+##?     ./run build
+##?     ```
+##?
+##?
+##? Commands:
+##?
+##?     init
+##?         Initializes the dependencies necessary to build the language
+##?         grammars.
+##?
+##?     build
+##?         Build the language grammars. Puts them into data/.
+##?
+##?     needed
+##?         List the language grammars that are included in the current grammars
+##?         but are not in the data/ folder.
+
 cwd=$(pwd)
 PATH="$cwd/node_modules/.bin:$PATH"
+help=$(grep "^##?" "$0" | cut -c 5-)
+eval "$(docopts -h "$help" : "$@")"
 
 fail() {
-    help
+    echo $help
     exit 1
 }
 
-help() {
-    printf "This script is used to build language grammars from Atom's various github
-repositories. They must be built because Atom stupidly uses CoffeeScript's
-pointless CSON format and therefore need to be converted to JSON to be usable.
-To build these grammars the following packages must be installed on a unix-based
-system:
-
-    * bash >=5.0
-    * bash-task-runner >=0.9.0
-    * composer >=2.0.6
-    * gnu awk >=5.1.0
-    * gnu coreutils >=8.0
-    * gnu parallel >=20180922
-    * yarn >=1.22.10
-
-Arch Linux:
-\`\`\`
-pacman -S composer parallel yarn
-yarn global add bash-task-runner
-\`\`\`
-
-macOS:
-\`\`\`
-brew install bash composer coreutils gawk parallel yarn
-echo \"/usr/local/bin/bash\" >> /etc/shells
-chsh -s /usr/local/bin/bash
-yarn global add bash-task-runner
-\`\`\`
-
-Building the grammars is then a matter of running the following commands from the project folder:
-
-\`\`\`
-./run init
-./run build
-\`\`\`
-"
-}
-
+# Check for bash 4+
 shopt -s globstar extglob || fail
 
 awkcmd="awk"
@@ -52,13 +76,21 @@ if [ "$(uname)" == "Darwin" ]; then
     awkcmd="gawk"
 fi
 
+# Check for presence of dependencies
 if (( $(which $awkcmd composer parallel yarn | wc -l) < 4 )); then fail; fi
 
-# Include runner
-source $HOME/.config/yarn/global/node_modules/bash-task-runner/src/runner.sh || fail
-runner_default_task="build"
+case $1 in
+build | *)
+    rm -rf "$cwd"/data/*
 
-task_init() {
+    # Convert from CSON to JSON AND rename the files to their scopes... all in parallel.
+    ls -1 "$cwd"/deps/**/grammars/!(tree-sitter-*).cson | parallel "temp=\$(mktemp) &&
+        csonc --output=\$temp {}
+        mv \$temp \"$cwd\"/data/\$(grep -m1 scopeName \$temp |
+        $awkcmd '{ match(\$0, /\s*:\s*\"(.+?)\"/, arr); if(arr[1] != \"\") print arr[1] }').json"
+    ;;
+
+init)
     yarn install
     mkdir -p "$cwd"/deps
 
@@ -70,14 +102,10 @@ shellscript
 sql
 typescript
 xml" | parallel "git clone https://github.com/atom/language-{}.git \"$cwd\"/deps/{}"
-}
+    ;;
 
-task_build() {
-    rm -rf "$cwd"/data/*
-
-    # Convert from CSON to JSON AND rename the files to their scopes... all in parallel.
-    ls -1 "$cwd"/deps/**/grammars/!(tree-sitter-*).cson | parallel "temp=\$(mktemp) &&
-        csonc --output=\$temp {}
-        mv \$temp \"$cwd\"/data/\$(grep -m1 scopeName \$temp |
-        $awkcmd '{ match(\$0, /\s*:\s*\"(.+?)\"/, arr); if(arr[1] != \"\") print arr[1] }').json"
-}
+needed)
+    cat "$cwd"/data/*.json | grep -E "\"include\"\s*:\s*\"[^#\$]+\"" | gawk '{ match($0, /"in
+clude": "(.+?)"/, arr); if(arr[1] != "") print arr[1] }' | sort -u
+    ;;
+esac

@@ -7,113 +7,58 @@ declare(strict_types=1);
 namespace dW\Highlighter\Scope;
 
 class Parser {
+    protected Data $data;
     protected string $token;
-    protected Tokenizer $tokenizer;
 
     protected static Parser $instance;
 
+    protected const PREFIX_REGEX = '/^[LRB]:$/S';
+    protected const SCOPE_REGEX = '/^[A-Za-z0-9-+_\.]+$/S';
+
+
+    public static function parse(string $selector): Matcher|false {
+        self::$instance = new self($selector);
+        return self::parseSelector();
+    }
+
 
     protected function __construct(string $selector) {
-        $this->tokenizer = new Tokenizer($selector);
+        $this->data = new Data($selector);
     }
 
-
-    public static function parse(string $selector): array {
-        self::$instance = new self($selector);
-
-        $result = [];
-        while (self::$instance->token = self::$instance->tokenizer->next()) {
-            $priority = 0;
-            if (strlen(self::$instance->token) === 2 && self::$instance->token[1] === ':') {
-                switch (self::$instance->token[0]) {
-                    case 'R': $priority = 1;
-                    break;
-                    case 'L': $priority = -1;
-                    break;
-                    default: die('OOK!');
+    protected static function parseSelector(): Matcher {
+        while (self::$instance->token = self::$instance->data->consume()) {
+            if (preg_match(self::PREFIX_REGEX, self::$instance->token)) {
+                $peek = self::$instance->data->peek();
+                if ($peek === '(') {
+                    $result = self::parseGroup();
+                } elseif (preg_match(self::SCOPE_REGEX, self::$instance->token)) {
+                    $result = self::parsePath();
+                } else {
+                    die('Group or path expected.');
                 }
-
-                self::$instance->token = self::$instance->tokenizer->next();
-                if (self::$instance->token === false) {
-                    break;
-                }
-            }
-
-            $matcher = self::parseConjunction();
-            if ($matcher === false) {
-                $matcher = self::parseOperand();
-            }
-
-            $result[] = [
-                'matcher' => $matcher,
-                'priority' => $priority
-            ];
-
-            if (self::$instance->token !== ',') {
-        		break;
-        	}
-        }
-
-        return $result;
-    }
-
-
-    protected static function parseConjunction(): AndMatcher|false {
-        $matchers = [];
-        while ($matcher = self::parseOperand()) {
-            $matchers[] = $matcher;
-        }
-
-        return (count($matchers) > 1) ? new AndMatcher($matchers[0], $matchers[1]) : false;
-    }
-
-    protected static function parseInnerExpression(): Matcher|false {
-        $matchers = [];
-        while ($matcher = self::parseConjunction()) {
-            $matchers[] = $matcher;
-            if (self::$instance->token === '|' || self::$instance->token === ',') {
-                do {
-                    self::$instance->token = self::$instance->tokenizer->next();
-                } while (self::$instance->token === '|' || self::$instance->token === ',');
+            } elseif (preg_match(self::SCOPE_REGEX, self::$instance->token)) {
+                $result = self::parseScope();
+            } elseif (self::$instance->token === '(') {
+                continue;
             } else {
-                break;
+                die('Group, path, or scope expected.');
             }
-        }
 
-        return (count($matchers) > 1) ? new OrMatcher($matchers[0], $matchers[1]) : false;
+            return $result;
+        }
     }
 
-    protected static function parseOperand(): Matcher|false {
-        if (self::$instance->token === '-') {
-            self::$instance->token = self::$instance->tokenizer->next();
-
-            $matcher = self::parseOperand();
-            if ($matcher === false) {
-                die('OH SHIT');
-            }
-
-            return new NegateMatcher($matcher);
+    protected static function parseScope(): Matcher {
+        if (!preg_match('/^(?:[A-Za-z0-9-_]+|\*)(?:\.(?:[A-Za-z0-9-+_]+|\*))*$/S', self::$instance->token)) {
+            die('Invalid scope');
         }
 
-        if (self::$instance->token === '(') {
-            self::$instance->token = self::$instance->tokenizer->next();
-            $expressionInParents = self::parseInnerExpression();
-            if (self::$instance->token === ')') {
-                self::$instance->token = self::$instance->tokenizer->next();
-            }
-            return $expressionInParents;
+        $segments = explode('.', $token);
+        foreach ($segments as $index => $segment) {
+            $segments[$index] = ($segment !== '*') ? new SegmentMatcher($segment) : new TrueMatcher();
         }
 
-        if (self::$instance->tokenizer->tokenIsIdentifier()) {
-            $identifiers = [];
-            do {
-                $identifiers[] = self::$instance->token;
-                self::$instance->token = self::$instance->tokenizer->next();
-            } while (self::$instance->tokenizer->tokenIsIdentifier());
-
-            return new ScopeMatcher(...$identifiers);
-        }
-
-        return false;
+        return new ScopeMatcher(...$segments);
     }
 }

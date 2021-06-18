@@ -9,79 +9,37 @@ namespace dW\Highlighter\Scope;
 class Data {
     protected string $data;
 
-    protected int $_position = 0;
+    protected int $position = 0;
     protected int $endPosition;
 
     public function __construct(string $data) {
-        $this->data = $data;
-        $this->endPosition = strlen($data);
+        preg_match('/[LRB]:|[A-Za-z0-9-+_\*\.]+|[\,\|\-\(\)]/', $data, $matches);
+        $this->data = $matches[0] ?? [];
+        $this->endPosition = count($this->data);
     }
 
-    public function consume(int $length = 1): string|bool {
-        if ($this->_position === $this->endPosition) {
+    public function consume(): string|bool {
+        if ($this->position === $this->endPosition) {
             return false;
         }
 
-        $stop = $this->_position + $length - 1;
-        if ($stop > $this->endPosition) {
-            $stop = $this->endPosition;
-        }
-
-        $result = '';
-        while ($this->_position <= $stop) {
-            $result .= $this->data[$this->_position++];
-        }
-
-        return $result;
+        return $this->data[$this->position++];
     }
 
-    public function consumeIf(string $match): string|bool {
-        return $this->consumeWhile($match, 1);
-    }
-
-    public function consumeWhile(string $match, $limit = null): string|bool {
-        if ($this->_position === $this->endPosition) {
+    public function peek(): string|bool {
+        if ($this->position === $this->endPosition) {
             return false;
         }
 
-        $length = strspn($this->data, $match, $this->_position, $limit);
-        if ($length === 0) {
-            return '';
-        }
-
-        return $this->consume($length);
+        return $this->data[$this->position + 1];
     }
 
-    public function peek(int $length = 1): string|bool {
-        if ($this->_position === $this->endPosition) {
+    public function unconsume(): bool {
+        if ($this->position < 0) {
             return false;
         }
 
-        $stop = $this->_position + $length - 1;
-        if ($stop >= $this->endPosition) {
-            $stop = $this->endPosition;
-        }
-
-        $output = '';
-        for ($i = $this->_position; $i <= $stop; $i++) {
-            $output .= $this->data[$i];
-        }
-
-        return $output;
-    }
-
-    public function unconsumeTo(int $position = 1): bool {
-        if ($position < 0 || $position > $this->endPosition) {
-            return false;
-        }
-
-        $this->_position = $position;
+        $this->position--;
         return true;
-    }
-
-    public function __get(string $name) {
-        if ($name === 'position') {
-            return $this->_position;
-        }
     }
 }

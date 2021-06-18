@@ -80,6 +80,41 @@ fi
 if (( $(which $awkcmd composer parallel yarn | wc -l) < 4 )); then fail; fi
 
 case $1 in
+init)
+    yarn install
+    mkdir -p "$cwd"/deps
+    rm -rf "$cwd"/deps/*
+
+    cd "$cwd"/deps
+    printf "franzheidl/atom-applescript
+atom/language-c
+atom/language-coffee-script
+atom/language-css
+rmosolgo/language-graphql
+atom/language-html
+atom/language-java
+atom/language-javascript
+atom/language-json
+burodepeper/language-markdown
+Azganoth/language-lua-plus
+atom/language-php
+atom/language-python
+atom/language-ruby
+atom/language-shellscript
+MaxGiting/atom-language-smarty
+atom/language-sql
+al3x/atom-language-textile
+atom/language-typescript
+atom/language-xml" | parallel "git clone https://github.com/{}.git"
+    cd "$cwd"
+    ;;
+
+
+needed)
+    grep -Fxv -f <(cd "$cwd"/data && ls -1 *.json | sed -e 's/\.json$//g') <(cat "$cwd"/data/*.json | grep -E "\"include\"\s*:\s*\"[^#\$]+\"" | gawk '{ match($0, /"include": "(.+?)"/, arr); if(arr[1] != "") print arr[1] }' | sort -u)
+    ;;
+
+
 build | *)
     rm -rf "$cwd"/data/*
 
@@ -87,25 +122,10 @@ build | *)
     ls -1 "$cwd"/deps/**/grammars/!(tree-sitter-*).cson | parallel "temp=\$(mktemp) &&
         csonc --output=\$temp {}
         mv \$temp \"$cwd\"/data/\$(grep -m1 scopeName \$temp |
+            $awkcmd '{ match(\$0, /\s*:\s*\"(.+?)\"/, arr); if(arr[1] != \"\") print arr[1] }').json"
+
+    # Some packages use JSON files, so just rename them to their scopes
+    ls -1 "$cwd"/deps/**/grammars/!(tree-sitter-*).json | parallel "cp {} \"$cwd\"/data/\$(grep -m1 scopeName {} |
         $awkcmd '{ match(\$0, /\s*:\s*\"(.+?)\"/, arr); if(arr[1] != \"\") print arr[1] }').json"
-    ;;
-
-init)
-    yarn install
-    mkdir -p "$cwd"/deps
-
-    printf "css
-html
-javascript
-php
-shellscript
-sql
-typescript
-xml" | parallel "git clone https://github.com/atom/language-{}.git \"$cwd\"/deps/{}"
-    ;;
-
-needed)
-    cat "$cwd"/data/*.json | grep -E "\"include\"\s*:\s*\"[^#\$]+\"" | gawk '{ match($0, /"in
-clude": "(.+?)"/, arr); if(arr[1] != "") print arr[1] }' | sort -u
     ;;
 esac

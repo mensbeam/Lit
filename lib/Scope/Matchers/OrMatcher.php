@@ -7,19 +7,34 @@ declare(strict_types=1);
 namespace dW\Highlighter\Scope;
 
 class OrMatcher extends Matcher {
-    protected Matcher $left;
-    protected Matcher $right;
+    protected array $matchers = [];
 
-    public function __construct(Matcher $left, Matcher $right) {
-        $this->left = $left;
-        $this->right = $right;
+    public function __construct(Matcher ...$matchers) {
+        $this->matchers = $matchers;
+    }
+
+    public function add(Matcher $matcher) {
+        $this->matchers[] = $matcher;
     }
 
     public function matches(string ...$scopes): bool {
-        return ($this->left->matches(...$scopes) || $this->right->matches(...$scopes));
+        foreach ($this->matchers as $m) {
+            if ($m->matches(...$scopes)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function getPrefix(string ...$scopes): string|null|false {
-        return $this->left->getPrefix(...$scopes) || $this->right->getPrefix(...$scopes);
+        foreach ($this->matchers as $m) {
+            $prefix = $m->getPrefix(...$scopes);
+            if ($prefix !== null) {
+                return $prefix;
+            }
+        }
+
+        return null;
     }
 }

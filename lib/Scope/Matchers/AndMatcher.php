@@ -7,21 +7,31 @@ declare(strict_types=1);
 namespace dW\Highlighter\Scope;
 
 class AndMatcher extends Matcher {
-    protected Matcher $left;
-    protected Matcher $right;
+    protected array $matchers = [];
 
-    public function __construct(Matcher $left, Matcher $right) {
-        $this->left = $left;
-        $this->right = $right;
+    public function __construct(Matcher ...$matchers) {
+        $this->matchers = $matchers;
+    }
+
+    public function add(Matcher $matcher) {
+        $this->matchers[] = $matcher;
     }
 
     public function matches(string ...$scopes): bool {
-        return ($this->left->matches(...$scopes) && $this->right->matches(...$scopes));
+        foreach ($this->matchers as $m) {
+            if (!$m->matches(...$scopes)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function getPrefix(string ...$scopes): string|null|false {
-        if ($this->left->matches(...$scopes) && $this->right->matches(...$scopes)) {
-            return $this->left->getPrefix(...$scopes);
+        if ($this->matches(...$scopes)) {
+            return $this->matches[0]->getPrefix(...$scopes);
         }
+
+        return null;
     }
 }

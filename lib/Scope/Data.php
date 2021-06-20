@@ -7,14 +7,14 @@ declare(strict_types=1);
 namespace dW\Highlighter\Scope;
 
 class Data {
-    protected string $data;
+    protected array $data;
 
     protected int $position = 0;
     protected int $endPosition;
 
     public function __construct(string $data) {
-        preg_match('/[LRB]:|[A-Za-z0-9-+_\*\.]+|[\,\|\-\(\)]/', $data, $matches);
-        $this->data = $matches[0] ?? [];
+        preg_match('/[LRB]:|[A-Za-z0-9-+_\*\.]+|[\,\|\-\(\)&]/', $data, $matches);
+        $this->data = $matches[1] ?? [];
         $this->endPosition = count($this->data);
     }
 

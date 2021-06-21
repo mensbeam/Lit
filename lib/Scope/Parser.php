@@ -15,15 +15,16 @@ class Parser {
     protected static Parser $instance;
 
 
+    protected function __construct(string $selector) {
+        $this->data = new Data($selector);
+    }
+    
+
     public static function parse(string $selector): Matcher|false {
         self::$instance = new self($selector);
         return self::parseSelector();
     }
 
-
-    protected function __construct(string $selector) {
-        $this->data = new Data($selector);
-    }
 
     protected static function parseComposite(): Matcher {
         if (self::$debug) {
@@ -175,12 +176,7 @@ class Parser {
             self::throw('valid scope syntax', $token);
         }
 
-        $segments = explode('.', $token);
-        /*foreach ($segments as $index => $segment) {
-            $segments[$index] = ($segment !== '*') ? new SegmentMatcher($segment) : new TrueMatcher();
-        }*/
-
-        $result = new ScopeMatcher(...$segments);
+        $result = new ScopeMatcher(...explode('.', $token));
 
         if (self::$debug) {
             self::debugResult($result);

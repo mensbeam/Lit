@@ -18,7 +18,7 @@ class Parser {
     protected function __construct(string $selector) {
         $this->data = new Data($selector);
     }
-    
+
 
     public static function parse(string $selector): Matcher|false {
         self::$instance = new self($selector);
@@ -40,21 +40,13 @@ class Parser {
 
             switch ($token) {
                 case '|':
-                    if ($result instanceof OrMatcher) {
-                        $result = $result->add($new);
-                    }
-
-                    $result = new OrMatcher($result, $new);
+                    $result = ($result instanceof OrMatcher) ? $result->add($new) : new OrMatcher($result, $new);
                 break;
 
                 case '-':
                     $new = new NegateMatcher($new);
                 case '&':
-                    if ($result instanceof AndMatcher) {
-                        $result = $result->add($new);
-                    }
-
-                    $result = new AndMatcher($result, $new);
+                    $result = ($result instanceof AndMatcher) ? $result->add($new) : new AndMatcher($result, $new);
                 break;
             }
 

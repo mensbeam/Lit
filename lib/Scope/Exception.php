@@ -9,23 +9,25 @@ namespace dW\Highlighter\Scope;
 class Exception extends \Exception {
     const MESSAGE = '%s expected; found %s';
 
-    public function __construct(string $expected, string|bool $found) {
-        $strlen = strlen($expected);
-        if ($strlen > 1) {
-            $temp = [];
-            for ($i = 0; $i < $strlen; $i++) {
-                $temp[] = ($expected[$i] !== false) ? "\"{$expected[$i]}\"" : 'end of input';
-            }
-            $expected = $temp;
-
-            if (count($expected) > 2) {
-                $last = array_pop($expected);
-                $expected = implode(', ', $expected) . ', or ' . $last;
+    public function __construct(array|string $expected, string|bool $found) {
+        if (!is_string($expected)) {
+            $expectedLen = count($expected);
+            if ($expectedLen === 1) {
+                $expected = ($expected[0] !== false) ? $expected[0] : 'end of input';
             } else {
-                $expected = implode(' or ', $expected);
+                $temp = [];
+                for ($i = 0; $i < $strlen; $i++) {
+                    $temp[] = ($expected[$i] !== false) ? "{$expected[$i]}" : 'end of input';
+                }
+                $expected = $temp;
+
+                if ($expectedLen > 2) {
+                    $last = array_pop($expected);
+                    $expected = implode(', ', $expected) . ', or ' . $last;
+                } else {
+                    $expected = implode(' or ', $expected);
+                }
             }
-        } else {
-            $expected = ($expected !== false) ? "\"$expected\"" : 'end of input';
         }
 
         $found = ($found !== false) ? "\"$found\"" : 'end of input';

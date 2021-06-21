@@ -86,10 +86,8 @@ class Parser {
             $result = self::parseGroup($prefix);
         } elseif (preg_match(self::SCOPE_REGEX, $peek)) {
             $result = self::parsePath($prefix);
-        } elseif ($peek !== false) {
-            die('Group or path expected.');
         } else {
-            die('Unexpected eod');
+            throw new Exception([ 'Instance of ' . __NAMESPACE__ . 'GroupMatcher', 'Instance of ' . __NAMESPACE__ . 'PathMatcher' ], $peek);
         }
 
         if (self::$debug) {
@@ -107,7 +105,7 @@ class Parser {
         $result = self::parseSelector();
         $token = self::$instance->data->consume();
         if ($token !== ')') {
-            die(($token !== false) ? 'Close parenthesis expected' : 'Unexpected eod');
+            throw new Exception(')', $token);
         }
 
         $result = ($prefix === null) ? $result : new GroupMatcher($prefix, $result);
@@ -126,7 +124,6 @@ class Parser {
 
         $result = [];
         $result[] = self::parseScope();
-        die(var_export($result));
 
         $peek = self::$instance->data->peek();
         while (!in_array($peek, [ '-', false ]) && preg_match(self::SCOPE_REGEX, $peek)) {
@@ -173,10 +170,9 @@ class Parser {
         }
 
         $token = self::$instance->data->consume();
-        if ($token === false) {
-            die('Unexpected eod');
-        } elseif (!preg_match('/^(?:[A-Za-z0-9-_]+|\*)(?:\.(?:[A-Za-z0-9-+_]+|\*))*$/S', $token)) {
-            die('Invalid scope');
+        if ($token === false || !preg_match('/^(?:[A-Za-z0-9-_]+|\*)(?:\.(?:[A-Za-z0-9-+_]+|\*))*$/S', $token)) {
+            // TODO: Take the effort to make this more descriptive
+            throw new Exception('valid scope syntax', $token);
         }
 
         $segments = explode('.', $token);

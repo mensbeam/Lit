@@ -17,20 +17,7 @@ class Parser {
 
     public static function parse(string $selector): Matcher|false {
         self::$instance = new self($selector);
-
-        $errorReporting = false;
-        if ((error_reporting() & \E_USER_ERROR)) {
-            $errorReporting = true;
-            ParseError::setHandler();
-        }
-
-        $result = self::parseSelector();
-
-        if ($errorReporting) {
-            ParseError::clearHandler();
-        }
-
-        return $result;
+        return self::parseSelector();
     }
 
 
@@ -100,7 +87,7 @@ class Parser {
             $result = self::parsePath($prefix);
         } else {
             // TODO: Take the effort to make this more descriptive
-            self::error([ 'Group', 'Path' ], $peek);
+            self::throw([ 'Group', 'Path' ], $peek);
         }
 
         if (self::$debug) {
@@ -118,7 +105,7 @@ class Parser {
         $result = self::parseSelector();
         $token = self::$instance->data->consume();
         if ($token !== ')') {
-            self::error('")"', $token);
+            self::throw('")"', $token);
         }
 
         $result = ($prefix === null) ? $result : new GroupMatcher($prefix, $result);
@@ -185,13 +172,13 @@ class Parser {
         $token = self::$instance->data->consume();
         if ($token === false || !preg_match('/^(?:[A-Za-z0-9-_]+|\*)(?:\.(?:[A-Za-z0-9-+_]+|\*))*$/S', $token)) {
             // TODO: Take the effort to make this more descriptive
-            self::error('valid scope syntax', $token);
+            self::throw('valid scope syntax', $token);
         }
 
         $segments = explode('.', $token);
-        foreach ($segments as $index => $segment) {
+        /*foreach ($segments as $index => $segment) {
             $segments[$index] = ($segment !== '*') ? new SegmentMatcher($segment) : new TrueMatcher();
-        }
+        }*/
 
         $result = new ScopeMatcher(...$segments);
 
@@ -231,10 +218,11 @@ class Parser {
     protected static function debugResult($result) {
         printf("%s Result: %s\n",
             debug_backtrace()[1]['function'],
-            str_replace([ '::__set_state(array', __NAMESPACE__ ], '', var_export($result, true)));
+            // Removes bullshit from printed classes for easier reading
+            str_replace([ '::__set_state(array', __NAMESPACE__, '))' ], [ '', '', ')' ], var_export($result, true)));
     }
 
-    protected static function error(array|string $expected, string|bool $found) {
-        ParseError::trigger($expected, $found, self::$instance->data->offset());
+    protected static function throw(array|string $expected, string|bool $found) {
+        throw new Exception($expected, $found, self::$instance->data->offset());
     }
 }

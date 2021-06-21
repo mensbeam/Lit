@@ -9,37 +9,43 @@ namespace dW\Highlighter\Scope;
 class Data {
     protected array $data;
 
-    protected int $position = 0;
+    protected int $_position = -1;
     protected int $endPosition;
 
     public function __construct(string $data) {
-        preg_match('/[LRB]:|[A-Za-z0-9-+_\*\.]+|[\,\|\-\(\)&]/', $data, $matches);
-        $this->data = $matches[1] ?? [];
+        preg_match_all('/[BLR]:|[A-Za-z0-9-+_\*\.]+|[\,\|\-\(\)&]/', $data, $matches);
+        $this->data = $matches[0] ?? [];
         $this->endPosition = count($this->data);
     }
 
     public function consume(): string|bool {
-        if ($this->position === $this->endPosition) {
+        if ($this->_position === $this->endPosition) {
             return false;
         }
 
-        return $this->data[$this->position++];
+        return $this->data[++$this->_position];
     }
 
     public function peek(): string|bool {
-        if ($this->position === $this->endPosition) {
+        if ($this->_position === $this->endPosition) {
             return false;
         }
 
-        return $this->data[$this->position + 1];
+        return $this->data[$this->_position + 1];
     }
 
     public function unconsume(): bool {
-        if ($this->position < 0) {
+        if ($this->_position < 0) {
             return false;
         }
 
-        $this->position--;
+        $this->_position--;
         return true;
+    }
+
+    public function __get(string $name) {
+        if ($name === 'position') {
+            return $this->_position;
+        }
     }
 }

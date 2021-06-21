@@ -13,7 +13,7 @@ class Data {
     protected int $endPosition;
 
     public function __construct(string $data) {
-        preg_match_all('/[BLR]:|[A-Za-z0-9-+_\*\.]+|[\,\|\-\(\)&]/', $data, $matches);
+        preg_match_all('/[BLR]:|[A-Za-z0-9-+_\*\.]+|[\,\|\-\(\)&]/', $data, $matches, PREG_OFFSET_CAPTURE);
         $this->data = $matches[0] ?? [];
         $this->endPosition = count($this->data) - 1;
     }
@@ -23,7 +23,15 @@ class Data {
             return false;
         }
 
-        return $this->data[++$this->_position];
+        return $this->data[++$this->_position][0];
+    }
+
+    public function offset(): int|bool {
+        if ($this->_position > $this->endPosition) {
+            return false;
+        }
+
+        return $this->data[$this->_position][1];
     }
 
     public function peek(): string|bool {
@@ -31,16 +39,7 @@ class Data {
             return false;
         }
 
-        return $this->data[$this->_position + 1];
-    }
-
-    public function unconsume(): bool {
-        if ($this->_position < 0) {
-            return false;
-        }
-
-        $this->_position--;
-        return true;
+        return $this->data[$this->_position + 1][0];
     }
 
     public function __get(string $name) {

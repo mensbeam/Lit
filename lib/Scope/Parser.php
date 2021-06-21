@@ -13,12 +13,24 @@ class Parser {
     protected int $debugCount = 1;
 
     protected static Parser $instance;
-    protected const SCOPE_REGEX = '/^[A-Za-z0-9-+_\.\*]+$/S';
 
 
     public static function parse(string $selector): Matcher|false {
         self::$instance = new self($selector);
-        return self::parseSelector();
+
+        $errorReporting = false;
+        if ((error_reporting() & \E_USER_ERROR)) {
+            $errorReporting = true;
+            ParseError::setHandler();
+        }
+
+        $result = self::parseSelector();
+
+        if ($errorReporting) {
+            ParseError::clearHandler();
+        }
+
+        return $result;
     }
 
 
@@ -75,19 +87,20 @@ class Parser {
 
         $peek = self::$instance->data->peek();
         $prefix = null;
-        if (in_array($peek[0], [ 'B', 'L', 'R' ]) && $peek[1] === ':') {
+        if ($peek !== false && in_array($peek[0], [ 'B', 'L', 'R' ]) && $peek[1] === ':') {
             $prefix = $peek[0];
             self::$instance->data->consume();
+            $peek = self::$instance->data->peek();
         }
 
-        $peek = self::$instance->data->peek();
         if ($peek === '(') {
             self::$instance->data->consume();
             $result = self::parseGroup($prefix);
-        } elseif (preg_match(self::SCOPE_REGEX, $peek)) {
+        } elseif (strspn($peek, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+_.*') === strlen($peek)) {
             $result = self::parsePath($prefix);
         } else {
-            throw new Exception([ 'Instance of ' . __NAMESPACE__ . 'GroupMatcher', 'Instance of ' . __NAMESPACE__ . 'PathMatcher' ], $peek);
+            // TODO: Take the effort to make this more descriptive
+            self::error([ 'Group', 'Path' ], $peek);
         }
 
         if (self::$debug) {
@@ -105,7 +118,7 @@ class Parser {
         $result = self::parseSelector();
         $token = self::$instance->data->consume();
         if ($token !== ')') {
-            throw new Exception(')', $token);
+            self::error('")"', $token);
         }
 
         $result = ($prefix === null) ? $result : new GroupMatcher($prefix, $result);
@@ -126,7 +139,7 @@ class Parser {
         $result[] = self::parseScope();
 
         $peek = self::$instance->data->peek();
-        while (!in_array($peek, [ '-', false ]) && preg_match(self::SCOPE_REGEX, $peek)) {
+        while (!in_array($peek, [ '-', false ]) && strspn($peek, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+_.*') === strlen($peek)) {
             $result[] = self::parseScope();
             $peek = self::$instance->data->peek();
         }
@@ -172,7 +185,7 @@ class Parser {
         $token = self::$instance->data->consume();
         if ($token === false || !preg_match('/^(?:[A-Za-z0-9-_]+|\*)(?:\.(?:[A-Za-z0-9-+_]+|\*))*$/S', $token)) {
             // TODO: Take the effort to make this more descriptive
-            throw new Exception('valid scope syntax', $token);
+            self::error('valid scope syntax', $token);
         }
 
         $segments = explode('.', $token);
@@ -219,5 +232,9 @@ class Parser {
         printf("%s Result: %s\n",
             debug_backtrace()[1]['function'],
             str_replace([ '::__set_state(array', __NAMESPACE__ ], '', var_export($result, true)));
+    }
+
+    protected static function error(array|string $expected, string|bool $found) {
+        ParseError::trigger($expected, $found, self::$instance->data->offset());
     }
 }

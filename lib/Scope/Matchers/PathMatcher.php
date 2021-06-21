@@ -10,8 +10,8 @@ class PathMatcher extends Matcher {
     protected string|null $prefix;
     protected array $matchers;
 
-    public function __construct(string|null $prefix, Matcher ...$matchers) {
-        $this->prefix = ($prefix !== null) ? $prefix[0] : null;
+    public function __construct(string $prefix, ScopeMatcher ...$matchers) {
+        $this->prefix = $prefix[0];
         $this->matchers = $matchers;
     }
 

@@ -86,8 +86,10 @@ class Parser {
             $result = self::parseGroup($prefix);
         } elseif (preg_match(self::SCOPE_REGEX, $peek)) {
             $result = self::parsePath($prefix);
-        } else {
+        } elseif ($peek !== false) {
             die('Group or path expected.');
+        } else {
+            die('Unexpected eod');
         }
 
         if (self::$debug) {
@@ -103,8 +105,9 @@ class Parser {
         }
 
         $result = self::parseSelector();
-        if (self::$instance->data->consume() !== ')') {
-            die('Close parenthesis expected');
+        $token = self::$instance->data->consume();
+        if ($token !== ')') {
+            die(($token !== false) ? 'Close parenthesis expected' : 'Unexpected eod');
         }
 
         $result = ($prefix === null) ? $result : new GroupMatcher($prefix, $result);
@@ -116,17 +119,17 @@ class Parser {
         return $result;
     }
 
-    protected static function parsePath(string|null $prefix = null): Matcher {
+    protected static function parsePath(string|null $prefix = null): PathMatcher|ScopeMatcher {
         if (self::$debug) {
             self::debug();
         }
 
         $result = [];
         $result[] = self::parseScope();
+        die(var_export($result));
 
         $peek = self::$instance->data->peek();
-        while ($peek != '-' && preg_match(self::SCOPE_REGEX, $peek)) {
-            self::$instance->data->consume();
+        while (!in_array($peek, [ '-', false ]) && preg_match(self::SCOPE_REGEX, $peek)) {
             $result[] = self::parseScope();
             $peek = self::$instance->data->peek();
         }
@@ -164,13 +167,15 @@ class Parser {
         return $result;
     }
 
-    protected static function parseScope(): Matcher {
+    protected static function parseScope(): ScopeMatcher {
         if (self::$debug) {
             self::debug();
         }
 
         $token = self::$instance->data->consume();
-        if (!preg_match('/^(?:[A-Za-z0-9-_]+|\*)(?:\.(?:[A-Za-z0-9-+_]+|\*))*$/S', $token)) {
+        if ($token === false) {
+            die('Unexpected eod');
+        } elseif (!preg_match('/^(?:[A-Za-z0-9-_]+|\*)(?:\.(?:[A-Za-z0-9-+_]+|\*))*$/S', $token)) {
             die('Invalid scope');
         }
 
@@ -217,6 +222,6 @@ class Parser {
     protected static function debugResult($result) {
         printf("%s Result: %s\n",
             debug_backtrace()[1]['function'],
-            var_export($result, true));
+            str_replace([ '::__set_state(array', __NAMESPACE__ ], '', var_export($result, true)));
     }
 }

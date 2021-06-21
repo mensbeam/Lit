@@ -10,8 +10,8 @@ class GroupMatcher extends Matcher {
     protected string|null $prefix;
     protected Matcher $selector;
 
-    public function __construct(string|null $prefix, Matcher $selector) {
-        $this->prefix = ($prefix !== null) ? $prefix[0] : null;
+    public function __construct(string $prefix, Matcher $selector) {
+        $this->prefix = $prefix[0];
         $this->selector = $selector;
     }
 

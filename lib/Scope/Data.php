@@ -15,7 +15,7 @@ class Data {
     public function __construct(string $data) {
         preg_match_all('/[BLR]:|[A-Za-z0-9-+_\*\.]+|[\,\|\-\(\)&]/', $data, $matches);
         $this->data = $matches[0] ?? [];
-        $this->endPosition = count($this->data);
+        $this->endPosition = count($this->data) - 1;
     }
 
     public function consume(): string|bool {

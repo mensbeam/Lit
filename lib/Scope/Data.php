@@ -6,6 +6,10 @@
 declare(strict_types=1);
 namespace dW\Highlighter\Scope;
 
+/**
+ * Tokenizes scope strings into an array of segments of the original string and
+ * provides an interface for iterating through them.
+ */
 class Data {
     protected array $data;
 
@@ -18,6 +22,7 @@ class Data {
         $this->endPosition = count($this->data) - 1;
     }
 
+    /** Moves the pointer up one position and returns the corresponding token */
     public function consume(): string|bool {
         if ($this->_position === $this->endPosition) {
             return false;
@@ -26,6 +31,7 @@ class Data {
         return $this->data[++$this->_position][0];
     }
 
+    /** Returns the character offset of the current token */
     public function offset(): int|bool {
         if ($this->_position > $this->endPosition) {
             return false;
@@ -34,6 +40,7 @@ class Data {
         return $this->data[$this->_position][1];
     }
 
+    /** Returns the next token without moving the pointer */
     public function peek(): string|bool {
         if ($this->_position === $this->endPosition) {
             return false;

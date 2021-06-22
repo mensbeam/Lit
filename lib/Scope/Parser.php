@@ -6,20 +6,33 @@
 declare(strict_types=1);
 namespace dW\Highlighter\Scope;
 
+/** Parses scope strings into a matcher tree */
 class Parser {
+    // When true prints out detailed data about the construction of the matcher
+    // tree.
     public static bool $debug = false;
 
+    // The tokenized scope string
     protected Data $data;
+    // Used for incrementing the blocks of debug information; useful for creating
+    // breakpoints when debugging.
     protected int $debugCount = 1;
 
+    // Used for instancing data tokens in static methods.
     protected static Parser $instance;
+
+    // strspn mask used to check whether a token could be a valid scope.
+    protected const SCOPE_MASK = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+_.*';
 
 
     protected function __construct(string $selector) {
         $this->data = new Data($selector);
     }
 
-
+    /**
+     * Static method entry point for the class. Creates the instance and parses the
+     * string.
+     */
     public static function parse(string $selector): Matcher|false {
         self::$instance = new self($selector);
         return self::parseSelector();
@@ -76,11 +89,12 @@ class Parser {
         if ($peek === '(') {
             self::$instance->data->consume();
             $result = self::parseGroup($prefix);
-        } elseif (strspn($peek, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+_.*') === strlen($peek)) {
+        } elseif (!in_array($peek, [ '-', false ]) && strspn($peek, self::SCOPE_MASK) === strlen($peek)) {
             $result = self::parsePath($prefix);
         } else {
+            if (!in_array($peek, [ '-', false ]) && )
             // TODO: Take the effort to make this more descriptive
-            self::throw([ 'Group', 'Path' ], $peek);
+            self::throw([ 'Group', 'Path', 'Scope' ], $peek);
         }
 
         if (self::$debug) {
@@ -119,7 +133,7 @@ class Parser {
         $result[] = self::parseScope();
 
         $peek = self::$instance->data->peek();
-        while (!in_array($peek, [ '-', false ]) && strspn($peek, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-+_.*') === strlen($peek)) {
+        while (!in_array($peek, [ '-', false ]) && strspn($peek, self::SCOPE_MASK) === strlen($peek)) {
             $result[] = self::parseScope();
             $peek = self::$instance->data->peek();
         }

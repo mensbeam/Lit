@@ -4,7 +4,7 @@
  * See LICENSE and AUTHORS files for details */
 
 declare(strict_types=1);
-namespace dW\Fukkus\Scope;
+namespace dW\Lit\Scope;
 
 /** Parses scope strings into a matcher tree */
 class Parser {
@@ -92,7 +92,6 @@ class Parser {
         } elseif (!in_array($peek, [ '-', false ]) && strspn($peek, self::SCOPE_MASK) === strlen($peek)) {
             $result = self::parsePath($prefix);
         } else {
-            if (!in_array($peek, [ '-', false ]) && )
             // TODO: Take the effort to make this more descriptive
             self::throw([ 'Group', 'Path', 'Scope' ], $peek);
         }

@@ -4,7 +4,7 @@
  * See LICENSE and AUTHORS files for details */
 
 declare(strict_types=1);
-namespace dW\Fukkus\Scope;
+namespace dW\Lit\Scope;
 
 class Exception extends \Exception {
     const MESSAGE = "%s expected; found %s at offset %s\n";

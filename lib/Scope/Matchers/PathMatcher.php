@@ -4,7 +4,7 @@
  * See LICENSE and AUTHORS files for details */
 
 declare(strict_types=1);
-namespace dW\Fukkus\Scope;
+namespace dW\Lit\Scope;
 
 class PathMatcher extends Matcher {
     protected string|null $prefix;

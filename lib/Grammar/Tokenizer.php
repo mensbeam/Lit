@@ -4,6 +4,6 @@
  * See LICENSE and AUTHORS files for details */
 
 declare(strict_types=1);
-namespace dW\Fukkus\Grammar;
+namespace dW\Lit\Grammar;
 
 class Tokenizer {}

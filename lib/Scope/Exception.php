@@ -4,10 +4,10 @@
  * See LICENSE and AUTHORS files for details */
 
 declare(strict_types=1);
-namespace dW\Highlighter\Scope;
+namespace dW\Fukkus\Scope;
 
 class Exception extends \Exception {
-    const MESSAGE = '%s expected; found %s at offset %s';
+    const MESSAGE = "%s expected; found %s at offset %s\n";
 
     public function __construct(array|string $expected, string|bool $found, int $offset) {
         if (!is_string($expected)) {
@@ -28,6 +28,8 @@ class Exception extends \Exception {
                     $expected = implode(' or ', $expected);
                 }
             }
+        } else {
+            $expected = ($expected !== false) ? $expected : 'end of input';
         }
 
         $found = ($found !== false) ? "\"$found\"" : 'end of input';

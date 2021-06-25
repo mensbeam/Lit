@@ -4,7 +4,7 @@
  * See LICENSE and AUTHORS files for details */
 
 declare(strict_types=1);
-namespace dW\Highlighter\Grammar;
+namespace dW\Fukkus\Grammar;
 
 class Registry {
     protected static array $grammars = [];
@@ -49,7 +49,7 @@ class Registry {
         }
 
         if (!$force && isset(self::$grammars[$grammar['scopeName']])) {
-            throw new \Exception("Grammar \"{$grammar['scopeName']}\" already exists.");
+            throw new \Exception("Grammar with the \"{$grammar['scopeName']}\" scope already exists.");
         }
 
         self::$grammars[$grammar['scopeName']] = $grammar;

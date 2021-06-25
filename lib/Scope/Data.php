@@ -4,7 +4,7 @@
  * See LICENSE and AUTHORS files for details */
 
 declare(strict_types=1);
-namespace dW\Highlighter\Scope;
+namespace dW\Fukkus\Scope;
 
 /**
  * Tokenizes scope strings into an array of segments of the original string and

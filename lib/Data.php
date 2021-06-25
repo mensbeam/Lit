@@ -4,10 +4,10 @@
  * See LICENSE and AUTHORS files for details */
 
 declare(strict_types=1);
-namespace dW\Lit\Grammar;
+namespace dW\Lit;
 
 class Data {
-    public static function withFile(string $filepath): \Generator {
+    public static function fileToGenerator(string $filepath): \Generator {
         $fp = fopen($filepath, 'r');
         try {
             while ($line = fgets($fp)) {
@@ -18,10 +18,10 @@ class Data {
         }
     }
 
-    public static function withString(string $data): \Generator {
-        $data = explode("\n", $data);
-        foreach ($data as $d) {
-            yield $d;
+    public static function stringToGenerator(string $string): \Generator {
+        $string = explode("\n", $string);
+        foreach ($string as $s) {
+            yield $s;
         }
     }
 }

@@ -18,8 +18,8 @@
     },
     "autoload": {
         "psr-4": {
-            "dW\\Highlighter\\": "lib/",
-            "dW\\Highlighter\\Scope\\": "lib/Scope/Matchers/"
+            "dW\\Lit\\": "lib/",
+            "dW\\Lit\\Scope\\": "lib/Scope/Matchers/"
         }
     }
 }

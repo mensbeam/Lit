@@ -1,0 +1,23 @@
+{
+  "key": "pandoc",
+  "patterns": [
+    {
+      "name": "table.storage.md",
+      "match": "^(\\+-+)+\\+$",
+      "captures": {
+        "0": {
+          "name": "punctuation.md"
+        }
+      }
+    },
+    {
+      "name": "table.storage.md",
+      "match": "^(\\+=+)+\\+$",
+      "captures": {
+        "0": {
+          "name": "punctuation.md"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "name": "Lua",
+  "scopeName": "source.lua",
+  "type": "tree-sitter",
+  "parser": "tree-sitter-lua",
+
+  "fileTypes": [ "lua" ],
+
+  "folds": [
+    {
+      "type": [
+        "do_statement",
+        "while_statement",
+        "repeat_statement",
+        "for_statement",
+        "for_in_statement",
+        "function",
+        "local_function",
+        "function_definition",
+        "table"
+      ],
+      "end": { "index": -1 }
+    },
+    {
+      "type": ["if_statement","elseif"],
+      "start": { "index": 1 },
+      "end": { "type": [ "else", "elseif" ] }
+    },
+    {
+      "type": "if_statement",
+      "start": { "index": 1 },
+      "end": { "index": -1 }
+    },
+    {
+      "type": "elseif",
+      "start": { "index": 1 }
+    },
+    {
+      "type": "else",
+      "start": { "index": 0 }
+    }
+  ],
+
+  "comments": {
+    "start": "-- "
+  },
+
+  "scopes": {
+    "program": "source.lua",
+
+    "comment": "comment",
+    "string": "string",
+    "number": "constant.numeric",
+
+    "function > function_name > identifier": "entity.name.function",
+    "function > function_name > property_identifier": "entity.name.function",
+    "function > function_name > method": "entity.name.function",
+    "function > parameters > identifier": "variable.parameter",
+
+    "local_function > identifier": "entity.name.function",
+    "local_function > parameters > identifier": "variable.parameter",
+
+    "function_call > identifier": "entity.name.function",
+    "function_call > property_identifier": "entity.name.function",
+    "function_call > method": "entity.name.function",
+
+    "function_definition > parameters > identifier": "variable.parameter",
+
+    "self": "variable.language",
+    "next": "entity.name.function",
+    "spread": "variable.parameter",
+    "global_variable": "variable.language",
+
+    "nil": "constant.language.nil",
+    "true": "constant.language.boolean",
+    "false": "constant.language.boolean",
+
+    "'local'": "storage.modifier",
+    "'function'": "storage.type.function",
+    "label_statement": "storage.type.label",
+
+    "'{'": "punctuation.definition.table.begin",
+    "'}'": "punctuation.definition.table.end",
+    "'('": "punctuation.definition.parameters.begin",
+    "')'": "punctuation.definition.parameters.end",
+
+    "'do'": "keyword.control",
+    "'return'": "keyword.control",
+    "'if'": "keyword.control",
+    "'then'": "keyword.control",
+    "'elseif'": "keyword.control",
+    "'else'": "keyword.control",
+    "'while'": "keyword.control",
+    "'repeat'": "keyword.control",
+    "'until'": "keyword.control",
+    "'for'": "keyword.control",
+    "'in'": "keyword.control",
+    "'goto'": "keyword.control",
+    "'end'": "keyword.control",
+
+    "'or'": "keyword.operator.logical",
+    "'and'": "keyword.operator.logical",
+    "'not'": "keyword.operator.logical",
+    "'|'": "keyword.operator.logical",
+    "'&'": "keyword.operator.logical",
+    "'~'": "keyword.operator.logical",
+
+    "'='": "keyword.operator.assignment",
+
+    "'<'": "keyword.operator.comparison",
+    "'<='": "keyword.operator.comparison",
+    "'=='": "keyword.operator.comparison",
+    "'~='": "keyword.operator.comparison",
+    "'>='": "keyword.operator.comparison",
+    "'>'": "keyword.operator.comparison",
+
+    "'<<'": "keyword.operator.arithmetic.bitwise",
+    "'>>'": "keyword.operator.arithmetic.bitwise",
+    "'+'": "keyword.operator.arithmetic",
+    "'-'": "keyword.operator.arithmetic",
+    "'*'": "keyword.operator.arithmetic",
+    "'/'": "keyword.operator.arithmetic",
+    "'//'": "keyword.operator.arithmetic",
+    "'%'": "keyword.operator.arithmetic",
+
+    "'..'": "keyword.operator.arithmetic",
+    "'^'": "keyword.operator.arithmetic",
+
+    "'#'": "keyword.operator.arithmetic",
+
+    "'.'": "punctuation.separator.object",
+    "','": "punctuation.separator.object",
+    "':'": "punctuation.separator.method",
+    "';'": "punctuation.separator.statement"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "key": "html",
+  "patterns": [
+    {
+      "match": "<(?![a-zA-Z!/])",
+      "name": ""
+    },
+    {
+      "include": "text.html.basic"
+    }
+  ]
+}

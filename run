@@ -69,7 +69,7 @@ fail() {
 }
 
 # Check for bash 4+
-shopt -s globstar extglob || fail
+shopt -s globstar extglob || help
 
 awkcmd="awk"
 if [ "$(uname)" == "Darwin" ]; then
@@ -77,7 +77,30 @@ if [ "$(uname)" == "Darwin" ]; then
 fi
 
 # Check for presence of dependencies
-if (( $(which $awkcmd composer parallel yarn | wc -l) < 4 )); then fail; fi
+if (( $(which $awkcmd composer parallel yarn | wc -l) < 4 )); then help; fi
+
+read -r -d '' grammarList <<'EOF'
+franzheidl/atom-applescript applescript
+atom/language-c c
+atom/language-coffee-script coffeescript
+atom/language-css css
+rmosolgo/language-graphql graphql
+atom/language-html html
+atom/language-java java
+atom/language-javascript javascript
+atom/language-json json
+burodepeper/language-markdown markdown
+Azganoth/language-lua-plus lua
+atom/language-php php
+atom/language-python python
+atom/language-ruby ruby
+atom/language-shellscript shell
+MaxGiting/atom-language-smarty smarty
+atom/language-sql sql
+al3x/atom-language-textile textile
+atom/language-typescript typescript
+atom/language-xml xml
+EOF
 
 case $1 in
 init)
@@ -86,46 +109,27 @@ init)
     rm -rf "$cwd"/deps/*
 
     cd "$cwd"/deps
-    printf "franzheidl/atom-applescript
-atom/language-c
-atom/language-coffee-script
-atom/language-css
-rmosolgo/language-graphql
-atom/language-html
-atom/language-java
-atom/language-javascript
-atom/language-json
-burodepeper/language-markdown
-Azganoth/language-lua-plus
-atom/language-php
-atom/language-python
-atom/language-ruby
-atom/language-shellscript
-MaxGiting/atom-language-smarty
-atom/language-sql
-al3x/atom-language-textile
-atom/language-typescript
-atom/language-xml" | parallel "git clone https://github.com/{}.git"
+    printf "$grammarList" | parallel --colsep ' ' "git clone https://github.com/{1}.git"
     cd "$cwd"
     ;;
 
 
 needed)
-    grep -Fxv -f <(cd "$cwd"/data && ls -1 *.json | sed -e 's/\.json$//g') <(cat "$cwd"/data/*.json | grep -E "\"include\"\s*:\s*\"[^#\$]+\"" | gawk '{ match($0, /"include": "(.+?)"/, arr); if(arr[1] != "") print arr[1] }' | sort -u)
+    grep -Fxv -f <(cd "$cwd"/data && ls -1 *.json | sed -e 's/\.json$//g') <(cat "$cwd"/data/*.json | grep -E "\"include\"\s*:\s*\"[^#\$]+\"" | $awkcmd '{ match($0, /"include": "(.+?)"/, arr); if(arr[1] != "") print arr[1] }' | sort -u)
     ;;
 
 
 build | *)
     rm -rf "$cwd"/data/*
 
-    # Convert from CSON to JSON AND rename the files to their scopes... all in parallel.
-    ls -1 "$cwd"/deps/**/grammars/!(tree-sitter-*).cson | parallel "temp=\$(mktemp) &&
-        csonc --output=\$temp {}
-        mv \$temp \"$cwd\"/data/\$(grep -m1 scopeName \$temp |
-            $awkcmd '{ match(\$0, /\s*:\s*\"(.+?)\"/, arr); if(arr[1] != \"\") print arr[1] }').json"
+    temp=$(mktemp -d)
+    printf "$grammarList" | parallel --colsep ' ' "mkdir -p $temp/{2} &&
+        cp -r \"$cwd\"/deps/\$(basename {1})/grammars/* $temp/{2}/"
 
-    # Some packages use JSON files, so just rename them to their scopes
-    ls -1 "$cwd"/deps/**/grammars/!(tree-sitter-*).json | parallel "cp {} \"$cwd\"/data/\$(grep -m1 scopeName {} |
-        $awkcmd '{ match(\$0, /\s*:\s*\"(.+?)\"/, arr); if(arr[1] != \"\") print arr[1] }').json"
+    ls -1 $temp/**/!(tree-sitter-*).cson | parallel "csonc --output={.}.json {} && rm {}"
+
+    rm -rf $temp/**/*.cson
+
+    mv $temp/* "$cwd"/data/
     ;;
 esac

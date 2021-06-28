@@ -19,30 +19,30 @@
 ##?         * bash >=5.0
 ##?         * composer >=2.0.6
 ##?         * docopts >=0.6.3
-##?         * gnu awk >=5.1.0
-##?         * gnu coreutils >=8.0
-##?         * gnu parallel >=20180922
+##?         * GNU awk >=5.1.0
+##?         * GNU coreutils >=8.0
+##?         * GNU parallel >=20180922
 ##?         * yarn >=1.22.10
 ##?
 ##?     Arch Linux:
-##?     ```
-##?     pacman -S composer docopts parallel yarn
-##?     ```
+##?         ```
+##?         pacman -S composer docopts parallel yarn
+##?         ```
 ##?
 ##?     macOS:
-##?     ```
-##?     brew install bash composer coreutils docopts gawk parallel yarn
-##?     echo \"/usr/local/bin/bash\" >> /etc/shells
-##?     chsh -s /usr/local/bin/bash
-##?     ```
+##?         ```
+##?         brew install bash composer coreutils docopts gawk parallel yarn
+##?         echo \"/usr/local/bin/bash\" >> /etc/shells
+##?         chsh -s /usr/local/bin/bash
+##?         ```
 ##?
 ##?     Building the grammars is then a matter of running the following commands
 ##?     from the project folder:
 ##?
-##?     ```
-##?     ./run init
-##?     ./run build
-##?     ```
+##?         ```
+##?         ./run init
+##?         ./run build
+##?         ```
 ##?
 ##?
 ##? Commands:
@@ -57,29 +57,41 @@
 ##?     needed
 ##?         List the language grammars that are included in the current grammars
 ##?         but are not in the data/ folder.
+##?
 
+set -e
 cwd=$(pwd)
 PATH="$cwd/node_modules/.bin:$PATH"
 help=$(grep "^##?" "$0" | cut -c 5-)
-eval "$(docopts -h "$help" : "$@")"
+eval "$(docopts -A args -h "$help" : "$@")"
 
 fail() {
     echo $help
     exit 1
 }
 
-# Check for bash 4+
-shopt -s globstar extglob || help
+# Check for bash 4+ and set extra glob options
+shopt -s globstar extglob || fail
 
+# macOS uses the BSD version of awk which isn't compatible with the linux
+# version, so this script requires Mac users to install the GNU version; it
+# therefore has a different name on macOS.
 awkcmd="awk"
 if [ "$(uname)" == "Darwin" ]; then
     awkcmd="gawk"
 fi
 
 # Check for presence of dependencies
-if (( $(which $awkcmd composer parallel yarn | wc -l) < 4 )); then help; fi
+if (( $(which $awkcmd composer parallel yarn | wc -l) < 4 )); then fail; fi
 
-read -r -d '' grammarList <<'EOF'
+# Process the subcommand
+subcmd="build"
+subcmd=$([ "${args[init]}" == "true" ] && echo "init" || echo "$subcmd")
+subcmd=$([ "${args[needed]}" == "true" ] && echo "needed" || echo "$subcmd")
+
+# Grammar table of the github repository location followed by its local folder
+# name
+read -r -d '' grammarTable <<'EOF'
 franzheidl/atom-applescript applescript
 atom/language-c c
 atom/language-coffee-script coffeescript
@@ -102,14 +114,14 @@ atom/language-typescript typescript
 atom/language-xml xml
 EOF
 
-case $1 in
+case $subcmd in
 init)
     yarn install
     mkdir -p "$cwd"/deps
     rm -rf "$cwd"/deps/*
 
     cd "$cwd"/deps
-    printf "$grammarList" | parallel --colsep ' ' "git clone https://github.com/{1}.git"
+    printf "$grammarTable" | parallel --colsep ' ' "git clone https://github.com/{1}.git"
     cd "$cwd"
     ;;
 
@@ -122,14 +134,22 @@ needed)
 build | *)
     rm -rf "$cwd"/data/*
 
+    # Copy grammars folders from all the local language grammar repositories to a
+    # temporary folder with the names provided in the table above
     temp=$(mktemp -d)
-    printf "$grammarList" | parallel --colsep ' ' "mkdir -p $temp/{2} &&
+    printf "$grammarTable" | parallel --colsep ' ' "mkdir -p $temp/{2} &&
         cp -r \"$cwd\"/deps/\$(basename {1})/grammars/* $temp/{2}/"
 
+    # Convert all relevant CSON files to a format that can actually be used :)
     ls -1 $temp/**/!(tree-sitter-*).cson | parallel "csonc --output={.}.json {} && rm {}"
 
-    rm -rf $temp/**/*.cson
+    # Remove any remaining tree sitter files; will also remove JSON ones from
+    # packages that didn't use CSON
+    rm $temp/**/tree-sitter-*
 
+    # Lastly, move everything over to the project's data folder and delete the
+    # temporary folder
     mv $temp/* "$cwd"/data/
+    rmdir $temp
     ;;
 esac

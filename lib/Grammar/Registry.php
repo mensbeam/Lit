@@ -34,18 +34,18 @@ class Registry {
         return false;
     }
 
-    public static function set(string $grammarPath, bool $force = false): bool {
-        if (!file_exists($grammarPath)) {
-            throw new \Exception("Path \"$grammarPath\" either does not exist or you do not have permission to view the file.");
+    public static function import(string $jsonPath, bool $force = false): bool {
+        if (!file_exists($jsonPath)) {
+            throw new \Exception("Path \"$jsonPath\" either does not exist or you do not have permission to view the file.");
         }
 
-        $grammar = json_decode(file_get_contents($grammarPath), true);
+        $grammar = json_decode(file_get_contents($jsonPath), true);
         if ($grammar === null) {
-            throw new \Exception("\"$grammarPath\" is not a valid grammar file.");
+            throw new \Exception("\"$jsonPath\" is not a valid grammar JSON file.");
         }
 
         if (!isset($grammar['scopeName'])) {
-            throw new \Exception("\"$grammarPath\" is missing the required scopeName property.");
+            throw new \Exception("\"$jsonPath\" is missing the required scopeName property.");
         }
 
         if (!$force && isset(self::$grammars[$grammar['scopeName']])) {

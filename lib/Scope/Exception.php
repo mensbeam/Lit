@@ -1,13 +1,13 @@
 <?php
 /** @license MIT
  * Copyright 2021 Dustin Wilson et al.
- * See LICENSE and AUTHORS files for details */
+ * See LICENSE file for details */
 
 declare(strict_types=1);
 namespace dW\Lit\Scope;
 
 class Exception extends \Exception {
-    const MESSAGE = "%s expected; found %s at offset %s\n";
+    const MESSAGE = '%s expected; found %s at offset %s'.\PHP_EOL;
 
     public function __construct(array|string $expected, string|bool $found, int $offset) {
         if (!is_string($expected)) {

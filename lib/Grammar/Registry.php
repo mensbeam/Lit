@@ -1,7 +1,7 @@
 <?php
 /** @license MIT
  * Copyright 2021 Dustin Wilson et al.
- * See LICENSE and AUTHORS files for details */
+ * See LICENSE file for details */
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
@@ -34,25 +34,43 @@ class Registry {
         return false;
     }
 
-    public static function import(string $jsonPath, bool $force = false): bool {
-        if (!file_exists($jsonPath)) {
-            throw new \Exception("Path \"$jsonPath\" either does not exist or you do not have permission to view the file.");
-        }
+    public static function import(string $jsonPath) {}
 
-        $grammar = json_decode(file_get_contents($jsonPath), true);
+    public static function validate(string $grammar): bool {
         if ($grammar === null) {
-            throw new \Exception("\"$jsonPath\" is not a valid grammar JSON file.");
+            throw new \Exception("\"$jsonPath\" is not a valid grammar JSON file.".\PHP_EOL);
         }
 
-        if (!isset($grammar['scopeName'])) {
-            throw new \Exception("\"$jsonPath\" is missing the required scopeName property.");
+        $requiredProperties = [
+            'name',
+            'patterns',
+            'scopeName'
+        ];
+
+        $missing = [];
+        foreach ($requiredProperties as $r) {
+            if (!array_key_exists($r, $grammar))) {
+                $missing = $r;
+            }
         }
 
-        if (!$force && isset(self::$grammars[$grammar['scopeName']])) {
-            throw new \Exception("Grammar with the \"{$grammar['scopeName']}\" scope already exists.");
+        $missingLen = count($missing);
+        if ($missingLen > 0) {
+            if ($missingLen > 1) {
+                if ($missingLen > 2) {
+                    $last = array_pop($missing);
+                    $missing = implode(', ', $missing);
+                    $missing .= ", and $last";
+                } else {
+                    $missing = implode(' and ', $missing);
+                }
+
+                throw new \Exception("\"$jsonPath\" is missing the required $missing properties.".\PHP_EOL);
+            }
+
+            throw new \Exception("\"$jsonPath\" is missing the required {$missing[0]} property.".\PHP_EOL);
         }
 
-        self::$grammars[$grammar['scopeName']] = $grammar;
         return true;
     }
 }

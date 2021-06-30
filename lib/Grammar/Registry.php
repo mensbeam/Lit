@@ -17,7 +17,7 @@ class Registry {
     public static function delete(string $scopeName): bool {
         try {
             unset(self::$grammars[$scopeName]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return false;
         }
 
@@ -33,8 +33,6 @@ class Registry {
 
         return false;
     }
-
-    public static function import(string $jsonPath) {}
 
     public static function validate(string $grammar): bool {
         if ($grammar === null) {

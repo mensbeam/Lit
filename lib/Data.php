@@ -8,10 +8,11 @@ namespace dW\Lit;
 
 class Data {
     public static function fileToGenerator(string $filepath): \Generator {
+        $lineNumber = 0;
         $fp = fopen($filepath, 'r');
         try {
             while ($line = fgets($fp)) {
-                yield $line;
+                yield ++$lineNumber => $line;
             }
         } finally {
             fclose($fp);
@@ -20,8 +21,8 @@ class Data {
 
     public static function stringToGenerator(string $string): \Generator {
         $string = explode("\n", $string);
-        foreach ($string as $s) {
-            yield $s;
+        foreach ($string as $lineNumber => $line) {
+            yield $lineNumber + 1 => $line;
         }
     }
 }

@@ -6,10 +6,10 @@
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
 
-abstract class NamedPatternListList extends ImmutableList {
+class CaptureList extends ImmutableList {
     public function __construct(array $array) {
         foreach ($array as $k => $v) {
-            assert(is_string($k), new \Exception('String index expected for supplied array, found ' . gettype($k) . "\n"));
+            assert(is_int($k), new \Exception('Integer index expected for supplied array, found ' . gettype($k) . "\n"));
             assert($v instanceof GrammarInclude || $v instanceof Pattern || $v instanceof PatternList, new \Exception(__NAMESPACE__ . '\GrammarInclude, ' . __NAMESPACE__ . '\Pattern, or ' . __NAMESPACE__ . '\PatternList value expected for supplied array, found ' . gettype($v) . "\n"));
         }
 

@@ -8,11 +8,11 @@ namespace dW\Lit;
 
 trait FauxReadOnly {
     public function __get(string $name) {
-        if ($name[0] !== '_') {
+        if ($name[0] === '_') {
             return;
         }
 
-        $name = substr($name, 1);
-        return $this->$name;
+        $prop = "_$name";
+        return $this->$prop;
     }
 }

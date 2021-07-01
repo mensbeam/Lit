@@ -7,7 +7,7 @@ declare(strict_types=1);
 namespace dW\Lit\Grammar;
 
 class PatternList extends ImmutableList {
-    public function __construct(Pattern|Include ...$values) {
-        parent::__construct($values);
+    public function __construct(Pattern|GrammarInclude ...$values) {
+        parent::__construct(...$values);
     }
 }

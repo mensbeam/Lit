@@ -431,12 +431,12 @@
         {
           "begin": "<%--",
           "captures": {
-            "0": {
-              "name": "punctuation.definition.comment.xml"
-            },
-            "end": "--%>",
-            "name": "comment.block.xml"
-          }
+              "0": {
+                  "name": "punctuation.definition.comment.xml"
+              }
+          },
+          "end": "--%>",
+          "name": "comment.block.xml"
         },
         {
           "begin": "<!--",

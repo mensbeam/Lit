@@ -7,10 +7,10 @@ declare(strict_types=1);
 namespace dW\Lit\Scope;
 
 class GroupMatcher extends Matcher {
-    protected string|null $prefix;
+    protected ?string $prefix;
     protected Matcher $selector;
 
-    public function __construct(string|null $prefix, Matcher $selector) {
+    public function __construct(?string $prefix, Matcher $selector) {
         $this->prefix = ($prefix !== null) ? $prefix[0] : null;
         $this->selector = $selector;
     }

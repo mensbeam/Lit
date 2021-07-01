@@ -103,7 +103,7 @@ class Parser {
         return $result;
     }
 
-    protected static function parseGroup(string|null $prefix = null): Matcher {
+    protected static function parseGroup(?string $prefix = null): Matcher {
         if (self::$debug) {
             self::debug();
         }
@@ -123,7 +123,7 @@ class Parser {
         return $result;
     }
 
-    protected static function parsePath(string|null $prefix = null): PathMatcher|ScopeMatcher {
+    protected static function parsePath(?string $prefix = null): PathMatcher|ScopeMatcher {
         if (self::$debug) {
             self::debug();
         }

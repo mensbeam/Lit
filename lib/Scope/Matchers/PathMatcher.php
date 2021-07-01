@@ -7,10 +7,10 @@ declare(strict_types=1);
 namespace dW\Lit\Scope;
 
 class PathMatcher extends Matcher {
-    protected string|null $prefix;
+    protected ?string $prefix;
     protected array $matchers;
 
-    public function __construct(string|null $prefix, ScopeMatcher ...$matchers) {
+    public function __construct(?string $prefix, ScopeMatcher ...$matchers) {
         $this->prefix = ($prefix !== null) ? $prefix[0] : null;
         $this->matchers = $matchers;
     }

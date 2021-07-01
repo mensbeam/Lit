@@ -6,4 +6,4 @@
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
 
-class Repository extends NamedPatternListList {}
+class InjectionList extends NamedPatternListList {}

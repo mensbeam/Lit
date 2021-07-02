@@ -8,9 +8,15 @@ namespace dW\Lit\Grammar;
 
 abstract class NamedPatternListList extends ImmutableList {
     public function __construct(array $array) {
+        /* This shit is here because PHP doesn't have array types or generics :) */
         foreach ($array as $k => $v) {
-            assert(is_string($k), new \Exception('String index expected for supplied array, found ' . gettype($k) . "\n"));
-            assert($v instanceof GrammarInclude || $v instanceof Pattern || $v instanceof PatternList, new \Exception(__NAMESPACE__ . '\GrammarInclude, ' . __NAMESPACE__ . '\Pattern, or ' . __NAMESPACE__ . '\PatternList value expected for supplied array, found ' . gettype($v) . "\n"));
+            if (!is_string($k)) {
+                throw new Exception(Exception::LIST_INVALID_TYPE, 'String', 'supplied array index', gettype($k));
+            }
+
+            if (!$v instanceof GrammarInclude && !$v instanceof Pattern && !$v instanceof PatternList) {
+                throw new Exception(Exception::LIST_INVALID_TYPE,  __NAMESPACE__.'\GrammarInclude, '.__NAMESPACE__.'\Pattern, or '.__NAMESPACE__.'\PatternList', 'supplied array value', gettype($v));
+            }
         }
 
         $this->storage = $array;

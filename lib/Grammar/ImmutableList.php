@@ -11,31 +11,15 @@ abstract class ImmutableList implements \ArrayAccess, \Countable, \Iterator {
     protected int|string|null $position;
     protected array $storage = [];
 
+
     public function __construct(...$values) {
         $this->storage = $values;
         $this->count = count($this->storage);
     }
 
-    public function offsetSet($offset, $value) {
-        throw new \Exception(__CLASS__ . "s are immutable\n");
-    }
 
-    public function offsetExists($offset) {
-        return isset($this->storage[$offset]);
-    }
-
-    public function offsetUnset($offset) {
-        throw new \Exception(__CLASS__ . "s are immutable\n");
-    }
-
-    public function offsetGet($offset) {
-        assert(isset($this->storage[$offset]), new \Exception("Invalid ImmutableList index at $offset\n"));
-        return $this->storage[$offset];
-    }
-
-    public function rewind() {
-        reset($this->storage);
-        $this->position = key($this->storage);
+    public function count(): int {
+        return $this->count;
     }
 
     public function current() {
@@ -52,11 +36,32 @@ abstract class ImmutableList implements \ArrayAccess, \Countable, \Iterator {
         $this->position = key($this->storage);
     }
 
-    public function valid() {
-        return $this->offsetExists($this->position);
+    public function offsetExists($offset) {
+        return isset($this->storage[$offset]);
     }
 
-    public function count(): int {
-        return $this->count;
+    public function offsetGet($offset) {
+        if (!isset($this->storage[$offset])) {
+            throw new Exception(Exception::LIST_INVALID_INDEX, __CLASS__, $offset);
+        }
+        
+        return $this->storage[$offset];
+    }
+
+    public function offsetSet($offset, $value) {
+        throw new Exception(Exception::LIST_IMMUTABLE, __CLASS__);
+    }
+
+    public function offsetUnset($offset) {
+        throw new Exception(Exception::LIST_IMMUTABLE, __CLASS__);
+    }
+
+    public function rewind() {
+        reset($this->storage);
+        $this->position = key($this->storage);
+    }
+
+    public function valid() {
+        return $this->offsetExists($this->position);
     }
 }

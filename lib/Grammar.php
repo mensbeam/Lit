@@ -6,6 +6,7 @@
 declare(strict_types=1);
 namespace dW\Lit;
 use dW\Lit\Grammar\CaptureList,
+    dW\Lit\Grammar\Exception,
     dW\Lit\Grammar\GrammarInclude,
     dW\Lit\Grammar\InjectionList,
     dW\Lit\Grammar\Pattern,
@@ -34,52 +35,37 @@ class Grammar {
         $this->_repository = $repository;
     }
 
-
+    /** Parses an Atom JSON grammar and converts to a Grammar object */
     public static function fromJSON(string $jsonPath): self {
-        assert(is_file($jsonPath), new \Exception("\"$jsonPath\" is either not a file or you do not have permission to read the file\n"));
+        if (!is_file($jsonPath)) {
+            throw new Exception(Exception::JSON_INVALID_FILE, $jsonPath);
+        }
 
         $json = json_decode(file_get_contents($jsonPath), true);
         if ($json === null) {
-            $message = "Parsing \"$jsonPath\" failed with the following error: ";
-            switch (json_last_error()) {
-                case JSON_ERROR_DEPTH:
-                    $message .= 'Maximum stack depth exceeded';
-                break;
-                case JSON_ERROR_STATE_MISMATCH:
-                    $message .= 'Underflow or mode mismatch';
-                break;
-                case JSON_ERROR_CTRL_CHAR:
-                    $message .= 'Unexpected control character found';
-                break;
-                case JSON_ERROR_SYNTAX:
-                    $message .= 'Syntax error, malformed JSON';
-                break;
-                case JSON_ERROR_UTF8:
-                    $message .= 'Malformed UTF-8 characters, possibly incorrectly encoded';
-                break;
-                default:
-                    $message .= 'Unknown error';
-                break;
-            }
-
-            throw new \Exception("$message\n");
+            throw new Exception(json_last_error() + 200, $jsonPath);
         }
 
-        assert(isset($json['scopeName']), new \Exception("\"$jsonPath\" does not have the required scopeName property"));
-        assert(isset($json['patterns']), new \Exception("\"$jsonPath\" does not have the required patterns property"));
+        if (!isset($json['scopeName'])) {
+            throw new Exception(Exception::JSON_MISSING_PROPERTY, $jsonPath, 'scopeName');
+        }
+
+        if (!isset($json['patterns'])) {
+            throw new Exception(Exception::JSON_MISSING_PROPERTY, $jsonPath, 'patterns');
+        }
 
         $name = $json['name'] ?? null;
         $scopeName = $json['scopeName'];
         $contentRegex = (isset($json['contentRegex'])) ? "/{$json['contentRegex']}/" : null;
         $firstLineMatch = (isset($json['firstLineMatch'])) ? "/{$json['firstLineMatch']}/" : null;
 
-        $patterns = self::parseJSONPatternList($json['patterns']);
+        $patterns = self::parseJSONPatternList($json['patterns'], $jsonPath);
 
         $injections = null;
         if (isset($json['injections'])) {
             $injections = [];
             foreach ($json['injections'] as $key => $injection) {
-                $injsections[$key] = (count($injection) === 1 && key($injection) === 'patterns') ?  self::parseJSONPatternList($injection['patterns']) : self::parseJSONPattern($injection);
+                $injsections[$key] = (count($injection) === 1 && key($injection) === 'patterns') ?  self::parseJSONPatternList($injection['patterns'], $jsonPath) : self::parseJSONPattern($injection, $jsonPath);
             }
 
             if (count($injections) > 0) {
@@ -93,7 +79,7 @@ class Grammar {
         if (isset($json['repository'])) {
             $respository = [];
             foreach ($json['repository'] as $key => $r) {
-                $repository[$key] = (count($r) === 1 && key($r) === 'patterns') ? self::parseJSONPatternList($r['patterns']) : self::parseJSONPattern($r);
+                $repository[$key] = (count($r) === 1 && key($r) === 'patterns') ? self::parseJSONPatternList($r['patterns'], $jsonPath) : self::parseJSONPattern($r, $jsonPath);
             }
 
             if (count($repository) > 0) {
@@ -107,7 +93,7 @@ class Grammar {
     }
 
 
-    protected static function parseJSONPattern(array $pattern): GrammarInclude|Pattern|null {
+    protected static function parseJSONPattern(array $pattern, string $jsonPath): GrammarInclude|Pattern|null {
         if (array_keys($pattern) === [ 'include' ]) {
             return new GrammarInclude($pattern['include']);
         }
@@ -129,7 +115,10 @@ class Grammar {
         foreach ($pattern as $key => $value) {
             switch ($key) {
                 case 'applyEndPatternLast':
-                    assert(is_bool($value) || (is_int($value) && ($value === 0 || $value === 1)), new \Exception("The value for applyEndPatternLast must be either a boolean, 0, or 1\n"));
+                    if (!is_bool($value) || (!is_int($value) && ($value !== 0 && $value !== 1))) {
+                        throw new Exception(Exception::JSON_INVALID_TYPE, 'Boolean, 0, or 1', 'applyEndPatternLast', gettype($value), $jsonPath);
+                    }
+
                     $value = (bool)$value;
                 case 'name':
                 case 'contentName':
@@ -145,7 +134,10 @@ class Grammar {
                 case 'captures':
                 case 'beginCaptures':
                 case 'endCaptures':
-                    assert(is_array($value), new \Exception("Array value expected for '$key', found " . gettype($value) . "\n"));
+                    if (!is_array($value)) {
+                        throw new Exception(Exception::JSON_INVALID_TYPE, 'Array', $key, gettype($value), $jsonPath);
+                    }
+
                     if (count($value) === 0) {
                         continue 2;
                     }
@@ -159,20 +151,27 @@ class Grammar {
                             continue;
                         }
 
-                        assert(strspn($kkkk, '0123456789') === strlen($kkkk), new \Exception("\"$kkkk\" is not castable to an integer for use in a capture list\n"));
+                        if (strspn($kkkk, '0123456789') !== strlen($kkkk)) {
+                            throw new Exception(Exception::JSON_INVALID_TYPE, 'Integer', 'capture list index', $kkkk, $jsonPath);
+                        }
+
                         $kkk = (int)$kkkk;
                     }
 
-                    $v = array_map(function ($n) {
-                        return (count($n) === 1 && key($n) === 'patterns') ? self::parseJSONPatternList($n['patterns']) : self::parseJSONPattern($n);
+                    $v = array_map(function($n) use ($jsonPath) {
+                        return (count($n) === 1 && key($n) === 'patterns') ? self::parseJSONPatternList($n['patterns'], $jsonPath) : self::parseJSONPattern($n, $jsonPath);
                     }, $v);
 
                     $p[$key] = new CaptureList(array_combine($kk, $v));
                     $modified = true;
                 break;
                 case 'patterns':
-                    assert(is_array($value), new \Exception("Array value expected for '$key', found " . gettype($value) . "\n"));
-                    $p[$key] = self::parseJSONPatternList($value);
+                    if (!is_array($value)) {
+                        // '%1$s expected for %2$s, found %3$s in "%4$s"'
+                        throw new Exception(Exception::JSON_INVALID_TYPE, 'Array', $key, gettype($value), $jsonPath);
+                    }
+
+                    $p[$key] = self::parseJSONPatternList($value, $jsonPath);
                     $modified = true;
                 break;
             }
@@ -181,11 +180,10 @@ class Grammar {
         return ($modified) ? new Pattern(...$p) : null;
     }
 
-
-    protected static function parseJSONPatternList(array $list): ?PatternList {
+    protected static function parseJSONPatternList(array $list, string $jsonPath): ?PatternList {
         $result = [];
         foreach ($list as $pattern) {
-            $p = self::parseJSONPattern($pattern);
+            $p = self::parseJSONPattern($pattern, $jsonPath);
             if ($p !== null) {
                 $result[] = $p;
             }

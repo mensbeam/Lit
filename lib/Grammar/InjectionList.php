@@ -6,4 +6,9 @@
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
 
+/**
+ * An immutable list of injection pattern rules which allows for creation of a
+ * new grammar; instead of applying to an entire file it's instead applied to a
+ * specific scope selector.
+ */
 class InjectionList extends NamedPatternListList {}

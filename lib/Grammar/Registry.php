@@ -6,6 +6,7 @@
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
 
+/** Static storage for grammars; a map of scope and a Grammar object */
 class Registry {
     protected static array $grammars = [];
 
@@ -32,43 +33,5 @@ class Registry {
         }
 
         return false;
-    }
-
-    public static function validate(string $grammar): bool {
-        if ($grammar === null) {
-            throw new \Exception("\"$jsonPath\" is not a valid grammar JSON file.".\PHP_EOL);
-        }
-
-        $requiredProperties = [
-            'name',
-            'patterns',
-            'scopeName'
-        ];
-
-        $missing = [];
-        foreach ($requiredProperties as $r) {
-            if (!array_key_exists($r, $grammar))) {
-                $missing = $r;
-            }
-        }
-
-        $missingLen = count($missing);
-        if ($missingLen > 0) {
-            if ($missingLen > 1) {
-                if ($missingLen > 2) {
-                    $last = array_pop($missing);
-                    $missing = implode(', ', $missing);
-                    $missing .= ", and $last";
-                } else {
-                    $missing = implode(' and ', $missing);
-                }
-
-                throw new \Exception("\"$jsonPath\" is missing the required $missing properties.".\PHP_EOL);
-            }
-
-            throw new \Exception("\"$jsonPath\" is missing the required {$missing[0]} property.".\PHP_EOL);
-        }
-
-        return true;
     }
 }

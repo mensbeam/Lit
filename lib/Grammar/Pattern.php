@@ -8,6 +8,7 @@ namespace dW\Lit\Grammar;
 use dW\Lit\FauxReadOnly;
 use dW\Lit\Grammar;
 
+/** Rule responsible for matching a portion of the document */
 class Pattern {
     use FauxReadOnly;
 

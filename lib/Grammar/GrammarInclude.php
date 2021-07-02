@@ -7,6 +7,10 @@ declare(strict_types=1);
 namespace dW\Lit\Grammar;
 use dW\Lit\FauxReadOnly;
 
+/**
+ * This allows for referencing a different language, recursively referencing the
+ * grammar itself, or a rule declared in the file's repository.
+ */
 class GrammarInclude {
     use FauxReadOnly;
 

@@ -142,32 +142,27 @@ class Grammar {
                         continue 2;
                     }
 
-                    $kk = array_keys($value);
-                    $v = array_values($value);
-
-                    // Skipping that bad three k variable name here... :)
-                    foreach ($kk as &$kkkk) {
-                        if (is_int($kkkk)) {
-                            continue;
+                    $k = array_map(function($n) use ($jsonPath) {
+                        if (is_int($n)) {
+                            return $n;
                         }
 
-                        if (strspn($kkkk, '0123456789') !== strlen($kkkk)) {
-                            throw new Exception(Exception::JSON_INVALID_TYPE, 'Integer', 'capture list index', $kkkk, $jsonPath);
+                        if (strspn($n, '0123456789') !== strlen($n)) {
+                            throw new Exception(Exception::JSON_INVALID_TYPE, 'Integer', 'capture list index', $n, $jsonPath);
                         }
 
-                        $kkk = (int)$kkkk;
-                    }
+                        return (int)$n;
+                    }, array_keys($value));
 
                     $v = array_map(function($n) use ($jsonPath) {
                         return (count($n) === 1 && key($n) === 'patterns') ? self::parseJSONPatternList($n['patterns'], $jsonPath) : self::parseJSONPattern($n, $jsonPath);
-                    }, $v);
+                    }, array_values($value));
 
-                    $p[$key] = new CaptureList(array_combine($kk, $v));
+                    $p[$key] = new CaptureList(array_combine($k, $v));
                     $modified = true;
                 break;
                 case 'patterns':
                     if (!is_array($value)) {
-                        // '%1$s expected for %2$s, found %3$s in "%4$s"'
                         throw new Exception(Exception::JSON_INVALID_TYPE, 'Array', $key, gettype($value), $jsonPath);
                     }
 

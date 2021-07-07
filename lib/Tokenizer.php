@@ -9,13 +9,13 @@ namespace dW\Lit;
 class Tokenizer {
     protected \Generator $data;
 
-    public function __constructor(\Generator $data) {
+    public function __construct(\Generator $data) {
         $this->data = $data;
     }
 
     public function tokenize(): \Generator {
         foreach ($this->data as $lineNumber => $line) {
-
+            yield $lineNumber => $line;
         }
     }
 }

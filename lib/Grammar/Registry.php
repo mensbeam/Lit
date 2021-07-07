@@ -5,19 +5,20 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
+use dW\Lit\Grammar;
 
-/** Static storage for grammars; a map of scope and a Grammar object */
-class Registry {
-    protected static array $grammars = [];
+/** Static storage for grammars; a map of a scope string and a Grammar object */
+class Registry implements \IteratorAggregate {
+    protected static array $storage = [];
 
     public static function clear(): bool {
-        self::$grammars = [];
+        self::$storage = [];
         return true;
     }
 
     public static function delete(string $scopeName): bool {
         try {
-            unset(self::$grammars[$scopeName]);
+            unset(self::$storage[$scopeName]);
         } catch (\Exception $e) {
             return false;
         }
@@ -25,13 +26,43 @@ class Registry {
         return true;
     }
 
-    public static function get(string $scopeName): array|bool {
-        foreach (self::$grammars as $grammar) {
-            if ($grammar['scopeName'] === $scopeName) {
-                return $grammar;
-            }
+    public static function get(string $scopeName): Grammar|bool {
+        if (array_key_exists($scopeName, self::$storage)) {
+            return self::$storage[$scopeName];
         }
 
         return false;
+    }
+
+    public function getIterator(): \Traversable {
+        foreach (self::$storage as $scopeName => $grammar) {
+            yield $scopeName => $grammar;
+        }
+    }
+
+    public static function has(string $scopeName): bool {
+        return (array_key_exists($scopeName, self::$storage));
+    }
+
+    public static function keys(): \Traversable {
+        foreach (self::$storage as $scopeName => $_) {
+            yield $scopeName;
+        }
+    }
+
+    public static function set(string $scopeName, Grammar $grammar): bool {
+        try {
+            self::$storage[$scopeName] = $grammar;
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function values(): \Traversable {
+        foreach (self::$storage as $grammar) {
+            yield $grammar;
+        }
     }
 }

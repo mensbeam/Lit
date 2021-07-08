@@ -19,30 +19,31 @@
 ##?         * bash >=5.0
 ##?         * composer >=2.0.6
 ##?         * docopts >=0.6.3
-##?         * GNU awk >=5.1.0
 ##?         * GNU coreutils >=8.0
 ##?         * GNU parallel >=20180922
+##?         * jq >=1.6
 ##?         * yarn >=1.22.10
 ##?
 ##?     Arch Linux:
-##?         ```
-##?         pacman -S composer docopts parallel yarn
-##?         ```
+##?
+##?
+##?         pacman -S composer docopts jq parallel yarn
+##?
 ##?
 ##?     macOS:
-##?         ```
-##?         brew install bash composer coreutils docopts gawk parallel yarn
+##?
+##?
+##?         brew install bash composer coreutils docopts jq parallel yarn
 ##?         echo \"/usr/local/bin/bash\" >> /etc/shells
 ##?         chsh -s /usr/local/bin/bash
-##?         ```
+##?
 ##?
 ##?     Building the grammars is then a matter of running the following commands
 ##?     from the project folder:
 ##?
-##?         ```
+##?
 ##?         ./run init
 ##?         ./run build
-##?         ```
 ##?
 ##?
 ##? Commands:
@@ -73,16 +74,8 @@ fail() {
 # Check for bash 4+ and set extra glob options
 shopt -s globstar extglob || fail
 
-# macOS uses the BSD version of awk which isn't compatible with the linux
-# version, so this script requires Mac users to install the GNU version; it
-# therefore has a different name on macOS.
-awkcmd="awk"
-if [ "$(uname)" == "Darwin" ]; then
-    awkcmd="gawk"
-fi
-
 # Check for presence of dependencies
-if (( $(which $awkcmd composer parallel yarn | wc -l) < 4 )); then fail; fi
+if (( $(which composer jq parallel yarn | wc -l) < 4 )); then fail; fi
 
 # Process the subcommand
 subcmd="build"
@@ -91,28 +84,44 @@ subcmd=$([ "${args[needed]}" == "true" ] && echo "needed" || echo "$subcmd")
 
 # Grammar table of the github repository location followed by its local folder
 # name
-read -r -d '' grammarTable <<'EOF'
-franzheidl/atom-applescript applescript
-atom/language-c c
-atom/language-coffee-script coffeescript
-atom/language-css css
-rmosolgo/language-graphql graphql
-atom/language-html html
-atom/language-java java
-atom/language-javascript javascript
-atom/language-json json
-burodepeper/language-markdown markdown
-Azganoth/language-lua-plus lua
-atom/language-php php
-atom/language-python python
-atom/language-ruby ruby
-atom/language-shellscript shell
-MaxGiting/atom-language-smarty smarty
-atom/language-sql sql
-al3x/atom-language-textile textile
-atom/language-typescript typescript
-atom/language-xml xml
-EOF
+grammars="franzheidl/atom-applescript
+atom/language-c
+atom/language-coffee-script
+atom/language-csharp
+atom/language-css
+miketheman/language-diff
+atom/language-gfm
+atom/language-git
+atom/language-go
+atom/language-html
+atom/language-hyperlink
+atom/language-java
+atom/language-javascript
+atom/language-json
+atom/language-less
+Azganoth/language-lua-plus
+burodepeper/language-markdown
+atom/language-make
+atom/language-mustache
+atom/language-objective-c
+atom/language-perl
+atom/language-php
+atom/language-property-list
+atom/language-python
+atom/language-ruby
+atom/language-ruby-on-rails
+zargony/atom-language-rust
+atom/language-sass
+atom/language-shellscript
+MaxGiting/atom-language-smarty
+atom/language-sql
+kelvin13/atom-swift-89
+atom/language-text
+atom/language-todo
+al3x/atom-language-textile
+atom/language-typescript
+atom/language-xml
+atom/language-yaml"
 
 case $subcmd in
 init)
@@ -121,35 +130,35 @@ init)
     rm -rf "$cwd"/deps/*
 
     cd "$cwd"/deps
-    printf "$grammarTable" | parallel --colsep ' ' "git clone https://github.com/{1}.git"
+    printf "$grammars" | parallel "git clone --depth 1 https://github.com/{}.git"
+
     cd "$cwd"
     ;;
 
 
 needed)
-    grep -Fxv -f <(cd "$cwd"/data && ls -1 *.json | sed -e 's/\.json$//g') <(cat "$cwd"/data/*.json | grep -E "\"include\"\s*:\s*\"[^#\$]+\"" | $awkcmd '{ match($0, /"include": "(.+?)"/, arr); if(arr[1] != "") print arr[1] }' | sort -u)
+    grep -Fv -f <(ls -1 "$cwd"/data/*.json | parallel "basename {} .json") <(ls -1 "$cwd"/data/*.json | parallel "jq -r '.. | select(.include | startswith(\"\$\") or startswith(\"#\") | not)? | .include?' {}" | sort | uniq | tail -n +2)
     ;;
 
 
-build | *)
+build)
     rm -rf "$cwd"/data/*
 
-    # Copy grammars folders from all the local language grammar repositories to a
-    # temporary folder with the names provided in the table above
+    # Copy root non-tree-sitter cson and json grammar files to a temporary folder in
+    # subfolders with the repository's name.
     temp=$(mktemp -d)
-    printf "$grammarTable" | parallel --colsep ' ' "mkdir -p $temp/{2} &&
-        cp -r \"$cwd\"/deps/\$(basename {1})/grammars/* $temp/{2}/"
+    ls -1 "$cwd"/deps/*/grammars/!(tree-sitter-*).@(cson|json) | parallel "
+        folder=\"$temp/\$(basename \$(dirname \$(dirname {})))\";
+        mkdir -p \"\$folder\" &&
+        cp {} \"\$folder\"/{/}"
 
-    # Convert all relevant CSON files to a format that can actually be used :)
-    ls -1 $temp/**/!(tree-sitter-*).cson | parallel "csonc --output={.}.json {} && rm {}"
-
-    # Remove any remaining tree sitter files; will also remove JSON ones from
-    # packages that didn't use CSON
-    rm $temp/**/tree-sitter-*
-
-    # Lastly, move everything over to the project's data folder and delete the
-    # temporary folder
-    mv $temp/* "$cwd"/data/
-    rmdir $temp
+    # Convert all cson files in the temp folder to json files
+    ls -1 $temp/**/*.cson | parallel "csonc --output={.}.json {} && rm {}"
+    # Move all json files to the root of the temp folder with the filename's being
+    # the scopeName property within the json files
+    ls -1 $temp/**/*.json | parallel "mv {} \"$temp/\$(jq -r '.scopeName' {}).json\""
+    # Finally, move the json files to the data folder
+    mv $temp/*.json "$cwd"/data/
+    rm -rf $temp
     ;;
 esac

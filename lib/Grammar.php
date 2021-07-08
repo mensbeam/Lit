@@ -31,7 +31,7 @@ class Grammar {
     protected string $_scopeName;
 
 
-    public function __construct(string $scopeName, PatternList $patterns, ?string $name = null, ?string $contentRegex = null, ?string $firstLineMatch = null, ?InjectionList $injections = null, ?Repository $repository = null, bool $register = false) {
+    public function __construct(string $scopeName, PatternList $patterns, ?string $name = null, ?string $contentRegex = null, ?string $firstLineMatch = null, ?InjectionList $injections = null, ?Repository $repository = null, bool $register = true) {
         $this->_name = $name;
         $this->_scopeName = $scopeName;
         $this->_patterns = $patterns;

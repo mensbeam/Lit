@@ -9,7 +9,8 @@ namespace dW\Lit;
 class Tokenizer {
     protected \Generator $data;
 
-    public function __construct(\Generator $data) {
+
+    public function __construct(\Generator $data, Grammar $grammar) {
         $this->data = $data;
     }
 

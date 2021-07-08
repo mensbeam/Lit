@@ -29,6 +29,13 @@ class Registry implements \IteratorAggregate {
     public static function get(string $scopeName): Grammar|bool {
         if (array_key_exists($scopeName, self::$storage)) {
             return self::$storage[$scopeName];
+        } else {
+            $jsonPath = __DIR__ . "/../../data/$scopeName.json";
+            if (file_exists($jsonPath)) {
+                $grammar = Grammar::fromJSON($jsonPath);
+                self::set($scopeName, $grammar);
+                return $grammar;
+            }
         }
 
         return false;

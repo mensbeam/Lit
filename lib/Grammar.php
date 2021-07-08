@@ -31,7 +31,7 @@ class Grammar {
     protected string $_scopeName;
 
 
-    public function __construct(string $scopeName, PatternList $patterns, ?string $name = null, ?string $contentRegex = null, ?string $firstLineMatch = null, ?InjectionList $injections = null, ?Repository $repository = null, bool $register = true) {
+    public function __construct(string $scopeName, PatternList $patterns, ?string $name = null, ?string $contentRegex = null, ?string $firstLineMatch = null, ?InjectionList $injections = null, ?Repository $repository = null) {
         $this->_name = $name;
         $this->_scopeName = $scopeName;
         $this->_patterns = $patterns;
@@ -39,14 +39,10 @@ class Grammar {
         $this->_firstLineMatch = $firstLineMatch;
         $this->_injections = $injections;
         $this->_repository = $repository;
-
-        if ($register) {
-            Registry::set($scopeName, $this);
-        }
     }
 
     /** Parses an Atom JSON grammar and converts to a Grammar object */
-    public static function fromJSON(string $jsonPath, bool $register = false): self {
+    public static function fromJSON(string $jsonPath): self {
         if (!is_file($jsonPath)) {
             throw new Exception(Exception::JSON_INVALID_FILE, $jsonPath);
         }
@@ -99,7 +95,7 @@ class Grammar {
             }
         }
 
-        return new self($scopeName, $patterns, $name, $contentRegex, $firstLineMatch, $injections, $repository, $register);
+        return new self($scopeName, $patterns, $name, $contentRegex, $firstLineMatch, $injections, $repository);
     }
 
 

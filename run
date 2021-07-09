@@ -53,10 +53,10 @@
 ##?         grammars.
 ##?
 ##?     build
-##?         Build the language grammars. Puts them into data/.
+##?         Builds the language grammars; puts them into data/.
 ##?
 ##?     needed
-##?         List the language grammars that are included in the current grammars
+##?         Lists the language grammars that are included in the current grammars
 ##?         but are not in the data/ folder.
 ##?
 

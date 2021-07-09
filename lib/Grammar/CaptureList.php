@@ -14,8 +14,8 @@ class CaptureList extends ImmutableList {
                 throw new Exception(Exception::LIST_INVALID_TYPE, 'Integer', 'supplied array index', gettype($k));
             }
 
-            if (!$v instanceof GrammarInclude && !$v instanceof Pattern && !$v instanceof PatternList) {
-                throw new Exception(Exception::LIST_INVALID_TYPE,  __NAMESPACE__.'\GrammarInclude, '.__NAMESPACE__.'\Pattern, or '.__NAMESPACE__.'\PatternList', 'supplied array value', gettype($v));
+            if (!$v instanceof GrammarInclude && !$v instanceof Rule && !$v instanceof RuleList) {
+                throw new Exception(Exception::LIST_INVALID_TYPE,  __NAMESPACE__.'\GrammarInclude, '.__NAMESPACE__.'\Rule, or '.__NAMESPACE__.'\RuleList', 'supplied array value', gettype($v));
             }
         }
 

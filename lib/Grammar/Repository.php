@@ -10,4 +10,4 @@ namespace dW\Lit\Grammar;
  * An immutable list of rules which can be included from other places in the
  * grammar; The key is the name of the rule and the value is the actual rule.
  */
-class Repository extends NamedPatternListList {}
+class Repository extends NamedRuleListList {}

@@ -29,6 +29,8 @@ class Exception extends \Exception {
     const LIST_INVALID_INDEX = 301;
     const LIST_INVALID_TYPE = 302;
 
+    const GRAMMAR_MISSING = 400;
+
     protected static $messages = [
         100 => 'Invalid error code',
         101 => 'Unknown error; escaping',
@@ -50,7 +52,9 @@ class Exception extends \Exception {
 
         300 => '%s is immutable',
         301 => 'Invalid %1$s index at offset %2$s',
-        302 => '%1$s expected for %2$s, found %3$s'
+        302 => '%1$s expected for %2$s, found %3$s',
+
+        400 => 'A grammar for scope %s does not exist; one may be added using Grammar\\Registry::set'
     ];
 
     public function __construct(int $code, ...$args) {

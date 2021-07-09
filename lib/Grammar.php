@@ -9,8 +9,8 @@ use dW\Lit\Grammar\CaptureList,
     dW\Lit\Grammar\Exception,
     dW\Lit\Grammar\GrammarInclude,
     dW\Lit\Grammar\InjectionList,
-    dW\Lit\Grammar\Pattern,
-    dW\Lit\Grammar\PatternList,
+    dW\Lit\Grammar\Rule,
+    dW\Lit\Grammar\RuleList,
     dW\Lit\Grammar\Registry,
     dW\Lit\Grammar\Repository;
 
@@ -26,15 +26,15 @@ class Grammar {
     protected ?string $_firstLineMatch;
     protected ?InjectionList $_injections;
     protected ?string $_name;
-    protected PatternList $_patterns;
+    protected RuleList $_patterns;
     protected ?Repository $_repository;
     protected string $_scopeName;
 
 
-    public function __construct(string $scopeName, PatternList $patterns, ?string $name = null, ?string $contentRegex = null, ?string $firstLineMatch = null, ?InjectionList $injections = null, ?Repository $repository = null) {
+    public function __construct(string $scopeName, RuleList $rules, ?string $name = null, ?string $contentRegex = null, ?string $firstLineMatch = null, ?InjectionList $injections = null, ?Repository $repository = null) {
         $this->_name = $name;
         $this->_scopeName = $scopeName;
-        $this->_patterns = $patterns;
+        $this->_patterns = $rules;
         $this->_contentRegex = $contentRegex;
         $this->_firstLineMatch = $firstLineMatch;
         $this->_injections = $injections;
@@ -65,13 +65,13 @@ class Grammar {
         $contentRegex = (isset($json['contentRegex'])) ? "/{$json['contentRegex']}/" : null;
         $firstLineMatch = (isset($json['firstLineMatch'])) ? "/{$json['firstLineMatch']}/" : null;
 
-        $patterns = self::parseJSONPatternList($json['patterns'], $jsonPath);
+        $rules = self::parseJSONRuleList($json['patterns'], $jsonPath);
 
         $injections = null;
         if (isset($json['injections'])) {
             $injections = [];
             foreach ($json['injections'] as $key => $injection) {
-                $injsections[$key] = (count($injection) === 1 && key($injection) === 'patterns') ?  self::parseJSONPatternList($injection['patterns'], $jsonPath) : self::parseJSONPattern($injection, $jsonPath);
+                $injsections[$key] = (count($injection) === 1 && key($injection) === 'patterns') ?  self::parseJSONRuleList($injection['patterns'], $jsonPath) : self::parseJSONRule($injection, $jsonPath);
             }
 
             if (count($injections) > 0) {
@@ -85,7 +85,7 @@ class Grammar {
         if (isset($json['repository'])) {
             $respository = [];
             foreach ($json['repository'] as $key => $r) {
-                $repository[$key] = (count($r) === 1 && key($r) === 'patterns') ? self::parseJSONPatternList($r['patterns'], $jsonPath) : self::parseJSONPattern($r, $jsonPath);
+                $repository[$key] = (count($r) === 1 && key($r) === 'patterns') ? self::parseJSONRuleList($r['patterns'], $jsonPath) : self::parseJSONRule($r, $jsonPath);
             }
 
             if (count($repository) > 0) {
@@ -95,13 +95,13 @@ class Grammar {
             }
         }
 
-        return new self($scopeName, $patterns, $name, $contentRegex, $firstLineMatch, $injections, $repository);
+        return new self($scopeName, $rules, $name, $contentRegex, $firstLineMatch, $injections, $repository);
     }
 
 
-    protected static function parseJSONPattern(array $pattern, string $jsonPath): GrammarInclude|Pattern|null {
-        if (array_keys($pattern) === [ 'include' ]) {
-            return new GrammarInclude($pattern['include']);
+    protected static function parseJSONRule(array $rule, string $jsonPath): GrammarInclude|Rule|null {
+        if (array_keys($rule) === [ 'include' ]) {
+            return new GrammarInclude($rule['include']);
         }
 
         $p = [
@@ -118,7 +118,7 @@ class Grammar {
         ];
 
         $modified = false;
-        foreach ($pattern as $key => $value) {
+        foreach ($rule as $key => $value) {
             switch ($key) {
                 case 'applyEndPatternLast':
                     if (!is_bool($value) || (!is_int($value) && ($value !== 0 && $value !== 1))) {
@@ -161,7 +161,7 @@ class Grammar {
                     }, array_keys($value));
 
                     $v = array_map(function($n) use ($jsonPath) {
-                        return (count($n) === 1 && key($n) === 'patterns') ? self::parseJSONPatternList($n['patterns'], $jsonPath) : self::parseJSONPattern($n, $jsonPath);
+                        return (count($n) === 1 && key($n) === 'patterns') ? self::parseJSONRuleList($n['patterns'], $jsonPath) : self::parseJSONRule($n, $jsonPath);
                     }, array_values($value));
 
                     $p[$key] = new CaptureList(array_combine($k, $v));
@@ -172,24 +172,24 @@ class Grammar {
                         throw new Exception(Exception::JSON_INVALID_TYPE, 'Array', $key, gettype($value), $jsonPath);
                     }
 
-                    $p[$key] = self::parseJSONPatternList($value, $jsonPath);
+                    $p[$key] = self::parseJSONRuleList($value, $jsonPath);
                     $modified = true;
                 break;
             }
         }
 
-        return ($modified) ? new Pattern(...$p) : null;
+        return ($modified) ? new Rule(...$p) : null;
     }
 
-    protected static function parseJSONPatternList(array $list, string $jsonPath): ?PatternList {
+    protected static function parseJSONRuleList(array $list, string $jsonPath): ?RuleList {
         $result = [];
-        foreach ($list as $pattern) {
-            $p = self::parseJSONPattern($pattern, $jsonPath);
+        foreach ($list as $rule) {
+            $p = self::parseJSONRule($rule, $jsonPath);
             if ($p !== null) {
                 $result[] = $p;
             }
         }
 
-        return (count($result) > 0) ? new PatternList(...$result) : null;
+        return (count($result) > 0) ? new RuleList(...$result) : null;
     }
 }

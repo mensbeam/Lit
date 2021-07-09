@@ -6,7 +6,7 @@
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
 
-abstract class NamedPatternListList extends ImmutableList {
+abstract class NamedRuleListList extends ImmutableList {
     public function __construct(array $array) {
         /* This shit is here because PHP doesn't have array types or generics :) */
         foreach ($array as $k => $v) {
@@ -14,8 +14,8 @@ abstract class NamedPatternListList extends ImmutableList {
                 throw new Exception(Exception::LIST_INVALID_TYPE, 'String', 'supplied array index', gettype($k));
             }
 
-            if (!$v instanceof GrammarInclude && !$v instanceof Pattern && !$v instanceof PatternList) {
-                throw new Exception(Exception::LIST_INVALID_TYPE,  __NAMESPACE__.'\GrammarInclude, '.__NAMESPACE__.'\Pattern, or '.__NAMESPACE__.'\PatternList', 'supplied array value', gettype($v));
+            if (!$v instanceof GrammarInclude && !$v instanceof Rule && !$v instanceof RuleList) {
+                throw new Exception(Exception::LIST_INVALID_TYPE,  __NAMESPACE__.'\GrammarInclude, '.__NAMESPACE__.'\Rule, or '.__NAMESPACE__.'\RuleList', 'supplied array value', gettype($v));
             }
         }
 

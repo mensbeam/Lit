@@ -5,13 +5,16 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
+use dW\Lit\FauxReadOnly;
 
-class CaptureList extends ImmutableList {
+abstract class NamedPatternListList extends ImmutableList {
+    use FauxReadOnly;
+
     public function __construct(array $array) {
         // This shit is here because PHP doesn't have array types or generics :)
         foreach ($array as $k => $v) {
-            if (!is_int($k)) {
-                throw new Exception(Exception::LIST_INVALID_TYPE, 'Integer', 'supplied array index', gettype($k));
+            if (!is_string($k)) {
+                throw new Exception(Exception::LIST_INVALID_TYPE, 'String', 'supplied array index', gettype($k));
             }
 
             if (!$v instanceof Pattern && !$v instanceof PatternList && !$v instanceof Reference && !$v instanceof \WeakReference) {

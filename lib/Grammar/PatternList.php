@@ -5,10 +5,11 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
+use dW\Lit\Grammar;
 
 /** Immutable list of pattern rules */
-class RuleList extends ImmutableList {
-    public function __construct(Rule|GrammarInclude ...$values) {
+class PatternList extends ImmutableList {
+    public function __construct(Pattern|Reference|\WeakReference ...$values) {
         parent::__construct(...$values);
     }
 }

@@ -21,8 +21,6 @@ class Tokenizer {
         $ruleStack = [ $this->grammar ];
 
         foreach ($this->data as $lineNumber => $line) {
-
-
             yield $lineNumber => $line;
         }
     }

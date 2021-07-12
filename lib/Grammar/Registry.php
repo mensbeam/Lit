@@ -30,10 +30,10 @@ class Registry implements \IteratorAggregate {
         if (array_key_exists($scopeName, self::$storage)) {
             return self::$storage[$scopeName];
         } else {
-            $jsonPath = __DIR__ . "/../../data/$scopeName.json";
-            if (file_exists($jsonPath)) {
-                $grammar = Grammar::fromJSON($jsonPath);
-                self::set($scopeName, $grammar);
+            $filename = __DIR__ . "/../../data/$scopeName.json";
+            if (file_exists($filename)) {
+                $grammar = new Grammar();
+                $grammar->loadJSON($filename);
                 return $grammar;
             }
         }

@@ -8,6 +8,9 @@ namespace dW\Lit\Scope;
 
 /** Parses scope strings into a matcher tree */
 class Parser {
+    // Used to cache parsed scopes
+    protected static array $cache = [];
+
     // When true prints out detailed data about the construction of the matcher
     // tree.
     public static bool $debug = false;
@@ -34,8 +37,14 @@ class Parser {
      * string.
      */
     public static function parse(string $selector): Matcher|false {
+        if (isset(self::$cache[$selector])) {
+            return self::$cache[$selector];
+        }
+
         self::$instance = new self($selector);
-        return self::parseSelector();
+        $result = self::parseSelector();
+        self::$cache[$selector] = $result;
+        return $result;
     }
 
 

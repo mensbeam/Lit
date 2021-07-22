@@ -17,7 +17,7 @@ class Data {
     protected int $endPosition;
 
     public function __construct(string $data) {
-        preg_match_all('/[BLR]:|[A-Za-z0-9-+_\*\.]+|[\,\|\-\(\)&]/', $data, $matches, PREG_OFFSET_CAPTURE);
+        preg_match_all('/[BLR]:|\.|[A-Za-z0-9-+_\*]+|[\,\|\(\)&\^\$\>]/', $data, $matches, PREG_OFFSET_CAPTURE);
         $this->data = $matches[0] ?? [];
         $this->endPosition = count($this->data) - 1;
     }
@@ -37,7 +37,7 @@ class Data {
             return false;
         }
 
-        return $this->data[$this->_position][1];
+        return $this->data[$this->_position + 1][1];
     }
 
     /** Returns the next token without moving the pointer */

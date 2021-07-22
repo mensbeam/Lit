@@ -16,7 +16,7 @@ class Exception extends \Exception {
                 $expected = ($expected[0] !== false) ? $expected[0] : 'end of input';
             } else {
                 $temp = [];
-                for ($i = 0; $i < $strlen; $i++) {
+                for ($i = 0; $i < $expectedLen; $i++) {
                     $temp[] = ($expected[$i] !== false) ? "{$expected[$i]}" : 'end of input';
                 }
                 $expected = $temp;

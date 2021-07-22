@@ -5,5 +5,10 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Scope;
+use dW\Lit\FauxReadOnly;
 
-abstract class Matcher {}
+class Node {
+    use FauxReadOnly;
+
+    protected ?\WeakReference $_parent;
+}

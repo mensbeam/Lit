@@ -8,11 +8,13 @@ namespace dW\Lit;
 
 trait FauxReadOnly {
     public function __get(string $name) {
-        if ($name[0] === '_') {
-            return;
+        $prop = "_$name";
+        if (!property_exists($this, $prop)) {
+            $trace = debug_backtrace();
+            trigger_error("Cannot get undefined property $name in {$trace[0]['file']} on line {$trace[0]['line']}", E_USER_NOTICE);
+            return null;
         }
 
-        $prop = "_$name";
-        return $this->$prop;
+        return (!is_array($this->$prop)) ? $this->$prop : clone $this->prop;
     }
 }

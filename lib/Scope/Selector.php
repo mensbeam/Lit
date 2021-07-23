@@ -7,7 +7,7 @@ declare(strict_types=1);
 namespace dW\Lit\Scope;
 
 class Selector extends Node {
-    protected array $composites = [];
+    protected array $_composites = [];
     protected bool $frozen = false;
 
 
@@ -21,7 +21,7 @@ class Selector extends Node {
             return false;
         }
 
-        $this->composites = $this->composites;
+        $this->_composites = $composites;
         $this->frozen = true;
         return true;
     }

@@ -9,17 +9,12 @@ namespace dW\Lit\Scope;
 class Expression extends Node {
     protected Filter|Group|Path $_child;
     protected bool $frozen = false;
-    protected bool $_negate = false;
     protected ?string $_operator;
 
 
     public function __construct(Composite $parent, ?string $operator = null) {
         $this->_operator = $operator;
         $this->_parent = \WeakReference::create($parent);
-
-        if ($operator === '-') {
-            $this->negate = true;
-        }
     }
 
 

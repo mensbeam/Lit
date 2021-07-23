@@ -11,7 +11,7 @@ class Group extends Node {
     protected bool $frozen = false;
 
 
-    public function __construct(Expression $parent) {
+    public function __construct(Expression|Filter $parent) {
         $this->_parent = \WeakReference::create($parent);
     }
 

@@ -15,6 +15,6 @@ trait FauxReadOnly {
             return null;
         }
 
-        return (!is_array($this->$prop)) ? $this->$prop : clone $this->prop;
+        return $this->$prop;
     }
 }

@@ -13,7 +13,7 @@ class Filter extends Node {
     protected string $_side;
 
 
-    public function __construct(Selector $parent, string $side) {
+    public function __construct(Expression $parent, string $side) {
         $this->_parent = \WeakReference::create($parent);
         $this->_side = $side;
     }

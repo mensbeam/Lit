@@ -11,10 +11,6 @@ class Parser {
     // Used to cache parsed selectors
     protected static array $cache = [];
 
-    // When true prints out detailed data about the construction of the matcher
-    // tree.
-    public static bool $debug = false;
-
     // The tokenized scope string
     protected Data $data;
     // Used for incrementing the blocks of debug information; useful for creating
@@ -45,31 +41,27 @@ class Parser {
     }
 
 
-    protected static function parseComposite(?Selector $parent = null): Matcher {
-        if (self::$debug) {
-            self::debug();
-        }
+    protected static function parseComposite(?Selector $parent = null): Composite {
+        assert((fn() => self::debug())());
 
         $result = new Composite($parent);
         $expressions = [ self::parseExpression($result) ];
 
-        while ($peek = self::$instance->data->peek() && in_array($peek, [ '&', '|', '-' ])) {
+        $peek = self::$instance->data->peek();
+        while ($peek !== false && in_array($peek, [ '&', '|', '-' ])) {
             $expressions[] = self::parseExpression($result, self::$instance->data->consume());
+            $peek = self::$instance->data->peek();
         }
 
         $result->add(...$expressions);
 
-        if (self::$debug) {
-            self::debugResult($result);
-        }
+        assert((fn() => self::debugResult($result))());
 
         return $result;
     }
 
     protected static function parseExpression(Composite $parent, ?string $operator = null): Expression {
-        if (self::$debug) {
-            self::debug();
-        }
+        assert((fn() => self::debug())());
 
         $result = new Expression($parent, $operator);
 
@@ -82,17 +74,13 @@ class Parser {
             $result->child = self::parsePath($result);
         }
 
-        if (self::$debug) {
-            self::debugResult($result);
-        }
+        assert((fn() => self::debugResult($result))());
 
         return $result;
     }
 
     protected static function parseFilter(Expression $parent, string $side): Filter {
-        if (self::$debug) {
-            self::debug();
-        }
+        assert((fn() => self::debug())());
 
         $result = new Filter($parent, $side);
         $peek = self::$instance->data->peek();
@@ -102,17 +90,13 @@ class Parser {
             $result->child = self::parsePath($result);
         }
 
-        if (self::$debug) {
-            self::debugResult($result);
-        }
+        assert((fn() => self::debugResult($result))());
 
         return $result;
     }
 
-    protected static function parseGroup(Expression $parent): Group {
-        if (self::$debug) {
-            self::debug();
-        }
+    protected static function parseGroup(Expression|Filter $parent): Group {
+        assert((fn() => self::debug())());
 
         $result = new Group($parent);
 
@@ -121,26 +105,20 @@ class Parser {
             self::throw('"("', $token);
         }
 
-        if (!$group->child = self::parseSelector($result)) {
-            return false;
-        }
+        $result->child = self::parseSelector($result);
 
         $token = self::$instance->data->consume();
         if ($token !== ')') {
             self::throw('")"', $token);
         }
 
-        if (self::$debug) {
-            self::debugResult($result);
-        }
+        assert((fn() => self::debugResult($result))());
 
         return $result;
     }
 
     protected static function parsePath(Expression $parent): Path {
-        if (self::$debug) {
-            self::debug();
-        }
+        assert((fn() => self::debug())());
 
         $result = new Path($parent);
 
@@ -156,14 +134,16 @@ class Parser {
         }
 
         $scopes = [ $first ];
-        while ($peek = self::$instance->data->peek() && strspn($peek, self::SCOPE_MASK) === strlen($peek)) {
+        $peek = self::$instance->data->peek();
+        while ($peek !== false && $peek !== '-' && strspn($peek, self::SCOPE_MASK) === strlen($peek)) {
             $scopes[] = self::parseScope($result);
+            $peek = self::$instance->data->peek();
         }
 
         $result->add(...$scopes);
 
         $anchorEnd = false;
-        if (self::$instance->data->peek() === '$') {
+        if ($peek === '$') {
             $anchorEnd = true;
             self::$instance->data->consume();
         }
@@ -172,43 +152,39 @@ class Parser {
             $result->anchor = Path::ANCHOR_BOTH;
         } elseif ($anchorStart) {
             $result->anchor = Path::ANCHOR_START;
-        } else {
+        } elseif ($anchorEnd) {
             $result->anchor = Path::ANCHOR_END;
+        } else {
+            $result->anchor = Path::ANCHOR_NONE;
         }
 
-        if (self::$debug) {
-            self::debugResult($result);
-        }
+        assert((fn() => self::debugResult($result))());
 
         return $result;
     }
 
-    protected static function parseSelector(?Group $parent = null): Matcher {
-        if (self::$debug) {
-            self::debug();
-        }
+    protected static function parseSelector(?Group $parent = null): Selector {
+        assert((fn() => self::debug())());
 
         $result = new Selector($parent);
 
         $composites = [ self::parseComposite($result) ];
-        while ($peek = self::$instance->data->peek() && $peek === ',') {
+        $peek = self::$instance->data->peek();
+        while ($peek === ',') {
             self::$instance->data->consume();
             $composites[] = self::parseComposite($result);
+            $peek = self::$instance->data->peek();
         }
 
         $result->add(...$composites);
 
-        if (self::$debug) {
-            self::debugResult($result);
-        }
+        assert((fn() => self::debugResult($result))());
 
         return $result;
     }
 
     protected static function parseScope(Path $parent): Scope {
-        if (self::$debug) {
-            self::debug();
-        }
+        assert((fn() => self::debug())());
 
         $peek = self::$instance->data->peek();
         if ($peek === '>') {
@@ -225,7 +201,7 @@ class Parser {
             }
 
             $peek = self::$instance->data->peek();
-            if (strspn($peek, self::SCOPE_MASK) !== strlen($peek)) {
+            if ($peek !== false && strspn($peek, self::SCOPE_MASK) !== strlen($peek)) {
                 self::throw([ 'A-Z', 'a-z', '0-9', '-', '+', '_', '*' ], $peek);
             }
 
@@ -235,14 +211,12 @@ class Parser {
 
         $result->add(...$atoms);
 
-        if (self::$debug) {
-            self::debugResult($result);
-        }
+        assert((fn() => self::debugResult($result))());
 
         return $result;
     }
 
-    protected static function debug() {
+    protected static function debug(): bool {
         $message = <<<DEBUG
         ------------------------------
         %s
@@ -254,7 +228,10 @@ class Parser {
 
         $methodTree = '';
         $backtrace = debug_backtrace();
+        // Shift two off because it's executed in an assert closure
         array_shift($backtrace);
+        array_shift($backtrace);
+        // And, pop this method off the backtrace
         array_pop($backtrace);
         foreach ($backtrace as $b) {
             $methodTree = "->{$b['function']}$methodTree";
@@ -266,13 +243,16 @@ class Parser {
             self::$instance->data->position + 1,
             var_export(self::$instance->data->peek(), true)
         );
+
+        return true;
     }
 
-    protected static function debugResult($result) {
+    protected static function debugResult($result): bool {
         printf("%s Result: %s\n",
-            debug_backtrace()[1]['function'],
-            // Removes bullshit from printed classes for easier reading
-            str_replace([ '::__set_state(array', __NAMESPACE__, '))' ], [ '', '', ')' ], var_export($result, true)));
+            debug_backtrace()[2]['function'],
+            // Removes bullshit from var_exported classes for easier reading
+            str_replace([ '::__set_state(array', __NAMESPACE__.'\\', '))' ], [ '', '', ')' ], var_export($result, true)));
+        return true;
     }
 
     protected static function throw(array|string $expected, string|bool $found) {

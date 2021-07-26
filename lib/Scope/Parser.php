@@ -49,7 +49,17 @@ class Parser {
 
         $peek = self::$instance->data->peek();
         while ($peek !== false && in_array($peek, [ '&', '|', '-' ])) {
-            $expressions[] = self::parseExpression($result, self::$instance->data->consume());
+            self::$instance->data->consume();
+            switch ($peek) {
+                case '&': $operator = Expression::OPERATOR_AND;
+                break;
+                case '|': $operator = Expression::OPERATOR_OR;
+                break;
+                case '-': $operator = Expression::OPERATOR_NOT;
+                break;
+            }
+
+            $expressions[] = self::parseExpression($result, $operator);
             $peek = self::$instance->data->peek();
         }
 
@@ -60,7 +70,7 @@ class Parser {
         return $result;
     }
 
-    protected static function parseExpression(Composite $parent, ?string $operator = null): Expression {
+    protected static function parseExpression(Composite $parent, int $operator = Expression::OPERATOR_NONE): Expression {
         assert((fn() => self::debug())());
 
         $result = new Expression($parent, $operator);
@@ -135,8 +145,14 @@ class Parser {
 
         $scopes = [ $first ];
         $peek = self::$instance->data->peek();
-        while ($peek !== false && $peek !== '-' && strspn($peek, self::SCOPE_MASK) === strlen($peek)) {
-            $scopes[] = self::parseScope($result);
+        while ($peek !== false && $peek !== '-' && ($peek === '>' || strspn($peek, self::SCOPE_MASK) === strlen($peek))) {
+            $anchorToPrevious = false;
+            if ($peek === '>') {
+                self::$instance->data->consume();
+                $peek = self::$instance->data->peek();
+                $anchorToPrevious = true;
+            }
+            $scopes[] = self::parseScope($result, $anchorToPrevious);
             $peek = self::$instance->data->peek();
         }
 

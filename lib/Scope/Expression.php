@@ -9,10 +9,15 @@ namespace dW\Lit\Scope;
 class Expression extends Node {
     protected Filter|Group|Path $_child;
     protected bool $frozen = false;
-    protected ?string $_operator;
+    protected int $_operator;
+
+    const OPERATOR_NONE = 0;
+    const OPERATOR_AND = 1;
+    const OPERATOR_OR = 2;
+    const OPERATOR_NOT = 3;
 
 
-    public function __construct(Composite $parent, ?string $operator = null) {
+    public function __construct(Composite $parent, int $operator = self::OPERATOR_NONE) {
         $this->_operator = $operator;
         $this->_parent = \WeakReference::create($parent);
     }
@@ -32,5 +37,20 @@ class Expression extends Node {
 
         $this->frozen = true;
         $this->_child = $value;
+    }
+
+
+    public function __toString(): string {
+        switch ($this->_operator) {
+            case OPERATOR_NONE: $operator = '';
+            break;
+            case OPERATOR_AND: $operator = '& ';
+            break;
+            case OPERATOR_OR: $operator = '| ';
+            break;
+            case OPERATOR_NOT: $operator = '- ';
+        }
+
+        return "$operator${$this->_child}";
     }
 }

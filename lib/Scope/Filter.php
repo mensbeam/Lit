@@ -9,7 +9,6 @@ namespace dW\Lit\Scope;
 class Filter extends Node {
     protected Group|Path $_child;
     protected bool $frozen = false;
-    protected string $_operator;
     protected string $_side;
 
 
@@ -33,5 +32,10 @@ class Filter extends Node {
 
         $this->frozen = true;
         $this->_child = $value;
+    }
+
+
+    public function __toString(): string {
+        return "${$this->side}: ${$this->_child}";
     }
 }

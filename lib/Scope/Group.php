@@ -31,4 +31,9 @@ class Group extends Node {
         $this->frozen = true;
         $this->_child = $value;
     }
+
+
+    public function __toString(): string {
+        return "({$this->_child})";
+    }
 }

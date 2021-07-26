@@ -25,4 +25,9 @@ class Selector extends Node {
         $this->frozen = true;
         return true;
     }
+
+
+    public function __toString(): string {
+        return implode(', ', $this->_composites);
+    }
 }

@@ -7,7 +7,7 @@ declare(strict_types=1);
 namespace dW\Lit\Scope;
 
 class Composite extends Node {
-    protected array $expressions = [];
+    protected array $_expressions = [];
     protected bool $frozen = false;
 
 
@@ -21,8 +21,13 @@ class Composite extends Node {
             return false;
         }
 
-        $this->expressions = $expressions;
+        $this->_expressions = $expressions;
         $this->frozen = true;
         return true;
+    }
+
+
+    public function __toString(): string {
+        return implode(' ', $this->_expressions);
     }
 }

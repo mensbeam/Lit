@@ -53,4 +53,20 @@ class Path extends Node {
         $this->frozen['anchor'] = true;
         $this->_anchor = $value;
     }
+
+    public function __toString(): string {
+        $result = '';
+        
+        if ($this->_anchor === self::ANCHOR_START || $this->_anchor === self::ANCHOR_BOTH) {
+            $result .= '^';
+        }
+
+        $result .= implode(' ', $this->_scopes);
+
+        if ($this->_anchor === self::ANCHOR_END || $this->_anchor === self::ANCHOR_BOTH) {
+            $result .= '$';
+        }
+
+        return $result;
+    }
 }

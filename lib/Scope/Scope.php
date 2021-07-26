@@ -27,4 +27,17 @@ class Scope extends Node {
         $this->frozen = true;
         return true;
     }
+
+
+    public function __toString(): string {
+        $result = '';
+
+        if ($this->_anchorToPrevious) {
+            $result .= '< ';
+        }
+
+        $result .= implode('.', $this->_atoms);
+
+        return $result;
+    }
 }

@@ -8,7 +8,7 @@ namespace dW\Lit\Scope;
 
 class Scope extends Node {
     protected bool $_anchorToPrevious;
-    protected array $atoms = [];
+    protected array $_atoms = [];
     protected bool $frozen = false;
 
 
@@ -23,7 +23,7 @@ class Scope extends Node {
             return false;
         }
 
-        $this->atoms = $atoms;
+        $this->_atoms = $atoms;
         $this->frozen = true;
         return true;
     }

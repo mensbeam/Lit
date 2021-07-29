@@ -14,7 +14,7 @@ class Path extends Node {
         'anchor' => false
     ];
 
-    protected array $scopes = [];
+    protected array $_scopes = [];
 
     const ANCHOR_NONE = 0;
     const ANCHOR_START = 1;
@@ -32,7 +32,7 @@ class Path extends Node {
             return false;
         }
 
-        $this->scopes = $scopes;
+        $this->_scopes = $scopes;
         $this->frozen['add'] = true;
         return true;
     }
@@ -56,7 +56,7 @@ class Path extends Node {
 
     public function __toString(): string {
         $result = '';
-        
+
         if ($this->_anchor === self::ANCHOR_START || $this->_anchor === self::ANCHOR_BOTH) {
             $result .= '^';
         }

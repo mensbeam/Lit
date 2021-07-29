@@ -42,15 +42,15 @@ class Expression extends Node {
 
     public function __toString(): string {
         switch ($this->_operator) {
-            case OPERATOR_NONE: $operator = '';
+            case self::OPERATOR_NONE: $operator = '';
             break;
-            case OPERATOR_AND: $operator = '& ';
+            case self::OPERATOR_AND: $operator = '& ';
             break;
-            case OPERATOR_OR: $operator = '| ';
+            case self::OPERATOR_OR: $operator = '| ';
             break;
-            case OPERATOR_NOT: $operator = '- ';
+            case self::OPERATOR_NOT: $operator = '- ';
         }
 
-        return "$operator${$this->_child}";
+        return "$operator{$this->_child}";
     }
 }

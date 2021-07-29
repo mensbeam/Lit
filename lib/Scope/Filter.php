@@ -36,6 +36,6 @@ class Filter extends Node {
 
 
     public function __toString(): string {
-        return "${$this->side}: ${$this->_child}";
+        return "{$this->_side}:{$this->_child}";
     }
 }

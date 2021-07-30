@@ -9,7 +9,11 @@ namespace dW\Lit\Scope;
 class Exception extends \Exception {
     const MESSAGE = '%s expected; found %s at offset %s'.\PHP_EOL;
 
-    public function __construct(array|string $expected, string|bool $found, int $offset) {
+    public function __construct(array|string|bool $expected, string|bool $found, int $offset) {
+        if ($expected === false) {
+            $expected = 'end of input';
+        }
+
         if (!is_string($expected)) {
             $expectedLen = count($expected);
             if ($expectedLen === 1) {
@@ -28,8 +32,6 @@ class Exception extends \Exception {
                     $expected = implode(' or ', $expected);
                 }
             }
-        } else {
-            $expected = ($expected !== false) ? $expected : 'end of input';
         }
 
         $found = ($found !== false) ? "\"$found\"" : 'end of input';

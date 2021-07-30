@@ -37,7 +37,7 @@ class Data {
             return false;
         }
 
-        return $this->data[$this->_position + 1][1];
+        return $this->data[$this->_position][1];
     }
 
     /** Returns the next token without moving the pointer */

@@ -9,6 +9,7 @@ namespace dW\Lit\Scope;
 class Expression extends Node {
     protected Filter|Group|Path $_child;
     protected bool $frozen = false;
+    protected bool $_negate = false;
     protected int $_operator;
 
     const OPERATOR_NONE = 0;
@@ -17,11 +18,12 @@ class Expression extends Node {
     const OPERATOR_NOT = 3;
 
 
-    public function __construct(Composite $parent, int $operator = self::OPERATOR_NONE) {
+    public function __construct(Composite $parent, int $operator = self::OPERATOR_NONE, bool $negate = false) {
+        $this->_negate = $negate;
         $this->_operator = $operator;
         $this->_parent = \WeakReference::create($parent);
     }
-
+    
 
     public function __set(string $name, $value) {
         if ($name !== 'child') {
@@ -51,6 +53,7 @@ class Expression extends Node {
             case self::OPERATOR_NOT: $operator = '- ';
         }
 
-        return "$operator{$this->_child}";
+        $negate = ($this->_negate) ? '- ' : '';
+        return "$operator$negate{$this->_child}";
     }
 }

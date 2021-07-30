@@ -26,7 +26,6 @@ class Composite extends Node {
         return true;
     }
 
-
     public function __toString(): string {
         return implode(' ', $this->_expressions);
     }

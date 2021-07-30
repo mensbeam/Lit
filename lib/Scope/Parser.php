@@ -36,6 +36,13 @@ class Parser {
 
         self::$instance = new self($string);
         $result = self::parseSelector();
+
+        // If not at the end of input throw an exception.
+        $token = self::$instance->data->consume();
+        if ($token !== false) {
+            self::throw(false, $token);
+        }
+
         self::$cache[$string] = $result;
         return $result;
     }
@@ -73,9 +80,16 @@ class Parser {
     protected static function parseExpression(Composite $parent, int $operator = Expression::OPERATOR_NONE): Expression {
         assert((fn() => self::debug())());
 
-        $result = new Expression($parent, $operator);
-
         $peek = self::$instance->data->peek();
+        $negate = false;
+        if ($peek === '-') {
+            self::$instance->data->consume();
+            $peek = self::$instance->data->peek();
+            $negate = true;
+        }
+
+        $result = new Expression($parent, $operator, $negate);
+
         if (in_array($peek[0], [ 'B', 'L', 'R' ])) {
             $result->child = self::parseFilter($result, self::$instance->data->consume()[0]);
         } elseif ($peek === '(') {
@@ -271,7 +285,7 @@ class Parser {
         return true;
     }
 
-    protected static function throw(array|string $expected, string|bool $found) {
+    protected static function throw(array|string|bool $expected, string|bool $found) {
         throw new Exception($expected, $found, self::$instance->data->offset());
     }
 }

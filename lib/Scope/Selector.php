@@ -26,6 +26,21 @@ class Selector extends Node {
         return true;
     }
 
+    public function matches(Path|string $path, &$match = null): bool {
+        if (is_string($selector)) {
+            $path = Parser::parsePath($path);
+        }
+
+        foreach ($this->_composites as $composite) {
+            if ($composite->matches($path)) {
+                $match = $composite;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
     public function __toString(): string {
         return implode(', ', $this->_composites);

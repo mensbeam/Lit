@@ -28,6 +28,11 @@ class Scope extends Node {
         return true;
     }
 
+    public function isAuxiliary(): bool {
+        $serialized = (string)$this;
+        return(strncmp($serialized, 'attr.', 5) === 0 || strncmp($serialized, 'dyn.', 4) === 0);
+    }
+
 
     public function __toString(): string {
         $result = '';

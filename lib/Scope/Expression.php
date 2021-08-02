@@ -23,7 +23,7 @@ class Expression extends Node {
         $this->_operator = $operator;
         $this->_parent = \WeakReference::create($parent);
     }
-    
+
 
     public function __set(string $name, $value) {
         if ($name !== 'child') {

@@ -16,6 +16,11 @@ class Group extends Node {
     }
 
 
+    public function matches(Path $path): bool {
+        return $this->_child->matches($path);
+    }
+
+
     public function __set(string $name, $value) {
         if ($name !== 'child') {
             $trace = debug_backtrace();

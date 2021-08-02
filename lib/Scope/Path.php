@@ -27,6 +27,23 @@ class Path extends Node {
     }
 
 
+    public function matches(Path $path): bool {
+        $start = reset($this->_scopes);
+        $bt = end($this->_scopes);
+        $node = $this;
+
+        if ($this->_anchor === self::ANCHOR_END || $this->_anchor === self::ANCHOR_BOTH) {
+            while ($node && $node->isAuxiliary()) {
+                $node = $node->parent->get();
+            }
+
+            $bt = $start;
+        }
+
+        return false;
+    }
+
+
     public function add(Scope ...$scopes): bool {
         if ($this->frozen['add']) {
             return false;

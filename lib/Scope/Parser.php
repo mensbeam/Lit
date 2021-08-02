@@ -28,14 +28,33 @@ class Parser {
         $this->data = new Data($selector);
     }
 
-    /** Static method entry point for the class. Parses the string. */
-    public static function parse(string $string): Selector {
+    /** Parses strings into Selectors */
+    public static function parseSelector(string $string): Selector {
         if (isset(self::$cache[$string])) {
             return self::$cache[$string];
         }
 
         self::$instance = new self($string);
-        $result = self::parseSelector();
+        $result = self::_parseSelector();
+
+        // If not at the end of input throw an exception.
+        $token = self::$instance->data->consume();
+        if ($token !== false) {
+            self::throw(false, $token);
+        }
+
+        self::$cache[$string] = $result;
+        return $result;
+    }
+
+    /** Parses strings into Selectors */
+    public static function parsePath(string $string): Path {
+        if (isset(self::$cache[$string])) {
+            return self::$cache[$string];
+        }
+
+        self::$instance = new self($string);
+        $result = self::_parsePath();
 
         // If not at the end of input throw an exception.
         $token = self::$instance->data->consume();
@@ -95,7 +114,7 @@ class Parser {
         } elseif ($peek === '(') {
             $result->child = self::parseGroup($result);
         } else {
-            $result->child = self::parsePath($result);
+            $result->child = self::_parsePath($result);
         }
 
         assert((fn() => self::debugResult($result))());
@@ -103,15 +122,15 @@ class Parser {
         return $result;
     }
 
-    protected static function parseFilter(Expression $parent, string $side): Filter {
+    protected static function parseFilter(Expression $parent, string $prefix): Filter {
         assert((fn() => self::debug())());
 
-        $result = new Filter($parent, $side);
+        $result = new Filter($parent, $prefix);
         $peek = self::$instance->data->peek();
         if ($peek === '(') {
             $result->child = self::parseGroup($result);
         } else {
-            $result->child = self::parsePath($result);
+            $result->child = self::_parsePath($result);
         }
 
         assert((fn() => self::debugResult($result))());
@@ -129,7 +148,7 @@ class Parser {
             self::throw('"("', $token);
         }
 
-        $result->child = self::parseSelector($result);
+        $result->child = self::_parseSelector($result);
 
         $token = self::$instance->data->consume();
         if ($token !== ')') {
@@ -141,7 +160,7 @@ class Parser {
         return $result;
     }
 
-    protected static function parsePath(Expression $parent): Path {
+    protected static function _parsePath(Expression $parent): Path {
         assert((fn() => self::debug())());
 
         $result = new Path($parent);
@@ -193,7 +212,7 @@ class Parser {
         return $result;
     }
 
-    protected static function parseSelector(?Group $parent = null): Selector {
+    protected static function _parseSelector(?Group $parent = null): Selector {
         assert((fn() => self::debug())());
 
         $result = new Selector($parent);

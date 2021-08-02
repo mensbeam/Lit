@@ -9,25 +9,33 @@ namespace dW\Lit\Scope;
 class Filter extends Node {
     protected Group|Path $_child;
     protected bool $frozen = false;
-    protected int $_side;
+    protected int $_prefix;
 
     const SIDE_LEFT = 0;
     const SIDE_RIGHT = 1;
     const SIDE_BOTH = 2;
 
 
-    public function __construct(Expression $parent, string $side) {
+    public function __construct(Expression $parent, string $prefix) {
         $this->_parent = \WeakReference::create($parent);
 
-        switch ($side) {
-            case 'L': $this->_side = self::SIDE_LEFT;
+        switch ($prefix) {
+            case 'L': $this->_prefix = self::SIDE_LEFT;
             break;
-            case 'R': $this->_side = self::SIDE_RIGHT;
+            case 'R': $this->_prefix = self::SIDE_RIGHT;
             break;
-            case 'B': $this->_side = self::SIDE_BOTH;
+            case 'B': $this->_prefix = self::SIDE_BOTH;
             break;
         }
     }
+
+
+    public function matches(Path $path): bool {
+        // No idea if prefixes are supposed to affect matches. Appears to in the
+        // TextMate original but not in Atom's implementation...
+        return $this->_child->matches($path);
+    }
+
 
     public function __set(string $name, $value) {
         if ($name !== 'child') {
@@ -47,15 +55,15 @@ class Filter extends Node {
 
 
     public function __toString(): string {
-        switch ($this->_side) {
-            case self::SIDE_LEFT: $side = 'L';
+        switch ($this->_prefix) {
+            case self::SIDE_LEFT: $prefix = 'L';
             break;
-            case self::SIDE_RIGHT: $side = 'R';
+            case self::SIDE_RIGHT: $prefix = 'R';
             break;
-            case self::SIDE_BOTH: $side = 'B';
+            case self::SIDE_BOTH: $prefix = 'B';
             break;
         }
 
-        return "$side:{$this->_child}";
+        return "$prefix:{$this->_child}";
     }
 }

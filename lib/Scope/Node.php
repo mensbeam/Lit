@@ -9,4 +9,8 @@ use dW\Lit\FauxReadOnly;
 
 class Node {
     use FauxReadOnly;
+
+    public function getPrefix(array $scopes): ?int {
+        return null;
+    }
 }

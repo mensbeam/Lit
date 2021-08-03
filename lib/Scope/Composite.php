@@ -15,6 +15,12 @@ class Composite extends Node {
     }
 
 
+    public function getPrefix(array $scopes): ?int {
+        if ($this->matches($scopes)) {
+            return $this->_expressions[0]->getPrefix($scopes);
+        }
+    }
+
     public function matches(array $scopes): bool {
         $result = false;
         foreach ($this->_expressions as $expression) {

@@ -24,6 +24,12 @@ class Expression extends Node {
     }
 
 
+    public function getPrefix(array $scopes): ?int {
+        if ($this->matches($scopes)) {
+            return $this->_child->getPrefix($scopes);
+        }
+    }
+
     public function matches(array $scopes): bool {
         $matches = $this->_child->matches($scopes);
         return ($this->_negate) ? !$matches : $matches;

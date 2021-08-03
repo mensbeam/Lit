@@ -20,10 +20,6 @@ class Scope extends Node {
 
 
     public function matches(Scope $scope): bool {
-        /*if (count($this->_atoms) !== count($scope->atoms)) {
-            return false;
-        }*/
-
         foreach ($this->_atoms as $index => $atom) {
             if ($atom === '*') {
                 continue;

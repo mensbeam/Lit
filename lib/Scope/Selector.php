@@ -15,15 +15,21 @@ class Selector extends Node {
     }
 
 
-    public function matches(array $scopes, &$match = null): bool {
-        foreach ($scopes as &$s) {
-            $isString = is_string($s);
-            if (!$isString && !$s instanceof Scope) {
-                throw new \Exception("Argument \$scopes must be an array containing only Scopes and/or strings.\n");
+    public function getPrefix(array $scopes): ?int {
+        foreach ($scopes as $s) {
+            if (!$s instanceof Scope) {
+                throw new \Exception("Argument \$scopes must be an array of Scope instances.\n");
             }
+        }
 
-            if ($isString) {
-                $s = Parser::parseScope($s);
+        $matches = $this->matches($scopes, $match);
+        return ($matches) ? $match->getPrefix($scopes) : null;
+    }
+
+    public function matches(array $scopes, ?Composite &$match = null): bool {
+        foreach ($scopes as $s) {
+            if (!$s instanceof Scope) {
+                throw new \Exception("Argument \$scopes must be an array of Scope instances.\n");
             }
         }
 

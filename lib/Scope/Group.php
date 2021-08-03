@@ -8,33 +8,15 @@ namespace dW\Lit\Scope;
 
 class Group extends Node {
     protected Selector $_child;
-    protected bool $frozen = false;
 
 
-    public function __construct(Expression|Filter $parent) {
-        $this->_parent = \WeakReference::create($parent);
+    public function __construct(Selector $child) {
+        $this->_child = $child;
     }
 
 
-    public function matches(Path $path): bool {
-        return $this->_child->matches($path);
-    }
-
-
-    public function __set(string $name, $value) {
-        if ($name !== 'child') {
-            $trace = debug_backtrace();
-            trigger_error("Cannot set undefined property $name in {$trace[0]['file']} on line {$trace[0]['line']}", E_USER_NOTICE);
-        }
-
-        if ($this->frozen) {
-            $trace = debug_backtrace();
-            trigger_error("Cannot set readonly $name property in {$trace[0]['file']} on line {$trace[0]['line']}", E_USER_NOTICE);
-            return;
-        }
-
-        $this->frozen = true;
-        $this->_child = $value;
+    public function matches(array $scopes): bool {
+        return $this->_child->matches($scopes);
     }
 
 

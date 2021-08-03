@@ -6,7 +6,7 @@
 declare(strict_types=1);
 namespace dW\Lit\Scope;
 
-class Exception extends \Exception {
+class ParserException extends \Exception {
     const MESSAGE = '%s expected; found %s at offset %s'.\PHP_EOL;
 
     public function __construct(array|string|bool $expected, string|bool $found, int $offset) {

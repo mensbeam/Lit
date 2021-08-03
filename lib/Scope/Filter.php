@@ -8,7 +8,6 @@ namespace dW\Lit\Scope;
 
 class Filter extends Node {
     protected Group|Path $_child;
-    protected bool $frozen = false;
     protected int $_prefix;
 
     const SIDE_LEFT = 0;
@@ -16,8 +15,8 @@ class Filter extends Node {
     const SIDE_BOTH = 2;
 
 
-    public function __construct(Expression $parent, string $prefix) {
-        $this->_parent = \WeakReference::create($parent);
+    public function __construct(Group|Path $child, string $prefix) {
+        $this->_child = $child;
 
         switch ($prefix) {
             case 'L': $this->_prefix = self::SIDE_LEFT;
@@ -30,27 +29,10 @@ class Filter extends Node {
     }
 
 
-    public function matches(Path $path): bool {
+    public function matches(array $scopes): bool {
         // No idea if prefixes are supposed to affect matches. Appears to in the
         // TextMate original but not in Atom's implementation...
-        return $this->_child->matches($path);
-    }
-
-
-    public function __set(string $name, $value) {
-        if ($name !== 'child') {
-            $trace = debug_backtrace();
-            trigger_error("Cannot set undefined property $name in {$trace[0]['file']} on line {$trace[0]['line']}", E_USER_NOTICE);
-        }
-
-        if ($this->frozen) {
-            $trace = debug_backtrace();
-            trigger_error("Cannot set readonly $name property in {$trace[0]['file']} on line {$trace[0]['line']}", E_USER_NOTICE);
-            return;
-        }
-
-        $this->frozen = true;
-        $this->_child = $value;
+        return $this->_child->matches($scopes);
     }
 
 

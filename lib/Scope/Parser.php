@@ -8,8 +8,11 @@ namespace dW\Lit\Scope;
 
 /** Parses strings into a scope selector */
 class Parser {
-    // Used to cache parsed selectors
-    protected static array $cache = [];
+    // Used to cache parsed scopes and selectors
+    protected static array $cache = [
+        'selector' => [],
+        'scope' => []
+    ];
 
     // The tokenized scope string
     protected Data $data;
@@ -30,8 +33,8 @@ class Parser {
 
     /** Parses strings into Selectors */
     public static function parseSelector(string $string): Selector {
-        if (isset(self::$cache[$string])) {
-            return self::$cache[$string];
+        if (isset(self::$cache['selector'][$string])) {
+            return self::$cache['selector'][$string];
         }
 
         self::$instance = new self($string);
@@ -43,18 +46,18 @@ class Parser {
             self::throw(false, $token);
         }
 
-        self::$cache[$string] = $result;
+        self::$cache['selector'][$string] = $result;
         return $result;
     }
 
-    /** Parses strings into Selectors */
-    public static function parsePath(string $string): Path {
-        if (isset(self::$cache[$string])) {
-            return self::$cache[$string];
+    /** Parses strings into Scopes */
+    public static function parseScope(string $string): Scope {
+        if (isset(self::$cache['scope'][$string])) {
+            return self::$cache['scope'][$string];
         }
 
         self::$instance = new self($string);
-        $result = self::_parsePath();
+        $result = self::_parseScope();
 
         // If not at the end of input throw an exception.
         $token = self::$instance->data->consume();
@@ -62,16 +65,15 @@ class Parser {
             self::throw(false, $token);
         }
 
-        self::$cache[$string] = $result;
+        self::$cache['scope'][$string] = $result;
         return $result;
     }
 
 
-    protected static function parseComposite(?Selector $parent = null): Composite {
+    protected static function parseComposite(): Composite {
         assert((fn() => self::debug())());
 
-        $result = new Composite($parent);
-        $expressions = [ self::parseExpression($result) ];
+        $expressions = [ self::parseExpression() ];
 
         $peek = self::$instance->data->peek();
         while ($peek !== false && in_array($peek, [ '&', '|', '-' ])) {
@@ -85,18 +87,16 @@ class Parser {
                 break;
             }
 
-            $expressions[] = self::parseExpression($result, $operator);
+            $expressions[] = self::parseExpression($operator);
             $peek = self::$instance->data->peek();
         }
 
-        $result->add(...$expressions);
-
+        $result = new Composite(...$expressions);
         assert((fn() => self::debugResult($result))());
-
         return $result;
     }
 
-    protected static function parseExpression(Composite $parent, int $operator = Expression::OPERATOR_NONE): Expression {
+    protected static function parseExpression(int $operator = Expression::OPERATOR_NONE): Expression {
         assert((fn() => self::debug())());
 
         $peek = self::$instance->data->peek();
@@ -107,63 +107,56 @@ class Parser {
             $negate = true;
         }
 
-        $result = new Expression($parent, $operator, $negate);
-
         if (in_array($peek[0], [ 'B', 'L', 'R' ])) {
-            $result->child = self::parseFilter($result, self::$instance->data->consume()[0]);
+            $child = self::parseFilter(self::$instance->data->consume()[0]);
         } elseif ($peek === '(') {
-            $result->child = self::parseGroup($result);
+            $child = self::parseGroup();
         } else {
-            $result->child = self::_parsePath($result);
+            $child = self::parsePath();
         }
 
+        $result = new Expression($child, $operator, $negate);
         assert((fn() => self::debugResult($result))());
-
         return $result;
     }
 
-    protected static function parseFilter(Expression $parent, string $prefix): Filter {
+    protected static function parseFilter(string $prefix): Filter {
         assert((fn() => self::debug())());
 
-        $result = new Filter($parent, $prefix);
         $peek = self::$instance->data->peek();
         if ($peek === '(') {
-            $result->child = self::parseGroup($result);
+            $child = self::parseGroup();
         } else {
-            $result->child = self::_parsePath($result);
+            $child = self::parsePath();
         }
 
+        $result = new Filter($child, $prefix);
         assert((fn() => self::debugResult($result))());
-
         return $result;
     }
 
-    protected static function parseGroup(Expression|Filter $parent): Group {
+    protected static function parseGroup(): Group {
         assert((fn() => self::debug())());
-
-        $result = new Group($parent);
 
         $token = self::$instance->data->consume();
         if ($token !== '(') {
             self::throw('"("', $token);
         }
 
-        $result->child = self::_parseSelector($result);
+        $child = self::_parseSelector();
 
         $token = self::$instance->data->consume();
         if ($token !== ')') {
             self::throw('")"', $token);
         }
 
+        $result = new Group($child);
         assert((fn() => self::debugResult($result))());
-
         return $result;
     }
 
-    protected static function _parsePath(Expression $parent): Path {
+    protected static function parsePath(): Path {
         assert((fn() => self::debug())());
-
-        $result = new Path($parent);
 
         $anchorStart = false;
         if (self::$instance->data->peek() === '^') {
@@ -171,7 +164,7 @@ class Parser {
             self::$instance->data->consume();
         }
 
-        $first = self::parseScope($result);
+        $first = self::_parseScope();
         if ($first->anchorToPrevious) {
             self::throw('first scope', '>');
         }
@@ -185,11 +178,9 @@ class Parser {
                 $peek = self::$instance->data->peek();
                 $anchorToPrevious = true;
             }
-            $scopes[] = self::parseScope($result, $anchorToPrevious);
+            $scopes[] = self::_parseScope(end($scopes), $anchorToPrevious);
             $peek = self::$instance->data->peek();
         }
-
-        $result->add(...$scopes);
 
         $anchorEnd = false;
         if ($peek === '$') {
@@ -198,49 +189,39 @@ class Parser {
         }
 
         if ($anchorStart && $anchorEnd) {
-            $result->anchor = Path::ANCHOR_BOTH;
+            $anchor = Path::ANCHOR_BOTH;
         } elseif ($anchorStart) {
-            $result->anchor = Path::ANCHOR_START;
+            $anchor = Path::ANCHOR_START;
         } elseif ($anchorEnd) {
-            $result->anchor = Path::ANCHOR_END;
+            $anchor = Path::ANCHOR_END;
         } else {
-            $result->anchor = Path::ANCHOR_NONE;
+            $anchor = Path::ANCHOR_NONE;
         }
 
+        $result = new Path($anchor, ...$scopes);
         assert((fn() => self::debugResult($result))());
-
         return $result;
     }
 
-    protected static function _parseSelector(?Group $parent = null): Selector {
+    protected static function _parseSelector(): Selector {
         assert((fn() => self::debug())());
 
-        $result = new Selector($parent);
-
-        $composites = [ self::parseComposite($result) ];
+        $composites = [ self::parseComposite() ];
         $peek = self::$instance->data->peek();
         while ($peek === ',') {
             self::$instance->data->consume();
-            $composites[] = self::parseComposite($result);
+            $composites[] = self::parseComposite();
             $peek = self::$instance->data->peek();
         }
 
-        $result->add(...$composites);
-
+        $result = new Selector(...$composites);
         assert((fn() => self::debugResult($result))());
-
         return $result;
     }
 
-    protected static function parseScope(Path $parent): Scope {
+    protected static function _parseScope(?Scope $parent = null, bool $anchorToPrevious = false): Scope {
         assert((fn() => self::debug())());
 
-        $peek = self::$instance->data->peek();
-        if ($peek === '>') {
-            self::$instance->data->consume();
-        }
-
-        $result = new Scope($parent, ($peek === '>'));
         $atoms = [];
         $first = true;
         do {
@@ -258,10 +239,8 @@ class Parser {
             $first = false;
         } while (self::$instance->data->peek() === '.');
 
-        $result->add(...$atoms);
-
+        $result = new Scope($parent, $anchorToPrevious, ...$atoms);
         assert((fn() => self::debugResult($result))());
-
         return $result;
     }
 
@@ -300,11 +279,13 @@ class Parser {
         printf("%s Result: %s\n",
             debug_backtrace()[2]['function'],
             // Removes bullshit from var_exported classes for easier reading
-            str_replace([ '::__set_state(array', __NAMESPACE__.'\\', '))' ], [ '', '', ')' ], var_export($result, true)));
+            str_replace([ '::__set_state(array', __NAMESPACE__.'\\', '))' ], [ '', '', ')' ], var_export($result, true))
+        );
+
         return true;
     }
 
     protected static function throw(array|string|bool $expected, string|bool $found) {
-        throw new Exception($expected, $found, self::$instance->data->offset());
+        throw new ParserException($expected, $found, self::$instance->data->offset());
     }
 }

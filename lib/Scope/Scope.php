@@ -9,30 +9,42 @@ namespace dW\Lit\Scope;
 class Scope extends Node {
     protected bool $_anchorToPrevious;
     protected array $_atoms = [];
-    protected bool $frozen = false;
+    protected ?\WeakReference $_parent;
 
 
-    public function __construct(Path $parent, bool $anchorToPrevious = false) {
+    public function __construct(?Scope $parent = null, bool $anchorToPrevious = false, string ...$atoms) {
         $this->_anchorToPrevious = $anchorToPrevious;
-        $this->_parent = \WeakReference::create($parent);
+        $this->_atoms = $atoms;
+        $this->_parent = ($parent !== null) ? \WeakReference::create($parent) : null;
     }
 
 
-    public function add(string ...$atoms): bool {
-        if ($this->frozen) {
+    public function matches(Scope $scope): bool {
+        /*if (count($this->_atoms) !== count($scope->atoms)) {
             return false;
+        }*/
+
+        foreach ($this->_atoms as $index => $atom) {
+            if ($atom === '*') {
+                continue;
+            }
+
+            if ($atom !== $scope->atoms[$index]) {
+                return false;
+            }
         }
 
-        $this->_atoms = $atoms;
-        $this->frozen = true;
         return true;
     }
 
-    public function isAuxiliary(): bool {
-        $serialized = (string)$this;
-        return(strncmp($serialized, 'attr.', 5) === 0 || strncmp($serialized, 'dyn.', 4) === 0);
-    }
 
+    public function __get(string $name) {
+        if ($name === 'parent') {
+            return ($this->_parent !== null) ? $this->_parent->get() : null;
+        }
+
+        return parent::__get($name);
+    }
 
     public function __toString(): string {
         $result = '';

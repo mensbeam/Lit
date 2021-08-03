@@ -9,6 +9,4 @@ use dW\Lit\FauxReadOnly;
 
 class Node {
     use FauxReadOnly;
-
-    protected ?\WeakReference $_parent;
 }

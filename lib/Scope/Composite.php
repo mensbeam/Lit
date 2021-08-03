@@ -8,25 +8,14 @@ namespace dW\Lit\Scope;
 
 class Composite extends Node {
     protected array $_expressions = [];
-    protected bool $frozen = false;
 
 
-    public function __construct(Selector $parent) {
-        $this->_parent = \WeakReference::create($parent);
-    }
-
-
-    public function add(Expression ...$expressions): bool {
-        if ($this->frozen) {
-            return false;
-        }
-
+    public function __construct(Expression ...$expressions) {
         $this->_expressions = $expressions;
-        $this->frozen = true;
-        return true;
     }
 
-    public function matches(Path $path): bool {
+
+    public function matches(array $scopes): bool {
         $result = false;
         foreach ($this->_expressions as $expression) {
             $operator = $expression->operator;
@@ -38,10 +27,7 @@ class Composite extends Node {
                 continue;
             }
 
-            $local = $expression->child->matches($path);
-            if ($expression->negate) {
-                $local = !$local;
-            }
+            $local = $expression->matches($scopes);
 
             switch ($operator) {
                 case Expression::OPERATOR_NONE: $result = $local;

@@ -8,31 +8,27 @@ namespace dW\Lit\Scope;
 
 class Selector extends Node {
     protected array $_composites = [];
-    protected bool $frozen = false;
 
 
-    public function __construct(?Group $parent = null) {
-        $this->_parent = ($parent === null) ? null : \WeakReference::create($parent);
-    }
-
-
-    public function add(Composite ...$composites): bool {
-        if ($this->frozen) {
-            return false;
-        }
-
+    public function __construct(Composite ...$composites) {
         $this->_composites = $composites;
-        $this->frozen = true;
-        return true;
     }
 
-    public function matches(Path|string $path, &$match = null): bool {
-        if (is_string($selector)) {
-            $path = Parser::parsePath($path);
+
+    public function matches(array $scopes, &$match = null): bool {
+        foreach ($scopes as &$s) {
+            $isString = is_string($s);
+            if (!$isString && !$s instanceof Scope) {
+                throw new \Exception("Argument \$scopes must be an array containing only Scopes and/or strings.\n");
+            }
+
+            if ($isString) {
+                $s = Parser::parseScope($s);
+            }
         }
 
         foreach ($this->_composites as $composite) {
-            if ($composite->matches($path)) {
+            if ($composite->matches($scopes)) {
                 $match = $composite;
                 return true;
             }

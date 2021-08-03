@@ -8,12 +8,6 @@ namespace dW\Lit\Scope;
 
 class Path extends Node {
     protected int $_anchor;
-
-    protected array $frozen = [
-        'add' => false,
-        'anchor' => false
-    ];
-
     protected array $_scopes = [];
 
     const ANCHOR_NONE = 0;
@@ -22,54 +16,36 @@ class Path extends Node {
     const ANCHOR_BOTH = 3;
 
 
-    public function __construct(Expression $parent) {
-        $this->_parent = \WeakReference::create($parent);
+    public function __construct(int $anchor, Scope ...$scopes) {
+        if ($anchor < 0 || $anchor > 3) {
+            throw new \Exception("Anchor must be a value between 0 and 3.\n");
+        }
+
+        $this->_anchor = $anchor;
+        $this->_scopes = $scopes;
     }
 
 
-    public function matches(Path $path): bool {
-        $start = reset($this->_scopes);
-        $bt = end($this->_scopes);
-        $node = $this;
+    public function matches(array $scopes): bool {
+        // TODO: Handle anchors; while they are parsed they're not factored in when
+        // matching because I can't find any documentation anywhere on what they do, and
+        // my brain can't tie itself into knots to read that part of the original C++.
 
-        if ($this->_anchor === self::ANCHOR_END || $this->_anchor === self::ANCHOR_BOTH) {
-            while ($node && $node->isAuxiliary()) {
-                $node = $node->parent->get();
+        $index = 0;
+        $cur = $this->_scopes[$index];
+        foreach ($scopes as $s) {
+            if ($cur->matches($s)) {
+                $cur = $this->_scopes[++$index] ?? null;
             }
 
-            $bt = $start;
+            if ($cur === null) {
+                return true;
+            }
         }
 
         return false;
     }
 
-
-    public function add(Scope ...$scopes): bool {
-        if ($this->frozen['add']) {
-            return false;
-        }
-
-        $this->_scopes = $scopes;
-        $this->frozen['add'] = true;
-        return true;
-    }
-
-
-    public function __set(string $name, $value) {
-        if ($name !== 'anchor') {
-            $trace = debug_backtrace();
-            trigger_error("Cannot set undefined property $name in {$trace[0]['file']} on line {$trace[0]['line']}", E_USER_NOTICE);
-        }
-
-        if ($this->frozen['anchor']) {
-            $trace = debug_backtrace();
-            trigger_error("Cannot set readonly $name property in {$trace[0]['file']} on line {$trace[0]['line']}", E_USER_NOTICE);
-            return;
-        }
-
-        $this->frozen['anchor'] = true;
-        $this->_anchor = $value;
-    }
 
     public function __toString(): string {
         $result = '';

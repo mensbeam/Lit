@@ -5,13 +5,11 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
-use dW\Lit\FauxReadOnly;
 use dW\Lit\Grammar;
 
-/** Contains patterns responsible for matching a portion of the document */
-class Pattern {
-    use FauxReadOnly;
 
+/** Contains patterns responsible for matching a portion of the document */
+class Pattern extends Rule {
     protected bool $_applyEndPatternLast = false;
     protected ?string $_begin;
     protected ?CaptureList $_beginCaptures;

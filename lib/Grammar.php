@@ -34,9 +34,10 @@ class Grammar {
     protected ?PatternList $_patterns;
     protected ?Repository $_repository;
     protected ?string $_scopeName;
+    protected ?string $_contentScopeName;
 
 
-    public function __construct(?string $scopeName = null, ?PatternList $patterns = null, ?string $name = null, ?string $contentRegex = null, ?string $firstLineMatch = null, ?InjectionList $injections = null, ?Repository $repository = null, ?Grammar $ownerGrammar = null) {
+    public function __construct(?string $scopeName = null, ?string $contentScopeName = null, ?PatternList $patterns = null, ?string $name = null, ?string $contentRegex = null, ?string $firstLineMatch = null, ?InjectionList $injections = null, ?Repository $repository = null, ?Grammar $ownerGrammar = null) {
         $this->_name = $name;
         $this->_scopeName = $scopeName;
         $this->_patterns = $patterns;
@@ -50,7 +51,7 @@ class Grammar {
 
     /** Clones the supplied grammar with this grammar set as its owner grammar */
     public function adoptGrammar(self $grammar): self {
-        return new self($grammar->name, $grammar->scopeName, $grammar->patterns, $grammar->contentRegex, $grammar->firstLineMatch, $grammar->injections, $this, $grammar->repository);
+        return new self($grammar->name, $grammar->scopeName, $grammar->contentScopeName, $grammar->patterns, $grammar->contentRegex, $grammar->firstLineMatch, $grammar->injections, $grammar->repository, $this);
     }
 
 
@@ -75,6 +76,7 @@ class Grammar {
 
         $this->_name = $json['name'] ?? null;
         $this->_scopeName = $json['scopeName'];
+        $this->_contentScopeName = $json['contentScopeName'] ?? null;
         $this->_contentRegex = (isset($json['contentRegex'])) ? "/{$json['contentRegex']}/" : null;
         $this->_firstLineMatch = (isset($json['firstLineMatch'])) ? "/{$json['firstLineMatch']}/" : null;
 

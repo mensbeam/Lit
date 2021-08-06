@@ -44,7 +44,7 @@ abstract class ImmutableList implements \ArrayAccess, \Countable, \Iterator {
         if (!isset($this->storage[$offset])) {
             throw new Exception(Exception::LIST_INVALID_INDEX, __CLASS__, $offset);
         }
-        
+
         return $this->storage[$offset];
     }
 

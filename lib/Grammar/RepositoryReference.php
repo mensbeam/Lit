@@ -5,15 +5,13 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
-use dW\Lit\FauxReadOnly,
-    dW\Lit\Grammar;
+use dW\Lit\Grammar;
+
 
 /**
  * Acts as a sort of lazy reference for repository items in grammars.
  */
 class RepositoryReference extends Reference {
-    use FauxReadOnly;
-
     protected \WeakReference $grammar;
     protected string $_name;
     protected PatternList|Pattern|null|false $object;

@@ -5,8 +5,12 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
+use dW\Lit\FauxReadOnly;
+
 
 /**
- * Acts as a sort of lazy reference for including self in a grammar.
+ * Abstract class used as a base class for Pattern and Reference classes
  */
-abstract class Reference extends Rule {}
+abstract class Rule {
+    use FauxReadOnly;
+}

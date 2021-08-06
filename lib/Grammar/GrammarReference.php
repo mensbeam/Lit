@@ -5,15 +5,13 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
-use dW\Lit\FauxReadOnly,
-    dW\Lit\Grammar;
+use dW\Lit\Grammar;
+
 
 /**
  * Acts as a sort of lazy reference for entire grammars in grammars.
  */
 class GrammarReference extends Reference {
-    use FauxReadOnly;
-
     protected ?Grammar $object;
     protected \WeakReference $ownerGrammar;
     protected string $_scopeName;

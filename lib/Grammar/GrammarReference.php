@@ -5,7 +5,8 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
-use dW\Lit\Grammar;
+use dW\Lit\Grammar,
+    dW\Lit\GrammarRegistry;
 
 
 /**
@@ -30,7 +31,7 @@ class GrammarReference extends Reference {
             return null;
         }
 
-        $grammar = Registry::get($this->_scopeName);
+        $grammar = GrammarRegistry::get($this->_scopeName);
         if ($grammar === null) {
             $this->object = false;
             return null;

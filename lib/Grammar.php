@@ -13,7 +13,6 @@ use dW\Lit\Grammar\BaseReference,
     dW\Lit\Grammar\Pattern,
     dW\Lit\Grammar\PatternList,
     dW\Lit\Grammar\Reference,
-    dW\Lit\Grammar\Registry,
     dW\Lit\Grammar\Repository,
     dW\Lit\Grammar\RepositoryReference,
     dW\Lit\Grammar\SelfReference;

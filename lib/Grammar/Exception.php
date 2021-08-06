@@ -54,7 +54,7 @@ class Exception extends \Exception {
         301 => 'Invalid %1$s index at offset %2$s',
         302 => '%1$s expected for %2$s, found %3$s',
 
-        400 => 'A grammar for scope %s does not exist; one may be added using Grammar\\Registry::set'
+        400 => 'A grammar for scope %s does not exist; one may be added using GrammarRegistry::set'
     ];
 
     public function __construct(int $code, ...$args) {

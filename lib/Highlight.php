@@ -5,8 +5,7 @@
 
 declare(strict_types=1);
 namespace dW\Lit;
-use dW\Lit\Grammar\Exception,
-    dW\Lit\Grammar\Registry as GrammarRegistry;
+use dW\Lit\Grammar\Exception;
 
 class Highlight {
     public static function withFile(string $filepath, string $scopeName) {

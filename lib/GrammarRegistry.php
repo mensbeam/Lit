@@ -4,11 +4,10 @@
  * See LICENSE file for details */
 
 declare(strict_types=1);
-namespace dW\Lit\Grammar;
-use dW\Lit\Grammar;
+namespace dW\Lit;
 
 /** Static storage for grammars; a map of a scope string and a Grammar object */
-class Registry implements \IteratorAggregate {
+class GrammarRegistry implements \IteratorAggregate {
     protected static array $storage = [];
 
     public static function clear(): bool {
@@ -30,7 +29,7 @@ class Registry implements \IteratorAggregate {
         if (array_key_exists($scopeName, self::$storage)) {
             return self::$storage[$scopeName];
         } else {
-            $filename = __DIR__ . "/../../data/$scopeName.json";
+            $filename = __DIR__ . "/../data/$scopeName.json";
             if (file_exists($filename)) {
                 $grammar = new Grammar();
                 $grammar->loadJSON($filename);

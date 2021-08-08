@@ -6,6 +6,7 @@
 declare(strict_types=1);
 namespace dW\Lit;
 
+
 trait FauxReadOnly {
     public function __get(string $name) {
         $prop = "_$name";

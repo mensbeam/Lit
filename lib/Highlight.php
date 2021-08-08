@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace dW\Lit;
 use dW\Lit\Grammar\Exception;
 
+
 class Highlight {
     public static function withFile(string $filepath, string $scopeName) {
         return self::highlight(Data::fileToGenerator($filepath), $scopeName);

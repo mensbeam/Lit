@@ -7,7 +7,8 @@ declare(strict_types=1);
 namespace dW\Lit\Grammar;
 use dW\Lit\FauxReadOnly;
 
-abstract class NamedPatternListList extends ImmutableList {
+/** Immutable named pattern list used for repositories and injection lists. */
+abstract class NamedPatternList extends ImmutableList {
     use FauxReadOnly;
 
     public function __construct(array $array) {
@@ -17,13 +18,13 @@ abstract class NamedPatternListList extends ImmutableList {
                 throw new Exception(Exception::LIST_INVALID_TYPE, 'String', 'supplied array index', gettype($k));
             }
 
-            if (!$v instanceof Pattern && !$v instanceof PatternList && !$v instanceof Reference && !$v instanceof \WeakReference) {
+            if (!$v instanceof Pattern && !$v instanceof PatternList && !$v instanceof Reference) {
                 $type = gettype($v);
                 if ($type === 'object') {
                     $type = get_class($v);
                 }
 
-                throw new Exception(Exception::LIST_INVALID_TYPE,  __NAMESPACE__.'\Pattern, '.__NAMESPACE__.'\PatternList, '.__NAMESPACE__.'\Reference, or \WeakReference', 'supplied array value', $type);
+                throw new Exception(Exception::LIST_INVALID_TYPE,  __NAMESPACE__.'\Pattern, '.__NAMESPACE__.'\PatternList, '.__NAMESPACE__.'\Reference', 'supplied array value', $type);
             }
         }
 

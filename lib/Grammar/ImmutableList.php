@@ -26,6 +26,10 @@ abstract class ImmutableList implements \ArrayAccess, \Countable, \Iterator {
         return current($this->storage);
     }
 
+    public function getIterator(): array {
+        return $this->storage;
+    }
+
     public function key(){
         $this->position = key($this->storage);
         return $this->position;

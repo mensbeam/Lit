@@ -5,17 +5,19 @@
 
 declare(strict_types=1);
 namespace dW\Lit;
-use dW\Lit\Grammar\BaseReference,
-    dW\Lit\Grammar\CaptureList,
-    dW\Lit\Grammar\Exception,
-    dW\Lit\Grammar\GrammarReference,
-    dW\Lit\Grammar\InjectionList,
-    dW\Lit\Grammar\Pattern,
-    dW\Lit\Grammar\PatternList,
-    dW\Lit\Grammar\Reference,
-    dW\Lit\Grammar\Repository,
-    dW\Lit\Grammar\RepositoryReference,
-    dW\Lit\Grammar\SelfReference;
+use dW\Lit\Grammar\{
+    BaseReference,
+    CaptureList,
+    Exception,
+    GrammarReference,
+    InjectionList,
+    Pattern,
+    PatternList,
+    Reference,
+    Repository,
+    RepositoryReference,
+    SelfReference
+};
 
 
 /**
@@ -50,7 +52,7 @@ class Grammar {
 
     /** Clones the supplied grammar with this grammar set as its owner grammar */
     public function adoptGrammar(self $grammar): self {
-        return new self($grammar->name, $grammar->scopeName, $grammar->contentScopeName, $grammar->patterns, $grammar->contentRegex, $grammar->firstLineMatch, $grammar->injections, $grammar->repository, $this);
+        return new self($grammar->scopeName, $grammar->contentScopeName, $grammar->patterns, $grammar->name, $grammar->contentRegex, $grammar->firstLineMatch, $grammar->injections, $grammar->repository, $this);
     }
 
 
@@ -76,8 +78,20 @@ class Grammar {
         $this->_name = $json['name'] ?? null;
         $this->_scopeName = $json['scopeName'];
         $this->_contentScopeName = $json['contentScopeName'] ?? null;
-        $this->_contentRegex = (isset($json['contentRegex'])) ? "/{$json['contentRegex']}/" : null;
-        $this->_firstLineMatch = (isset($json['firstLineMatch'])) ? "/{$json['firstLineMatch']}/" : null;
+
+        if (isset($json['contentRegex'])) {
+            $value = str_replace('/', '\/', $json['contentRegex']);
+            $this->_contentRegex = $value;
+        } else {
+            $this->_contentRegex = null;
+        }
+
+        if (isset($json['firstLineMatch'])) {
+            $value = str_replace('/', '\/', $json['firstLineMatch']);
+            $this->_firstLineMatch = $value;
+        } else {
+            $this->_firstLineMatch = null;
+        }
 
         $repository = null;
         if (isset($json['repository'])) {
@@ -120,7 +134,7 @@ class Grammar {
             } elseif ($pattern['include'] === '$base') {
                 return new BaseReference($this);
             } elseif ($pattern['include'] === '$self') {
-                return \WeakReference::create($this);
+                return SelfReference::create($this);
             } else {
                 return new GrammarReference($pattern['include'], $this);
             }
@@ -156,6 +170,7 @@ class Grammar {
                 case 'begin':
                 case 'end':
                 case 'match':
+                    $value = str_replace('/', '\/', $value);
                     $p[$key] = "/$value/";
                     $modified = true;
                 break;

@@ -6,6 +6,7 @@
 declare(strict_types=1);
 namespace dW\Lit;
 
+
 /** Static storage for grammars; a map of a scope string and a Grammar object */
 class GrammarRegistry implements \IteratorAggregate {
     protected static array $storage = [];

@@ -13,7 +13,7 @@ use dW\Lit\Grammar,
  * Acts as a sort of lazy reference for entire grammars in grammars.
  */
 class GrammarReference extends Reference {
-    protected ?Grammar $object;
+    protected ?Grammar $object = null;
     protected \WeakReference $ownerGrammar;
     protected string $_scopeName;
 
@@ -37,7 +37,7 @@ class GrammarReference extends Reference {
             return null;
         }
 
-        $this->object = $this->ownerGrammar->get()->adopt($grammar);
+        $this->object = $this->ownerGrammar->get()->adoptGrammar($grammar);
         return $this->object;
     }
 }

@@ -11,4 +11,4 @@ namespace dW\Lit\Grammar;
  * new grammar; instead of applying to an entire file it's instead applied to a
  * specific scope selector.
  */
-class InjectionList extends NamedPatternListList {}
+class InjectionList extends NamedPatternList {}

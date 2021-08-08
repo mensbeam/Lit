@@ -6,6 +6,7 @@
 declare(strict_types=1);
 namespace dW\Lit;
 
+
 class Data {
     public static function fileToGenerator(string $filepath): \Generator {
         $lineNumber = 0;

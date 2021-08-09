@@ -5,6 +5,7 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
+use dW\Lit\Grammar;
 
 abstract class ImmutableList implements \ArrayAccess, \Countable, \Iterator {
     protected int $count = 0;
@@ -15,6 +16,17 @@ abstract class ImmutableList implements \ArrayAccess, \Countable, \Iterator {
     public function __construct(...$values) {
         $this->storage = $values;
         $this->count = count($this->storage);
+    }
+
+    // Used when adopting to change the $ownerGrammar property of items in the
+    // list.
+    public function withOwnerGrammar(Grammar $ownerGrammar): self {
+        $new = clone $this;
+        foreach ($new->storage as &$s) {
+            $s = $s->withOwnerGrammar($ownerGrammar);
+        }
+
+        return $new;
     }
 
 

@@ -11,13 +11,7 @@ use dW\Lit\Grammar;
  * Acts as a sort of lazy weak reference for a base grammar in a grammar.
  */
 class BaseReference extends Reference {
-    protected \WeakReference $grammar;
     protected ?\WeakReference $object;
-
-
-    public function __construct(Grammar $grammar) {
-        $this->grammar = \WeakReference::create($grammar);
-    }
 
 
     public function get(): Grammar {
@@ -25,7 +19,7 @@ class BaseReference extends Reference {
             return $this->object->get();
         }
 
-        $grammar = $this->grammar->get();
+        $grammar = $this->_ownerGrammar->get();
         do {
             $result = $grammar;
         } while ($grammar = $grammar->ownerGrammar);

@@ -14,13 +14,12 @@ use dW\Lit\Grammar,
  */
 class GrammarReference extends Reference {
     protected ?Grammar $object = null;
-    protected \WeakReference $ownerGrammar;
     protected string $_scopeName;
 
 
     public function __construct(string $scopeName, Grammar $ownerGrammar) {
-        $this->ownerGrammar = \WeakReference::create($ownerGrammar);
         $this->_scopeName = $scopeName;
+        parent::__construct($ownerGrammar);
     }
 
 
@@ -37,7 +36,7 @@ class GrammarReference extends Reference {
             return null;
         }
 
-        $this->object = $this->ownerGrammar->get()->adoptGrammar($grammar);
+        $this->object = $this->_ownerGrammar->get()->adoptGrammar($grammar);
         return $this->object;
     }
 }

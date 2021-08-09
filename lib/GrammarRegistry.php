@@ -10,9 +10,16 @@ namespace dW\Lit;
 /** Static storage for grammars; a map of a scope string and a Grammar object */
 class GrammarRegistry implements \IteratorAggregate {
     protected static array $storage = [];
+    protected static array $childStorage = [];
+
+    public static function cacheChild(Grammar $grammar): Grammar {
+        self::$childStorage[] = $grammar;
+        return $grammar;
+    }
 
     public static function clear(): bool {
         self::$storage = [];
+        self::$childStorage = [];
         return true;
     }
 

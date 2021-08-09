@@ -51,16 +51,16 @@ class Tokenizer {
 
                         if ($regex !== null && $match = $this->getMatch($regex, $line)) {
                             $scopeStack = $this->scopeStack;
-                            if ($this->rule->name !== null) {
-                                $scopeStack[] = $this->rule->name;
+                            if ($rule->name !== null) {
+                                $scopeStack[] = $rule->name;
                             }
-                            if ($this->rule->contentName !== null) {
-                                $scopeStack[] = $this->rule->contentName;
+                            if ($rule->contentName !== null) {
+                                $scopeStack[] = $rule->contentName;
                             }
 
                             $results[] = [
                                 'scopeStack' => $scopeStack,
-                                'matches' => $matches
+                                'matches' => $match
                             ];
 
                             if ($rule->begin !== null) {
@@ -87,7 +87,7 @@ class Tokenizer {
     }
 
 
-    protected function getMatch(string $regex, string $line): array {
+    protected function getMatch(string $regex, string $line): ?array {
         if (preg_match($regex, $line, $match, PREG_OFFSET_CAPTURE) !== 1) {
             return null;
         }

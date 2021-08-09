@@ -19,10 +19,11 @@ class Pattern extends Rule {
     protected ?CaptureList $_endCaptures;
     protected ?string $_match;
     protected ?string $_name;
+    protected \WeakReference $_ownerGrammar;
     protected ?PatternList $_patterns;
 
 
-    public function __construct(?string $name = null, ?string $contentName = null, ?string $begin = null, ?string $end = null, ?string $match = null, ?PatternList $patterns = null, ?CaptureList $captures = null, ?CaptureList $beginCaptures = null, ?CaptureList $endCaptures = null, bool $applyEndPatternLast = false) {
+    public function __construct(Grammar $ownerGrammar, ?string $name = null, ?string $contentName = null, ?string $begin = null, ?string $end = null, ?string $match = null, ?PatternList $patterns = null, ?CaptureList $captures = null, ?CaptureList $beginCaptures = null, ?CaptureList $endCaptures = null, bool $applyEndPatternLast = false) {
         $this->_name = $name;
         $this->_contentName = $contentName;
         $this->_begin = $begin;
@@ -33,5 +34,13 @@ class Pattern extends Rule {
         $this->_beginCaptures = $beginCaptures;
         $this->_endCaptures = $endCaptures;
         $this->_applyEndPatternLast = $applyEndPatternLast;
+        $this->_ownerGrammar = ($ownerGrammar === null) ? null : \WeakReference::create($ownerGrammar);
+    }
+
+    // Used when adopting to change the $ownerGrammar property.
+    public function withOwnerGrammar(Grammar $ownerGrammar): self {
+        $new = clone $this;
+        $new->_ownerGrammar = \WeakReference::create($ownerGrammar);
+        return $new;
     }
 }

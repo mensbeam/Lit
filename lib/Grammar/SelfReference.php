@@ -15,8 +15,9 @@ class SelfReference extends Reference {
     protected ?Grammar $grammar;
 
 
-    public function __construct(Grammar $grammar) {
+    public function __construct(Grammar $grammar, Grammar $ownerGrammar) {
         $this->grammar = $grammar;
+        parent::__construct($ownerGrammar);
     }
 
     public function __destruct() {

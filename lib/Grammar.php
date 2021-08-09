@@ -52,7 +52,20 @@ class Grammar {
 
     /** Clones the supplied grammar with this grammar set as its owner grammar */
     public function adoptGrammar(self $grammar): self {
-        return new self($grammar->scopeName, $grammar->contentScopeName, $grammar->patterns, $grammar->name, $grammar->contentRegex, $grammar->firstLineMatch, $grammar->injections, $grammar->repository, $this);
+        $new = clone $this;
+        if ($new->_patterns !== null) {
+            $new->_patterns = $new->_patterns->withOwnerGrammar($new);
+        }
+
+        if ($new->_injections !== null) {
+            $new->_injections = $new->_injections->withOwnerGrammar($new);
+        }
+
+        if ($new->_repository !== null) {
+            $new->_repository = $new->_repository->withOwnerGrammar($new);
+        }
+
+        return GrammarRegistry::cacheChild($new);
     }
 
 
@@ -141,6 +154,7 @@ class Grammar {
         }
 
         $p = [
+            'ownerGrammar' => $this,
             'name' => null,
             'contentName' => null,
             'begin' => null,

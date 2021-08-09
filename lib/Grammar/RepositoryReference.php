@@ -30,10 +30,6 @@ class RepositoryReference extends Reference {
         }
 
         $grammar = $this->_ownerGrammar->get();
-        if (!isset($grammar->repository)) {
-            die(var_export($grammar));
-        }
-
         if (!isset($grammar->repository[$this->name])) {
             $this->object = false;
             return null;

@@ -5,31 +5,17 @@
 
 declare(strict_types=1);
 namespace dW\Lit;
+use dW\Lit\Grammar\ChildGrammarRegistry;
 
 
 /** Static storage for grammars; a map of a scope string and a Grammar object */
-class GrammarRegistry implements \IteratorAggregate {
+class GrammarRegistry {
     protected static array $storage = [];
-    protected static array $childStorage = [];
-
-    public static function cacheChild(Grammar $grammar): Grammar {
-        self::$childStorage[] = $grammar;
-        return $grammar;
-    }
 
     public static function clear(): bool {
+        // Clear all the child grammars, too.
+        ChildGrammarRegistry::clear();
         self::$storage = [];
-        self::$childStorage = [];
-        return true;
-    }
-
-    public static function delete(string $scopeName): bool {
-        try {
-            unset(self::$storage[$scopeName]);
-        } catch (\Exception $e) {
-            return false;
-        }
-
         return true;
     }
 
@@ -48,22 +34,6 @@ class GrammarRegistry implements \IteratorAggregate {
         return false;
     }
 
-    public function getIterator(): \Traversable {
-        foreach (self::$storage as $scopeName => $grammar) {
-            yield $scopeName => $grammar;
-        }
-    }
-
-    public static function has(string $scopeName): bool {
-        return (array_key_exists($scopeName, self::$storage));
-    }
-
-    public static function keys(): \Traversable {
-        foreach (self::$storage as $scopeName => $_) {
-            yield $scopeName;
-        }
-    }
-
     public static function set(string $scopeName, Grammar $grammar): bool {
         try {
             self::$storage[$scopeName] = $grammar;
@@ -72,11 +42,5 @@ class GrammarRegistry implements \IteratorAggregate {
         }
 
         return true;
-    }
-
-    public function values(): \Traversable {
-        foreach (self::$storage as $grammar) {
-            yield $grammar;
-        }
     }
 }

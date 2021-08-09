@@ -36,11 +36,4 @@ class Pattern extends Rule {
         $this->_applyEndPatternLast = $applyEndPatternLast;
         $this->_ownerGrammar = ($ownerGrammar === null) ? null : \WeakReference::create($ownerGrammar);
     }
-
-    // Used when adopting to change the $ownerGrammar property.
-    public function withOwnerGrammar(Grammar $ownerGrammar): self {
-        $new = clone $this;
-        $new->_ownerGrammar = \WeakReference::create($ownerGrammar);
-        return $new;
-    }
 }

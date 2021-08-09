@@ -12,21 +12,12 @@ use dW\Lit\Grammar;
  * exists to maintain sanity when checking types.
  */
 class SelfReference extends Reference {
-    protected ?Grammar $grammar;
-
-
-    public function __construct(Grammar $grammar, Grammar $ownerGrammar) {
-        $this->grammar = $grammar;
-        parent::__construct($ownerGrammar);
-    }
-
-    public function __destruct() {
-        parent::__destruct();
-        $this->grammar = null;
+    public function __construct(Grammar $grammar) {
+        parent::__construct($grammar);
     }
 
 
     public function get(): Grammar {
-        return $this->grammar;
+        return $this->_ownerGrammar->get();
     }
 }

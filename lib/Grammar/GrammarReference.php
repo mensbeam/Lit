@@ -36,7 +36,7 @@ class GrammarReference extends Reference {
             return null;
         }
 
-        $this->object = $this->_ownerGrammar->get()->adoptGrammar($grammar);
+        $this->object = $grammar->withOwnerGrammar($this->_ownerGrammar->get());
         return $this->object;
     }
 }

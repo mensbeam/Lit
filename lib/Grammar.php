@@ -8,9 +8,12 @@ namespace dW\Lit;
 use dW\Lit\Grammar\{
     BaseReference,
     CaptureList,
+    ChildGrammarRegistry,
     Exception,
+    FauxReadOnly,
     GrammarReference,
     InjectionList,
+    Node,
     Pattern,
     PatternList,
     Reference,
@@ -26,7 +29,6 @@ use dW\Lit\Grammar\{
  */
 class Grammar {
     use FauxReadOnly;
-
     protected ?string $_contentRegex;
     protected ?string $_firstLineMatch;
     protected ?InjectionList $_injections;
@@ -49,9 +51,12 @@ class Grammar {
         $this->_ownerGrammar = (is_null($ownerGrammar)) ? null : \WeakReference::create($ownerGrammar);
     }
 
+    // Used when adopting to change the $ownerGrammar property.
+    public function withOwnerGrammar(Grammar $ownerGrammar): self {
+        if ($new = ChildGrammarRegistry::get($this->_scopeName, $ownerGrammar)) {
+            return $new;
+        }
 
-    /** Clones the supplied grammar with this grammar set as its owner grammar */
-    public function adoptGrammar(self $grammar): self {
         $new = clone $this;
         if ($new->_patterns !== null) {
             $new->_patterns = $new->_patterns->withOwnerGrammar($new);
@@ -65,7 +70,10 @@ class Grammar {
             $new->_repository = $new->_repository->withOwnerGrammar($new);
         }
 
-        return GrammarRegistry::cacheChild($new);
+        $new->_ownerGrammar = \WeakReference::create($ownerGrammar);
+
+        ChildGrammarRegistry::set($this->_scopeName, $new);
+        return $new;
     }
 
 
@@ -147,7 +155,7 @@ class Grammar {
             } elseif ($pattern['include'] === '$base') {
                 return new BaseReference($this);
             } elseif ($pattern['include'] === '$self') {
-                return SelfReference::create($this);
+                return new SelfReference($this);
             } else {
                 return new GrammarReference($pattern['include'], $this);
             }

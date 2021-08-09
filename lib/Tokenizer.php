@@ -63,6 +63,8 @@ class Tokenizer {
                                 'matches' => $match
                             ];
 
+                            die(var_export($rule));
+
                             if ($rule->begin !== null) {
                                 $this->ruleStack[] = $rule;
                                 $this->scopeStack[] = $scopeStack;

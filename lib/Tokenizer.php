@@ -18,6 +18,9 @@ class Tokenizer {
     protected array $ruleStack;
     protected array $scopeStack;
 
+    const MATCH_MODE_SINGLE = 0;
+    const MATCH_MODE_BEGINEND = 1;
+
 
     public function __construct(\Generator $data, Grammar $grammar) {
         $this->data = $data;
@@ -32,59 +35,8 @@ class Tokenizer {
 
 
     public function tokenize(): \Generator {
-        foreach ($this->data as $lineNumber => $inputLine) {
-            $currentRules = end($this->ruleStack)->patterns->getIterator();
-            $currentRulesCount = count($currentRules);
-            $results = [];
-            $line = $inputLine;
-
-            for ($i = 0; $i < $currentRulesCount; $i++) {
-                while (true) {
-                    $rule = $currentRules[$i];
-                    if ($rule instanceof Pattern) {
-                        $regex = null;
-                        if ($rule->match !== null) {
-                            $regex = $rule->match;
-                        } elseif ($rule->begin !== null) {
-                            $regex = $rule->begin;
-                        }
-
-                        if ($regex !== null && $match = $this->getMatch($regex, $line)) {
-                            $scopeStack = $this->scopeStack;
-                            if ($rule->name !== null) {
-                                $scopeStack[] = $rule->name;
-                            }
-                            if ($rule->contentName !== null) {
-                                $scopeStack[] = $rule->contentName;
-                            }
-
-                            $results[] = [
-                                'scopeStack' => $scopeStack,
-                                'matches' => $match
-                            ];
-
-                            die(var_export($rule));
-
-                            if ($rule->begin !== null) {
-                                $this->ruleStack[] = $rule;
-                                $this->scopeStack[] = $scopeStack;
-                            }
-                        }
-                    } elseif ($rule instanceof Reference && $obj = $rule->get()) {
-                        if ($obj instanceof PatternList) {
-                            $obj = $obj->getIterator();
-                        } elseif ($obj instanceof Grammar) {
-                            $obj = $obj->patterns->getIterator();
-                        }
-
-                        array_splice($currentRules, $i, 1, $obj);
-                        $currentRulesCount = count($currentRules);
-                        continue;
-                    }
-
-                    break;
-                }
-            }
+        foreach ($this->data as $lineNumber => $line) {
+            yield $lineNumber => $this->tokenizeLine($line);
         }
     }
 
@@ -95,5 +47,58 @@ class Tokenizer {
         }
 
         return $match;
+    }
+
+    protected function tokenizeLine(string $inputLine): array {
+        $currentRules = end($this->ruleStack)->patterns->getIterator();
+        $currentRulesCount = count($currentRules);
+        $results = [];
+        $line = $inputLine;
+
+        for ($i = 0; $i < $currentRulesCount; $i++) {
+            while (true) {
+                $rule = $currentRules[$i];
+                if ($rule instanceof Pattern) {
+                    $matchMode = null;
+                    $regex = null;
+                    if ($rule->match !== null) {
+                        $regex = $rule->match;
+                        $matchMode = self::MATCH_MODE_SINGLE;
+                    } elseif ($rule->begin !== null) {
+                        $regex = $rule->begin;
+                        $matchMode = self::MATCH_MODE_BEGINEND;
+                    }
+
+                    if ($matchMode !== null && $match = $this->getMatch($regex, $line)) {
+                        $scopeStack = $this->scopeStack;
+                        if ($rule->name !== null) {
+                            $scopeStack[] = $rule->name;
+                        }
+                        if ($rule->contentName !== null) {
+                            $scopeStack[] = $rule->contentName;
+                        }
+
+                        die(var_export($rule));
+
+                        if ($matchMode === self::MATCH_MODE_BEGINEND) {
+                            $this->ruleStack[] = $rule;
+                            $this->scopeStack[] = $scopeStack;
+                        }
+                    }
+                } elseif ($rule instanceof Reference && $obj = $rule->get()) {
+                    if ($obj instanceof PatternList) {
+                        $obj = $obj->getIterator();
+                    } elseif ($obj instanceof Grammar) {
+                        $obj = $obj->patterns->getIterator();
+                    }
+
+                    array_splice($currentRules, $i, 1, $obj);
+                    $currentRulesCount = count($currentRules);
+                    continue;
+                }
+
+                break;
+            }
+        }
     }
 }

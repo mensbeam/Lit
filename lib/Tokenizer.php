@@ -17,10 +17,7 @@ class Tokenizer {
     protected Grammar $grammar;
     protected array $ruleStack;
     protected array $scopeStack;
-
-    const MATCH_MODE_SINGLE = 0;
-    const MATCH_MODE_BEGINEND = 1;
-
+    
 
     public function __construct(\Generator $data, Grammar $grammar) {
         $this->data = $data;
@@ -35,8 +32,22 @@ class Tokenizer {
 
 
     public function tokenize(): \Generator {
-        foreach ($this->data as $lineNumber => $line) {
-            yield $lineNumber => $this->tokenizeLine($line);
+        $appendNewLine = true;
+
+        foreach ($this->data as $lineNumber => $inputLine) {
+            $line = $inputLine;
+            $lineWithNewLine = ($appendNewLine) ? "$line\n" : $line;
+            $initialStackRuleLength = count($this->ruleStack);
+            $position = 0;
+            $tokenCount = 0;
+
+            while (true) {
+                $initialStackRuleLength = count($this->ruleStack);
+                $previousPosition = $position;
+                if ($position > mb_strlen($line)) {
+                    break;
+                }
+            }
         }
     }
 

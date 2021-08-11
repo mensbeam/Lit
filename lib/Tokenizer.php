@@ -14,13 +14,15 @@ use dW\Lit\Grammar\{
 
 class Tokenizer {
     protected \Generator $data;
+    protected string $encoding;
     protected Grammar $grammar;
     protected array $ruleStack;
     protected array $scopeStack;
-    
 
-    public function __construct(\Generator $data, Grammar $grammar) {
+
+    public function __construct(\Generator $data, Grammar $grammar, string $encoding) {
         $this->data = $data;
+        $this->encoding = $encoding;
         $this->grammar = $grammar;
         $this->ruleStack = [ $this->grammar ];
         $this->scopeStack = [ $this->grammar->scopeName ];
@@ -33,9 +35,9 @@ class Tokenizer {
 
     public function tokenize(): \Generator {
         $appendNewLine = true;
-
         foreach ($this->data as $lineNumber => $inputLine) {
-            $line = $inputLine;
+            yield $lineNumber => $this->_tokenize($inputLine);
+            /*$line = $inputLine;
             $lineWithNewLine = ($appendNewLine) ? "$line\n" : $line;
             $initialStackRuleLength = count($this->ruleStack);
             $position = 0;
@@ -47,20 +49,46 @@ class Tokenizer {
                 if ($position > mb_strlen($line)) {
                     break;
                 }
-            }
+            }*/
         }
     }
 
 
-    protected function getMatch(string $regex, string $line): ?array {
-        if (preg_match($regex, $line, $match, PREG_OFFSET_CAPTURE) !== 1) {
+    protected function getMatch(string $regex, string $line, int $offset = 0): ?array {
+        // Using mbstring's regular expressions because it truly supports multibyte
+        // strings but also because the original implementation used Oniguruma.
+        mb_ereg_search_init($line, mb_convert_encoding($regex, 'UTF-32'));
+
+        if ($offset !== 0) {
+            // UTF-32 uses 4 bytes for every character; multiply by 4 to convert from
+            // character offset to byte offset.
+            mb_ereg_search_setpos($offset * 4);
+        }
+
+        $pos = mb_ereg_search_pos();
+        if ($pos === false) {
             return null;
         }
 
+        // UTF-32 uses 4 bytes for every character; divide by 4 to get character
+        // offsets.
+        $length = $pos[1] / 4;
+        $pos = [
+            'start' => $pos[0] / 4,
+        ];
+        $pos['end'] = $pos['start'] + $length;
+
+        $match = mb_ereg_search_getregs();
+        // Convert the matches back to the original encoding.
+        foreach ($match as &$m) {
+            $m = mb_convert_encoding($m, $this->encoding, 'UTF-32');
+        }
+
+        $match['offset'] = $pos;
         return $match;
     }
 
-    protected function tokenizeLine(string $inputLine): array {
+    protected function _tokenize(string $inputLine, int $offset = 0): array {
         $currentRules = end($this->ruleStack)->patterns->getIterator();
         $currentRulesCount = count($currentRules);
         $results = [];
@@ -70,31 +98,8 @@ class Tokenizer {
             while (true) {
                 $rule = $currentRules[$i];
                 if ($rule instanceof Pattern) {
-                    $matchMode = null;
-                    $regex = null;
-                    if ($rule->match !== null) {
-                        $regex = $rule->match;
-                        $matchMode = self::MATCH_MODE_SINGLE;
-                    } elseif ($rule->begin !== null) {
-                        $regex = $rule->begin;
-                        $matchMode = self::MATCH_MODE_BEGINEND;
-                    }
-
-                    if ($matchMode !== null && $match = $this->getMatch($regex, $line)) {
-                        $scopeStack = $this->scopeStack;
-                        if ($rule->name !== null) {
-                            $scopeStack[] = $rule->name;
-                        }
-                        if ($rule->contentName !== null) {
-                            $scopeStack[] = $rule->contentName;
-                        }
-
-                        die(var_export($rule));
-
-                        if ($matchMode === self::MATCH_MODE_BEGINEND) {
-                            $this->ruleStack[] = $rule;
-                            $this->scopeStack[] = $scopeStack;
-                        }
+                    if ($match = $this->getMatch($rule->match, $line, $offset)) {
+                        $offset = $match['offset']['end'];
                     }
                 } elseif ($rule instanceof Reference && $obj = $rule->get()) {
                     if ($obj instanceof PatternList) {
@@ -111,5 +116,7 @@ class Tokenizer {
                 break;
             }
         }
+
+        return $inputLine;
     }
 }

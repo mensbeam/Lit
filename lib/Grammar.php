@@ -148,7 +148,7 @@ class Grammar {
     }
 
 
-    protected function parseJSONPattern(array $pattern, string $filename): Pattern|Reference|\WeakReference|null {
+    protected function parseJSONPattern(array $pattern, string $filename): Pattern|Reference|null {
         if (isset($pattern['include'])) {
             if ($pattern['include'][0] === '#') {
                 return new RepositoryReference(substr($pattern['include'], 1), $this);
@@ -165,40 +165,82 @@ class Grammar {
             'ownerGrammar' => $this,
             'name' => null,
             'contentName' => null,
-            'begin' => null,
-            'end' => null,
             'match' => null,
             'patterns' => null,
             'captures' => null,
-            'beginCaptures' => null,
-            'endCaptures' => null,
-            'applyEndPatternLast' => false
+            'endPattern' => false
         ];
 
         $modified = false;
+
+        $applyEndPatternLast = false;
+        if (isset($pattern['applyEndPatternLast'])) {
+            $applyEndPatternLast = $pattern['applyEndPatternLast'];
+            if (!is_bool($applyEndPatternLast) || (!is_int($applyEndPatternLast) && ($applyEndPatternLast !== 0 && $applyEndPatternLast !== 1))) {
+                throw new Exception(Exception::JSON_INVALID_TYPE, 'Boolean, 0, or 1', 'applyEndPatternLast', gettype($applyEndPatternLast), $filename);
+            }
+
+            $applyEndPatternLast = (bool)$applyEndPatternLast;
+        }
+
+        // Begin and end matches are handled in this implementation by parsing begin
+        // matches as regular matches and appending the end match as a pattern to the
+        // end of the pattern's patterns.
+        if (isset($pattern['begin'])) {
+            if (!isset($pattern['end'])) {
+                throw new Exception(Exception::JSON_MISSING_PROPERTY, $filename, 'end');
+            }
+
+            $begin = $pattern['begin'];//str_replace('/', '\/', $pattern['begin']);
+            $p['match'] = $begin;//"/$begin/";
+            $modified = true;
+
+            if (isset($pattern['beginCaptures'])) {
+                $pattern['captures'] = $pattern['beginCaptures'];
+            } elseif (isset($pattern['captures'])) {
+                $pattern['captures'] = $pattern['captures'];
+            }
+
+            $endCaptures = null;
+            if (isset($pattern['endCaptures'])) {
+                $endCaptures = $pattern['endCaptures'];
+            } elseif (isset($pattern['captures'])) {
+                $endCaptures = $pattern['captures'];
+            }
+
+            $endPattern = [
+                'match' => $pattern['end'],//"/" . str_replace('/', '\/', $pattern['end']) . "/",
+                'endPattern' => true
+            ];
+
+            if ($endCaptures !== null) {
+                $endPattern['captures'] = $endCaptures;
+            }
+
+            if (isset($pattern['patterns'])) {
+                if ($applyEndPatternLast) {
+                    $pattern['patterns'][] = $endPattern;
+                } else {
+                    array_unshift($pattern['patterns'], $endPattern);
+                }
+            } else {
+                $pattern['patterns'] = [ $endPattern ];
+            }
+        }
+
         foreach ($pattern as $key => $value) {
             switch ($key) {
-                case 'applyEndPatternLast':
-                    if (!is_bool($value) || (!is_int($value) && ($value !== 0 && $value !== 1))) {
-                        throw new Exception(Exception::JSON_INVALID_TYPE, 'Boolean, 0, or 1', 'applyEndPatternLast', gettype($value), $filename);
-                    }
-
-                    $value = (bool)$value;
                 case 'name':
                 case 'contentName':
                     $p[$key] = $value;
                     $modified = true;
                 break;
-                case 'begin':
-                case 'end':
                 case 'match':
-                    $value = str_replace('/', '\/', $value);
-                    $p[$key] = "/$value/";
+                    //$value = str_replace('/', '\/', $value);
+                    $p['match'] = $value;//"/$value/";
                     $modified = true;
                 break;
                 case 'captures':
-                case 'beginCaptures':
-                case 'endCaptures':
                     if (!is_array($value)) {
                         throw new Exception(Exception::JSON_INVALID_TYPE, 'Array', $key, gettype($value), $filename);
                     }
@@ -240,7 +282,7 @@ class Grammar {
         return ($modified) ? new Pattern(...$p) : null;
     }
 
-    protected function parseJSONPatternList(array $list, string $filename): Pattern|PatternList|null {
+    protected function parseJSONPatternList(array $list, string $filename): ?PatternList {
         $result = [];
         foreach ($list as $pattern) {
             $p = $this->parseJSONPattern($pattern, $filename);

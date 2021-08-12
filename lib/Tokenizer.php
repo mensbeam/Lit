@@ -14,15 +14,13 @@ use dW\Lit\Grammar\{
 
 class Tokenizer {
     protected \Generator $data;
-    protected string $encoding;
     protected Grammar $grammar;
     protected array $ruleStack;
     protected array $scopeStack;
 
 
-    public function __construct(\Generator $data, Grammar $grammar, string $encoding) {
+    public function __construct(\Generator $data, Grammar $grammar) {
         $this->data = $data;
-        $this->encoding = $encoding;
         $this->grammar = $grammar;
         $this->ruleStack = [ $this->grammar ];
         $this->scopeStack = [ $this->grammar->scopeName ];
@@ -55,36 +53,10 @@ class Tokenizer {
 
 
     protected function getMatch(string $regex, string $line, int $offset = 0): ?array {
-        // Using mbstring's regular expressions because it truly supports multibyte
-        // strings but also because the original implementation used Oniguruma.
-        mb_ereg_search_init($line, mb_convert_encoding($regex, 'UTF-32'));
-
-        if ($offset !== 0) {
-            // UTF-32 uses 4 bytes for every character; multiply by 4 to convert from
-            // character offset to byte offset.
-            mb_ereg_search_setpos($offset * 4);
-        }
-
-        $pos = mb_ereg_search_pos();
-        if ($pos === false) {
+        if (preg_match($regex, $line, $match, PREG_OFFSET_CAPTURE, $offset) !== 1) {
             return null;
         }
 
-        // UTF-32 uses 4 bytes for every character; divide by 4 to get character
-        // offsets.
-        $length = $pos[1] / 4;
-        $pos = [
-            'start' => $pos[0] / 4,
-        ];
-        $pos['end'] = $pos['start'] + $length;
-
-        $match = mb_ereg_search_getregs();
-        // Convert the matches back to the original encoding.
-        foreach ($match as &$m) {
-            $m = mb_convert_encoding($m, $this->encoding, 'UTF-32');
-        }
-
-        $match['offset'] = $pos;
         return $match;
     }
 
@@ -93,13 +65,33 @@ class Tokenizer {
         $currentRulesCount = count($currentRules);
         $results = [];
         $line = $inputLine;
+        $lineLength = strlen($line);
 
         for ($i = 0; $i < $currentRulesCount; $i++) {
             while (true) {
                 $rule = $currentRules[$i];
                 if ($rule instanceof Pattern) {
                     if ($match = $this->getMatch($rule->match, $line, $offset)) {
-                        $offset = $match['offset']['end'];
+                        $tokens = [];
+                        unset($match[0]);
+                        foreach ($match as $k => $m) {
+                            if ($m[1] > $offset) {
+                                $tokens[] = [
+                                    'scope' => $this->scopeStack,
+                                    'string' => substr($line, $offset, $m[1])
+                                ];
+                                $offset = $m[1];
+                            }
+
+                            $tokens[] = [
+                                'scope' => [ ...$this->scopeStack, $rule->captures[$k]->name ],
+                                'string' => $m[0]
+                            ];
+                            $offset = $m[1] + strlen($m[0]);
+                        }
+
+                        echo "\n";
+                        die(var_export($tokens));
                     }
                 } elseif ($rule instanceof Reference && $obj = $rule->get()) {
                     if ($obj instanceof PatternList) {

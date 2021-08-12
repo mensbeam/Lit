@@ -191,8 +191,8 @@ class Grammar {
                 throw new Exception(Exception::JSON_MISSING_PROPERTY, $filename, 'end');
             }
 
-            $begin = $pattern['begin'];//str_replace('/', '\/', $pattern['begin']);
-            $p['match'] = $begin;//"/$begin/";
+            $begin = str_replace('/', '\/', $pattern['begin']);
+            $p['match'] = "/$begin/u";
             $modified = true;
 
             if (isset($pattern['beginCaptures'])) {
@@ -209,7 +209,7 @@ class Grammar {
             }
 
             $endPattern = [
-                'match' => $pattern['end'],//"/" . str_replace('/', '\/', $pattern['end']) . "/",
+                'match' => '/' . str_replace('/', '\/', $pattern['end']) . '/u',
                 'endPattern' => true
             ];
 
@@ -236,8 +236,8 @@ class Grammar {
                     $modified = true;
                 break;
                 case 'match':
-                    //$value = str_replace('/', '\/', $value);
-                    $p['match'] = $value;//"/$value/";
+                    $value = str_replace('/', '\/', $value);
+                    $p['match'] = "/$value/u";
                     $modified = true;
                 break;
                 case 'captures':

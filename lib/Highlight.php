@@ -9,30 +9,26 @@ use dW\Lit\Grammar\Exception;
 
 
 class Highlight {
-    public static function withFile(string $filepath, string $scopeName, string $encoding = 'UTF-8') {
-        return self::highlight(Data::fileToGenerator($filepath, $encoding), $scopeName, $encoding);
+    public static function withFile(string $filepath, string $scopeName) {
+        return self::highlight(Data::fileToGenerator($filepath), $scopeName);
     }
 
-    public static function withString(string $string, string $scopeName, string $encoding = 'UTF-8') {
-        return self::highlight(Data::stringToGenerator($string, $encoding), $scopeName, $encoding);
+    public static function withString(string $string, string $scopeName) {
+        return self::highlight(Data::stringToGenerator($string), $scopeName);
     }
 
 
-    protected static function highlight(\Generator $data, string $scopeName, string $encoding) {
+    protected static function highlight(\Generator $data, string $scopeName) {
         $grammar = GrammarRegistry::get($scopeName);
         if ($grammar === false) {
             throw new Exception(Exception::GRAMMAR_MISSING, $scopeName);
         }
 
-        mb_regex_encoding('UTF-32');
-
-        $tokenizer = new Tokenizer($data, $grammar, $encoding);
+        $tokenizer = new Tokenizer($data, $grammar);
         $tokenList = $tokenizer->tokenize();
 
         foreach ($tokenList as $lineNumber => $line) {
             echo "$lineNumber: $line\n";
         }
-
-        mb_regex_encoding();
     }
 }

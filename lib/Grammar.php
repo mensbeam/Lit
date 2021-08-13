@@ -29,7 +29,7 @@ use dW\Lit\Grammar\{
  */
 class Grammar {
     use FauxReadOnly;
-    protected ?string $_contentRegex;
+    protected ?string $_contentName;
     protected ?string $_firstLineMatch;
     protected ?InjectionList $_injections;
     protected ?string $_name;
@@ -37,14 +37,12 @@ class Grammar {
     protected ?PatternList $_patterns;
     protected ?Repository $_repository;
     protected ?string $_scopeName;
-    protected ?string $_contentScopeName;
 
 
-    public function __construct(?string $scopeName = null, ?string $contentScopeName = null, ?PatternList $patterns = null, ?string $name = null, ?string $contentRegex = null, ?string $firstLineMatch = null, ?InjectionList $injections = null, ?Repository $repository = null, ?Grammar $ownerGrammar = null) {
+    public function __construct(?string $scopeName = null, ?PatternList $patterns = null, ?string $name = null, ?string $firstLineMatch = null, ?InjectionList $injections = null, ?Repository $repository = null, ?Grammar $ownerGrammar = null) {
         $this->_name = $name;
         $this->_scopeName = $scopeName;
         $this->_patterns = $patterns;
-        $this->_contentRegex = $contentRegex;
         $this->_firstLineMatch = $firstLineMatch;
         $this->_injections = $injections;
         $this->_repository = $repository;
@@ -98,14 +96,6 @@ class Grammar {
 
         $this->_name = $json['name'] ?? null;
         $this->_scopeName = $json['scopeName'];
-        $this->_contentScopeName = $json['contentScopeName'] ?? null;
-
-        if (isset($json['contentRegex'])) {
-            $value = str_replace('/', '\/', $json['contentRegex']);
-            $this->_contentRegex = $value;
-        } else {
-            $this->_contentRegex = null;
-        }
 
         if (isset($json['firstLineMatch'])) {
             $value = str_replace('/', '\/', $json['firstLineMatch']);
@@ -164,7 +154,6 @@ class Grammar {
         $p = [
             'ownerGrammar' => $this,
             'name' => null,
-            'contentName' => null,
             'match' => null,
             'patterns' => null,
             'captures' => null,
@@ -231,7 +220,6 @@ class Grammar {
         foreach ($pattern as $key => $value) {
             switch ($key) {
                 case 'name':
-                case 'contentName':
                     $p[$key] = $value;
                     $modified = true;
                 break;

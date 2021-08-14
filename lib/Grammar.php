@@ -157,7 +157,7 @@ class Grammar {
             'match' => null,
             'patterns' => null,
             'captures' => null,
-            'endPattern' => false
+            'endPattern' => (isset($pattern['endPattern']) && $pattern['endPattern'])
         ];
 
         $modified = false;
@@ -198,7 +198,7 @@ class Grammar {
             }
 
             $endPattern = [
-                'match' => '/' . str_replace('/', '\/', $pattern['end']) . '/u',
+                'match' => $pattern['end'],
                 'endPattern' => true
             ];
 
@@ -219,15 +219,6 @@ class Grammar {
 
         foreach ($pattern as $key => $value) {
             switch ($key) {
-                case 'name':
-                    $p[$key] = $value;
-                    $modified = true;
-                break;
-                case 'match':
-                    $value = str_replace('/', '\/', $value);
-                    $p['match'] = "/$value/u";
-                    $modified = true;
-                break;
                 case 'captures':
                     if (!is_array($value)) {
                         throw new Exception(Exception::JSON_INVALID_TYPE, 'Array', $key, gettype($value), $filename);
@@ -254,6 +245,15 @@ class Grammar {
                     }, array_values($value));
 
                     $p[$key] = new CaptureList(array_combine($k, $v));
+                    $modified = true;
+                break;
+                case 'match':
+                    $value = str_replace('/', '\/', $value);
+                    $p['match'] = "/$value/u";
+                    $modified = true;
+                break;
+                case 'name':
+                    $p[$key] = $value;
                     $modified = true;
                 break;
                 case 'patterns':

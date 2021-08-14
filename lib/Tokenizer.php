@@ -15,8 +15,10 @@ use dW\Lit\Grammar\{
 class Tokenizer {
     protected \Generator $data;
     protected Grammar $grammar;
+    protected int $offset = 0;
     protected array $ruleStack;
     protected array $scopeStack;
+    protected $debug = false;
 
 
     public function __construct(\Generator $data, Grammar $grammar) {
@@ -28,37 +30,35 @@ class Tokenizer {
 
 
     public function tokenize(): \Generator {
-        $appendNewLine = true;
-        foreach ($this->data as $lineNumber => $inputLine) {
-            yield $lineNumber => $this->_tokenize($inputLine);
-            /*$line = $inputLine;
-            $lineWithNewLine = ($appendNewLine) ? "$line\n" : $line;
-            $initialStackRuleLength = count($this->ruleStack);
-            $position = 0;
-            $tokenCount = 0;
+        foreach ($this->data as $lineNumber => $line) {
+            $this->offset = 0;
+            $tokens = $this->tokenizeLine($line);
 
-            while (true) {
-                $initialStackRuleLength = count($this->ruleStack);
-                $previousPosition = $position;
-                if ($position > mb_strlen($line)) {
-                    break;
-                }
-            }*/
+            // If after tokenizing the line the entire line still hasn't been tokenized then
+            // create a token of the rest of the line.
+            $lineLength = strlen($line);
+            if ($this->offset < $lineLength) {
+                $tokens[] = new Token(
+                    $this->scopeStack,
+                    substr($line, $this->offset, $lineLength)
+                );
+            }
+            
+            yield $lineNumber => $tokens;
         }
     }
 
 
-    protected function getMatch(string $regex, string $line, int $offset = 0): ?array {
-        if (preg_match($regex, $line, $match, PREG_OFFSET_CAPTURE, $offset) !== 1) {
+    protected function getMatch(string $regex, string $line): ?array {
+        if (preg_match($regex, $line, $match, PREG_OFFSET_CAPTURE, $this->offset) !== 1) {
             return null;
         }
 
         return $match;
     }
 
-    protected function _tokenize(string $line, int &$offset = 0): array {
+    protected function tokenizeLine(string $line): array {
         $tokens = [];
-        $lineLength = strlen($line);
 
         while (true) {
             $currentRules = end($this->ruleStack)->patterns->getIterator();
@@ -69,11 +69,7 @@ class Tokenizer {
                     $rule = $currentRules[$i];
                     // If the rule is a Pattern and matches the line at the offset then tokenize the
                     // matches.
-                    if ($rule instanceof Pattern && $match = $this->getMatch($rule->match, $line, $offset)) {
-                        // First, remove the first entry in the match, the full
-                        // match, leaving only the subpatterns.
-                        //unset($match[0]);
-
+                    if ($rule instanceof Pattern && $match = $this->getMatch($rule->match, $line)) {
                         // Add the name and contentName to the scope stack
                         // if present.
                         if ($rule->name !== null) {
@@ -93,8 +89,8 @@ class Tokenizer {
                                 }
 
                                 // If the subpattern begins after the offset then create a token from the bits
-                                // of the line in-between.
-                                if ($m[1] > $offset) {
+                                // of the line in-between the last token and the one about to be created.
+                                if ($m[1] > $this->offset) {
                                     $scopeStack = $this->scopeStack;
                                     // If this is the first capture, then the scopes added to the stack need to be
                                     // removed from this token's scope stack as this will grab everything before
@@ -108,11 +104,11 @@ class Tokenizer {
                                         }
                                     }
 
-                                    $tokens[] = [
-                                        'scopes' => $scopeStack,
-                                        'string' => substr($line, $offset, $m[1])
-                                    ];
-                                    $offset = $m[1];
+                                    $tokens[] = new Token(
+                                        $scopeStack,
+                                        substr($line, $this->offset, $m[1])
+                                    );
+                                    $this->offset = $m[1];
                                 }
 
                                 // The first match is the whole match, and if there are captures for it the name
@@ -150,7 +146,7 @@ class Tokenizer {
                                         }
                                     }
 
-                                    $tokens = [ ...$tokens, ...$this->_tokenize($line, $offset) ];
+                                    $tokens = [ ...$tokens, ...$this->tokenizeLine($line) ];
 
                                     // The scope stack for the whole match is handled above, so only handle that for
                                     // other captures.
@@ -165,19 +161,21 @@ class Tokenizer {
 
                                     array_pop($this->ruleStack);
                                 } else {
-                                    $tokens[] = [
-                                        'scopes' => [ ...$this->scopeStack, $rule->captures[$k]->name ],
-                                        'string' => $m[0]
-                                    ];
+                                    $tokens[] = new Token(
+                                        [ ...$this->scopeStack, $rule->captures[$k]->name ],
+                                        $m[0]
+                                    );
                                 }
 
-                                $offset = $m[1] + strlen($m[0]);
+                                $this->offset = $m[1] + strlen($m[0]);
                                 $firstCapture = false;
                             }
                         }
 
+                        $this->ruleStack[] = $rule;
+
                         if ($rule->patterns !== null) {
-                            $tokens = [ ...$tokens, ...$this->_tokenize($line, $offset) ];
+                            $tokens = [ ...$tokens, ...$this->tokenizeLine($line) ];
                         }
 
                         // Remove the name and contentName from the scope stack if present.
@@ -197,9 +195,6 @@ class Tokenizer {
 
                         // And remove the rule from the rule stack, too.
                         array_pop($this->ruleStack);
-
-                        echo "\n";
-                        die(var_export($tokens));
                         break 2;
                     }
                     // Otherwise, if the rule is a Reference then retrieve its patterns, splice into

@@ -10,16 +10,17 @@ use dW\Lit\Grammar;
 
 /** Contains patterns responsible for matching a portion of the document */
 class Pattern extends Rule {
-    protected ?CaptureList $_captures;
+    protected ?array $_captures;
     protected ?string $_contentName;
     protected bool $_endPattern = false;
     protected ?string $_match;
     protected ?string $_name;
+    protected bool $_nameNeedsResolving = false;
     protected \WeakReference $_ownerGrammar;
-    protected ?PatternList $_patterns;
+    protected ?array $_patterns;
 
 
-    public function __construct(Grammar $ownerGrammar, ?string $name = null, ?string $contentName = null, ?string $match = null, ?PatternList $patterns = null, ?CaptureList $captures = null, bool $endPattern = false) {
+    public function __construct(Grammar $ownerGrammar, ?string $name = null, ?string $contentName = null, ?string $match = null, ?array $patterns = null, ?array $captures = null, bool $endPattern = false) {
         $this->_name = $name;
         $this->_contentName = $contentName;
         $this->_match = $match;

@@ -7,17 +7,12 @@ declare(strict_types=1);
 namespace dW\Lit;
 use dW\Lit\Grammar\{
     BaseReference,
-    CaptureList,
     ChildGrammarRegistry,
     Exception,
     FauxReadOnly,
     GrammarReference,
-    InjectionList,
-    Node,
     Pattern,
-    PatternList,
     Reference,
-    Repository,
     RepositoryReference,
     SelfReference
 };
@@ -31,15 +26,15 @@ class Grammar {
     use FauxReadOnly;
     protected ?string $_contentName;
     protected ?string $_firstLineMatch;
-    protected ?InjectionList $_injections;
+    protected ?array $_injections;
     protected ?string $_name;
     protected ?\WeakReference $_ownerGrammar;
-    protected ?PatternList $_patterns;
-    protected ?Repository $_repository;
+    protected ?array $_patterns;
+    protected ?array $_repository;
     protected ?string $_scopeName;
 
 
-    public function __construct(?string $scopeName = null, ?PatternList $patterns = null, ?string $name = null, ?string $firstLineMatch = null, ?InjectionList $injections = null, ?Repository $repository = null, ?Grammar $ownerGrammar = null) {
+    public function __construct(?string $scopeName = null, ?array $patterns = null, ?string $name = null, ?string $firstLineMatch = null, ?array $injections = null, ?array $repository = null, ?Grammar $ownerGrammar = null) {
         $this->_name = $name;
         $this->_scopeName = $scopeName;
         $this->_patterns = $patterns;
@@ -57,19 +52,24 @@ class Grammar {
 
         $new = clone $this;
         if ($new->_patterns !== null) {
-            $new->_patterns = $new->_patterns->withOwnerGrammar($new);
+            foreach ($new->_patterns as &$p) {
+                $p = $p->withOwnerGrammar($new);
+            }
         }
 
         if ($new->_injections !== null) {
-            $new->_injections = $new->_injections->withOwnerGrammar($new);
+            foreach ($new->_injections as &$i) {
+                $i = $i->withOwnerGrammar($new);
+            }
         }
 
         if ($new->_repository !== null) {
-            $new->_repository = $new->_repository->withOwnerGrammar($new);
+            foreach ($new->_repository as &$r) {
+                $r = $r->withOwnerGrammar($new);
+            }
         }
 
         $new->_ownerGrammar = \WeakReference::create($ownerGrammar);
-
         ChildGrammarRegistry::set($this->_scopeName, $new);
         return $new;
     }
@@ -110,12 +110,7 @@ class Grammar {
             foreach ($json['repository'] as $key => $r) {
                 $repository[$key] = $this->parseJSONPattern($r, $filename);
             }
-
-            if (count($repository) > 0) {
-                $repository = new Repository($repository);
-            } else {
-                $repository = null;
-            }
+            $repository = (count($repository) > 0) ? $repository : null;
         }
         $this->_repository = $repository;
 
@@ -127,12 +122,7 @@ class Grammar {
             foreach ($json['injections'] as $key => $injection) {
                 $injections[$key] = $this->parseJSONPattern($injection, $filename);
             }
-
-            if (count($injections) > 0) {
-                $injections = new InjectionList($injections);
-            } else {
-                $injections = null;
-            }
+            $injections = (count($injections) > 0) ? $injections : null;
         }
         $this->_injections = $injections;
     }
@@ -154,6 +144,7 @@ class Grammar {
         $p = [
             'ownerGrammar' => $this,
             'name' => null,
+            'contentName' => null,
             'match' => null,
             'patterns' => null,
             'captures' => null,
@@ -173,8 +164,9 @@ class Grammar {
         }
 
         // Begin and end matches are handled in this implementation by parsing begin
-        // matches as regular matches and appending the end match as a pattern to the
-        // end of the pattern's patterns.
+        // matches as regular matches and appending the end match as a pattern
+        // to the the pattern's patterns with an end pattern flag turned on
+        // which is used to exit matching.
         if (isset($pattern['begin'])) {
             if (!isset($pattern['end'])) {
                 throw new Exception(Exception::JSON_MISSING_PROPERTY, $filename, 'end');
@@ -244,7 +236,7 @@ class Grammar {
                         return $this->parseJSONPattern($n, $filename);
                     }, array_values($value));
 
-                    $p[$key] = new CaptureList(array_combine($k, $v));
+                    $p[$key] = array_combine($k, $v);
                     $modified = true;
                 break;
                 case 'match':
@@ -252,6 +244,7 @@ class Grammar {
                     $p['match'] = "/$value/u";
                     $modified = true;
                 break;
+                case 'contentName':
                 case 'name':
                     $p[$key] = $value;
                     $modified = true;
@@ -270,7 +263,7 @@ class Grammar {
         return ($modified) ? new Pattern(...$p) : null;
     }
 
-    protected function parseJSONPatternList(array $list, string $filename): ?PatternList {
+    protected function parseJSONPatternList(array $list, string $filename): ?array {
         $result = [];
         foreach ($list as $pattern) {
             $p = $this->parseJSONPattern($pattern, $filename);
@@ -279,6 +272,6 @@ class Grammar {
             }
         }
 
-        return (count($result) > 0) ? new PatternList(...$result) : null;
+        return (count($result) > 0) ? $result : null;
     }
 }

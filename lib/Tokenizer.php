@@ -43,25 +43,31 @@ class Tokenizer {
                     substr($line, $this->offset, $lineLength)
                 );
             }
-            
+
             yield $lineNumber => $tokens;
         }
     }
 
 
-    protected function getMatch(string $regex, string $line): ?array {
-        if (preg_match($regex, $line, $match, PREG_OFFSET_CAPTURE, $this->offset) !== 1) {
-            return null;
-        }
-
-        return $match;
+    protected function resolveScopeName(string $scopeName, array $match): string {
+        return preg_replace_callback('/\$(\d+)|\${(\d+):\/(downcase|upcase)}/', function($m) use ($match) {
+            $replacement = $match[(int)$m[1]][0] ?? $m[1];
+            $command = $m[2] ?? null;
+            switch ($command) {
+                case 'downcase': return strtolower($replacement);
+                break;
+                case 'upcase': return strtoupper($replacement);
+                break;
+                default: return $replacement;
+            }
+        }, $scopeName);
     }
 
     protected function tokenizeLine(string $line): array {
         $tokens = [];
 
         while (true) {
-            $currentRules = end($this->ruleStack)->patterns->getIterator();
+            $currentRules = end($this->ruleStack)->patterns;
             $currentRulesCount = count($currentRules);
 
             for ($i = 0; $i < $currentRulesCount; $i++) {
@@ -69,14 +75,14 @@ class Tokenizer {
                     $rule = $currentRules[$i];
                     // If the rule is a Pattern and matches the line at the offset then tokenize the
                     // matches.
-                    if ($rule instanceof Pattern && $match = $this->getMatch($rule->match, $line)) {
+                    if ($rule instanceof Pattern && preg_match($rule->match, $line, $match, PREG_OFFSET_CAPTURE, $this->offset)) {
                         // Add the name and contentName to the scope stack
                         // if present.
                         if ($rule->name !== null) {
-                            $this->scopeStack[] = $rule->name;
+                            $this->scopeStack[] = $this->resolveScopeName($rule->name, $match);
                         }
                         if ($rule->contentName !== null) {
-                            $this->scopeStack[] = $rule->contentName;
+                            $this->scopeStack[] = $this->resolveScopeName($rule->contentName, $match);
                         }
 
                         $wholeMatchCaptureScopeCount = 0;
@@ -121,11 +127,11 @@ class Tokenizer {
                                     }
 
                                     if ($rule->captures[0]->name !== null) {
-                                        $this->scopeStack[] = $rule->captures[0]->name;
+                                        $this->scopeStack[] = $this->resolveScopeName($rule->captures[0]->name, $match);
                                         $wholeMatchCaptureScopeCount++;
                                     }
                                     if ($rule->captures[0]->contentName !== null) {
-                                        $this->scopeStack[] = $rule->captures[0]->contentName;
+                                        $this->scopeStack[] = $this->resolveScopeName($rule->captures[0]->contentName, $match);
                                         $wholeMatchCaptureScopeCount++;
                                     }
                                 }
@@ -138,11 +144,11 @@ class Tokenizer {
                                     // The scope stack for the whole match is handled above, so only handle that for
                                     // other captures.
                                     if ($k !== 0) {
-                                        if ($rule->captures->name !== null) {
-                                            $this->scopeStack[] = $rule->captures[$k]->name;
+                                        if ($rule->captures[$k]->name !== null) {
+                                            $this->scopeStack[] = $this->resolveScopeName($rule->captures[$k]->name, $match);
                                         }
-                                        if ($rule->captures->contentName !== null) {
-                                            $this->scopeStack[] = $rule->captures[$k]->contentName;
+                                        if ($rule->captures[$k]->contentName !== null) {
+                                            $this->scopeStack[] = $this->resolveScopeName($rule->captures[$k]->contentName, $match);
                                         }
                                     }
 
@@ -162,7 +168,7 @@ class Tokenizer {
                                     array_pop($this->ruleStack);
                                 } else {
                                     $tokens[] = new Token(
-                                        [ ...$this->scopeStack, $rule->captures[$k]->name ],
+                                        [ ...$this->scopeStack, $this->resolveScopeName($rule->captures[$k]->name, $match) ],
                                         $m[0]
                                     );
                                 }
@@ -200,10 +206,8 @@ class Tokenizer {
                     // Otherwise, if the rule is a Reference then retrieve its patterns, splice into
                     // the rule list, and reprocess the rule.
                     elseif ($rule instanceof Reference && $obj = $rule->get()) {
-                        if ($obj instanceof PatternList) {
-                            $obj = $obj->getIterator();
-                        } elseif ($obj instanceof Grammar) {
-                            $obj = $obj->patterns->getIterator();
+                        if ($obj instanceof Grammar) {
+                            $obj = $obj->patterns;
                         }
 
                         array_splice($currentRules, $i, 1, $obj);

@@ -89,7 +89,6 @@ class Tokenizer {
             $currentRules = end($this->ruleStack)->patterns;
             $currentRulesCount = count($currentRules);
 
-
             for ($i = 0; $i < $currentRulesCount; $i++) {
                 while (true) {
                     $rule = $currentRules[$i];
@@ -248,15 +247,12 @@ class Tokenizer {
             if ($this->activeInjection === null && $this->grammar->injections !== null) {
                 foreach ($this->grammar->injections as $selector => $injection) {
                     $selector = ScopeParser::parseSelector($selector);
-                    if ($selector->matches($this->scopeStack)) {
-                        $prefix = $selector->getPrefix($this->scopeStack);
-                        if ($prefix !== Filter::PREFIX_LEFT) {
-                            $this->ruleStack[] = $injection;
-                            $this->activeInjection = $injection;
+                    if ($selector->matches($this->scopeStack) && $selector->getPrefix($this->scopeStack) !== Filter::PREFIX_LEFT) {
+                        $this->ruleStack[] = $injection;
+                        $this->activeInjection = $injection;
 
-                            if ($this->offset < $lineLength) {
-                                continue 2;
-                            }
+                        if ($this->offset < $lineLength) {
+                            continue 2;
                         }
                     }
                 }

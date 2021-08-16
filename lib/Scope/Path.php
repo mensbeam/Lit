@@ -34,6 +34,12 @@ class Path extends Node {
         $index = 0;
         $cur = $this->_scopes[$index];
         foreach ($scopes as $s) {
+            if (is_string($s)) {
+                $s = Parser::parseScope($s);
+            } elseif (!$s instanceof Scope) {
+                throw new \Exception('Argument $scopes must be an array of strings or instances of '. __NAMESPACE__. "\\Scope.\n");
+            }
+
             if ($cur->matches($s)) {
                 $cur = $this->_scopes[++$index] ?? null;
             }

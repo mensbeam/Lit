@@ -16,23 +16,11 @@ class Selector extends Node {
 
 
     public function getPrefix(array $scopes): ?int {
-        foreach ($scopes as $s) {
-            if (!$s instanceof Scope) {
-                throw new \Exception("Argument \$scopes must be an array of Scope instances.\n");
-            }
-        }
-
         $matches = $this->matches($scopes, $match);
         return ($matches) ? $match->getPrefix($scopes) : null;
     }
 
     public function matches(array $scopes, ?Composite &$match = null): bool {
-        foreach ($scopes as $s) {
-            if (!$s instanceof Scope) {
-                throw new \Exception("Argument \$scopes must be an array of Scope instances.\n");
-            }
-        }
-
         foreach ($this->_composites as $composite) {
             if ($composite->matches($scopes)) {
                 $match = $composite;

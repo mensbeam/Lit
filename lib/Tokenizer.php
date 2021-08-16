@@ -5,10 +5,13 @@
 
 declare(strict_types=1);
 namespace dW\Lit;
-use dW\Lit\Scope\Parser as ScopeParser;
 use dW\Lit\Grammar\{
         Pattern,
         Reference
+};
+use dW\Lit\Scope\{
+    Filter,
+    Parser as ScopeParser
 };
 
 
@@ -16,6 +19,7 @@ class Tokenizer {
     protected \Generator $data;
     protected Grammar $grammar;
     protected int $offset = 0;
+    protected ?Pattern $activeInjection = null;
     protected array $ruleStack;
     protected array $scopeStack;
     protected $debug = false;
@@ -65,14 +69,31 @@ class Tokenizer {
 
     protected function tokenizeLine(string $line): array {
         $tokens = [];
+        $lineLength = strlen($line);
+
+        if ($this->activeInjection === null && $this->grammar->injections !== null) {
+            foreach ($this->grammar->injections as $selector => $injection) {
+                $selector = ScopeParser::parseSelector($selector);
+                if ($selector->matches($this->scopeStack)) {
+                    $prefix = $selector->getPrefix($this->scopeStack);
+                    if ($prefix === Filter::PREFIX_LEFT || $prefix === Filter::PREFIX_BOTH) {
+                        $this->scopeStack[] = $injection;
+                        $this->activeInjection = $injection;
+                        break;
+                    }
+                }
+            }
+        }
 
         while (true) {
             $currentRules = end($this->ruleStack)->patterns;
             $currentRulesCount = count($currentRules);
 
+
             for ($i = 0; $i < $currentRulesCount; $i++) {
                 while (true) {
                     $rule = $currentRules[$i];
+
                     // If the rule is a Pattern and matches the line at the offset then tokenize the
                     // matches.
                     if ($rule instanceof Pattern && preg_match($rule->match, $line, $match, PREG_OFFSET_CAPTURE, $this->offset)) {
@@ -200,7 +221,12 @@ class Tokenizer {
                         }
 
                         // And remove the rule from the rule stack, too.
-                        array_pop($this->ruleStack);
+                        $popped = array_pop($this->ruleStack);
+                        // If what was just popped is the active injection then remove it, too.
+                        if ($popped === $this->activeInjection) {
+                            $this->activeInjection = null;
+                        }
+
                         break 2;
                     }
                     // Otherwise, if the rule is a Reference then retrieve its patterns, splice into
@@ -216,6 +242,23 @@ class Tokenizer {
                     }
 
                     break;
+                }
+            }
+
+            if ($this->activeInjection === null && $this->grammar->injections !== null) {
+                foreach ($this->grammar->injections as $selector => $injection) {
+                    $selector = ScopeParser::parseSelector($selector);
+                    if ($selector->matches($this->scopeStack)) {
+                        $prefix = $selector->getPrefix($this->scopeStack);
+                        if ($prefix !== Filter::PREFIX_LEFT) {
+                            $this->ruleStack[] = $injection;
+                            $this->activeInjection = $injection;
+
+                            if ($this->offset < $lineLength) {
+                                continue 2;
+                            }
+                        }
+                    }
                 }
             }
 

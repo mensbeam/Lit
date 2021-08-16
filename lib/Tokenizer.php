@@ -7,7 +7,8 @@ declare(strict_types=1);
 namespace dW\Lit;
 use dW\Lit\Grammar\{
         Pattern,
-        Reference
+        Reference,
+        RepositoryReference
 };
 use dW\Lit\Scope\{
     Filter,
@@ -231,11 +232,12 @@ class Tokenizer {
                     // Otherwise, if the rule is a Reference then retrieve its patterns, splice into
                     // the rule list, and reprocess the rule.
                     elseif ($rule instanceof Reference && $obj = $rule->get()) {
-                        if ($obj instanceof Grammar) {
+                        if ($obj instanceof Grammar || $rule instanceof RepositoryReference) {
                             $obj = $obj->patterns;
                         }
 
                         array_splice($currentRules, $i, 1, $obj);
+
                         $currentRulesCount = count($currentRules);
                         continue;
                     }

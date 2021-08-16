@@ -20,6 +20,7 @@ abstract class Rule {
         $this->_ownerGrammar = \WeakReference::create($ownerGrammar);
     }
 
+
     // Used when adopting to change the $ownerGrammar property.
     public function withOwnerGrammar(Grammar $ownerGrammar): self {
         $new = clone $this;

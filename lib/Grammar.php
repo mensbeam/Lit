@@ -172,8 +172,6 @@ class Grammar {
                 throw new Exception(Exception::JSON_MISSING_PROPERTY, $filename, 'end');
             }
 
-            $begin = str_replace('/', '\/', $pattern['begin']);
-            $p['match'] = "/$begin/u";
             $modified = true;
 
             if (isset($pattern['beginCaptures'])) {
@@ -239,9 +237,15 @@ class Grammar {
                     $p[$key] = array_combine($k, $v);
                     $modified = true;
                 break;
+                case 'begin':
                 case 'match':
                     $value = str_replace('/', '\/', $value);
+                    $value = preg_replace_callback('/\\\(x|o)\{([0-9a-fA-F]{5,})\}/', function($matches) {
+                        $code = substr($matches[2], 0, 4);
+                        return "\\{$matches[1]}{"."$code}";
+                    }, $value);
                     $p['match'] = "/$value/u";
+
                     $modified = true;
                 break;
                 case 'contentName':

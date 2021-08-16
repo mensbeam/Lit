@@ -15,7 +15,6 @@ class Pattern extends Rule {
     protected bool $_endPattern = false;
     protected ?string $_match;
     protected ?string $_name;
-    protected bool $_nameNeedsResolving = false;
     protected \WeakReference $_ownerGrammar;
     protected ?array $_patterns;
 
@@ -28,5 +27,17 @@ class Pattern extends Rule {
         $this->_captures = $captures;
         $this->_endPattern = $endPattern;
         $this->_ownerGrammar = ($ownerGrammar === null) ? null : \WeakReference::create($ownerGrammar);
+    }
+
+    // Used when adopting to change the $ownerGrammar property.
+    public function withOwnerGrammar(Grammar $ownerGrammar): self {
+        $new = parent::withOwnerGrammar($ownerGrammar);
+        if ($new->_patterns !== null) {
+            foreach ($new->_patterns as &$p) {
+                $p = $p->withOwnerGrammar($ownerGrammar);
+            }
+        }
+        
+        return $new;
     }
 }

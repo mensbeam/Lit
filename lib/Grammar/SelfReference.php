@@ -7,10 +7,7 @@ declare(strict_types=1);
 namespace dW\Lit\Grammar;
 use dW\Lit\Grammar;
 
-/**
- * A weak reference to a grammar's self. This indeed doesn't have to exist, but
- * exists to maintain sanity when checking types.
- */
+/** A weak reference to a grammar's self. */
 class SelfReference extends Reference {
     public function __construct(Grammar $grammar) {
         parent::__construct($grammar);

@@ -241,10 +241,12 @@ class Grammar {
                 case 'begin':
                     $p['beginPattern'] = true;
                 case 'match':
-                    $value = str_replace('/', '\/', $value);
-                    $value = preg_replace_callback('/\\\(x|o)\{([0-9a-fA-F]{5,})\}/', function($matches) {
-                        $code = substr($matches[2], 0, 4);
-                        return "\\{$matches[1]}{"."$code}";
+                    // Escape forward slashes that aren't escaped in regexes.
+                    $value = preg_replace('/(?<!\\\)\//', '\/', $value);
+                    // Truncate unicode character codes that are too long.
+                    $value = preg_replace_callback('/\\\x\{([0-9A-Fa-f]{6,})\}/', function($matches) {
+                        $code = ((int)base_convert($matches[1], 16, 10) > 0x10ffff) ? '10ffff' : $matches[1];
+                        return "\\x{"."$code}";
                     }, $value);
                     $p['match'] = "/$value/u";
 

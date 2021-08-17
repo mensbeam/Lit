@@ -95,12 +95,16 @@ class Tokenizer {
                 while (true) {
                     $rule = $currentRules[$i];
 
+                    if ($rule instanceof Pattern) {
+                        echo "Match: {$rule->match}\n\n";
+                    }
+
                     // If the rule is a Pattern and matches the line at the offset then tokenize the
                     // matches.
                     if ($rule instanceof Pattern && preg_match($rule->match, $line, $match, PREG_OFFSET_CAPTURE, $this->offset)) {
                         // ¡TEMPORARY! Haven't implemented begin and end line
                         // anchors, so let's toss them completely.
-                        if (preg_match('/\\\(?:A|G)/', $rule->match)) {
+                        if (preg_match('/\\\(?:A|G|Z)/', $rule->match)) {
                             continue 2;
                         }
 
@@ -108,9 +112,6 @@ class Tokenizer {
                         // if present.
                         if ($rule->name !== null) {
                             $this->scopeStack[] = $this->resolveScopeName($rule->name, $match);
-                        }
-                        if ($rule->contentName !== null) {
-                            $this->scopeStack[] = $this->resolveScopeName($rule->contentName, $match);
                         }
 
                         if ($rule->captures !== null) {
@@ -128,13 +129,8 @@ class Tokenizer {
                                     // If this is the first capture, then the scopes added to the stack need to be
                                     // removed from this token's scope stack as this will grab everything before
                                     // this match began.
-                                    if ($k === 0) {
-                                        if ($rule->contentName !== null) {
-                                            array_pop($scopeStack);
-                                        }
-                                        if ($rule->name !== null) {
-                                            array_pop($scopeStack);
-                                        }
+                                    if ($k === 0 && $rule->name !== null) {
+                                        array_pop($scopeStack);
                                     }
 
                                     $tokens[] = new Token(
@@ -144,20 +140,8 @@ class Tokenizer {
                                     $this->offset = $m[1];
                                 }
 
-                                // The first match is the whole match, and if there are captures for it the name
-                                // and contentName should be added to the stack regardless of whether it has
-                                // patterns or not.
-                                if ($k === 0) {
-                                    if (!isset($rule->captures[0])) {
-                                        continue;
-                                    }
-
-                                    if ($rule->captures[0]->name !== null) {
-                                        $this->scopeStack[] = $this->resolveScopeName($rule->captures[0]->name, $match);
-                                    }
-                                    if ($rule->captures[0]->contentName !== null) {
-                                        $this->scopeStack[] = $this->resolveScopeName($rule->captures[0]->contentName, $match);
-                                    }
+                                if ($k === 0 && !isset($rule->captures[0])) {
+                                    continue;
                                 }
 
                                 // If the capture rule has patterns of its own then
@@ -165,29 +149,11 @@ class Tokenizer {
                                 if ($rule->captures[$k]->patterns !== null) {
                                     $this->ruleStack[] = $rule->captures[$k];
 
-                                    // The scope stack for the whole match is handled above, so only handle that for
-                                    // other captures.
-                                    if ($k > 0) {
-                                        if ($rule->captures[$k]->name !== null) {
-                                            $this->scopeStack[] = $this->resolveScopeName($rule->captures[$k]->name, $match);
-                                        }
-                                        if ($rule->captures[$k]->contentName !== null) {
-                                            $this->scopeStack[] = $this->resolveScopeName($rule->captures[$k]->contentName, $match);
-                                        }
+                                    if ($rule->captures[$k]->name !== null) {
+                                        $this->scopeStack[] = $this->resolveScopeName($rule->captures[$k]->name, $match);
                                     }
 
                                     $tokens = [ ...$tokens, ...$this->tokenizeLine($line) ];
-
-                                    // The scope stack for the whole match is handled above, so only handle that for
-                                    // other captures.
-                                    if ($k > 0) {
-                                        if ($rule->captures[$k]->contentName !== null) {
-                                            array_pop($this->scopeStack);
-                                        }
-                                        if ($rule->captures[$k]->name !== null) {
-                                            array_pop($this->scopeStack);
-                                        }
-                                    }
 
                                     array_pop($this->ruleStack);
                                 } else {
@@ -195,13 +161,8 @@ class Tokenizer {
                                     // and content names if they exist to the token's scope stack but not to the
                                     // global one.
                                     $scopeStack = $this->scopeStack;
-                                    if ($k > 0) {
-                                        if ($rule->captures[$k]->name !== null) {
-                                            $scopeStack[] = $this->resolveScopeName($rule->captures[$k]->name, $match);
-                                        }
-                                        if ($rule->captures[$k]->contentName !== null) {
-                                            $scopeStack[] = $this->resolveScopeName($rule->captures[$k]->contentName, $match);
-                                        }
+                                    if ($rule->captures[$k]->name !== null) {
+                                        $scopeStack[] = $this->resolveScopeName($rule->captures[$k]->name, $match);
                                     }
 
                                     $tokens[] = new Token(
@@ -210,9 +171,18 @@ class Tokenizer {
                                     );
                                 }
 
+                                if ($rule->captures[$k]->name !== null) {
+                                    array_pop($this->scopeStack);
+                                }
+
                                 $this->offset = $m[1] + strlen($m[0]);
-                                $firstCapture = false;
                             }
+                        }
+
+                        // If the pattern is a begin pattern and has a content name then add that to the
+                        // scope stack before processing the children.
+                        if ($rule->beginPattern && $rule->contentName !== null) {
+                            $this->scopeStack[] = $this->resolveScopeName($rule->contentName, $match);
                         }
 
                         $this->ruleStack[] = $rule;
@@ -226,23 +196,11 @@ class Tokenizer {
                                 while (!end($this->ruleStack)->beginPattern) {
                                     $popped = array_pop($this->ruleStack);
 
-                                    if ($popped->captures !== null && isset($popped->captures[0])) {
-                                        if ($popped->captures[0]->contentName !== null) {
-                                            array_pop($this->scopeStack);
-                                        }
-                                        if ($popped->captures[0]->name !== null) {
-                                            array_pop($this->scopeStack);
-                                        }
-                                    }
-
-                                    if ($popped->contentName !== null) {
-                                        array_pop($this->scopeStack);
-                                    }
                                     if ($popped->name !== null) {
                                         array_pop($this->scopeStack);
                                     }
 
-                                    // If what was just popped is the active injection then remove it, too
+                                    // If what was just popped is the active injection then remove it, too.
                                     if ($popped === $this->activeInjection) {
                                         $this->activeInjection = null;
                                     }
@@ -251,16 +209,9 @@ class Tokenizer {
 
                             $popped = array_pop($this->ruleStack);
 
-                            if ($popped->captures !== null && isset($popped->captures[0])) {
-                                if ($popped->captures[0]->contentName !== null) {
-                                    array_pop($this->scopeStack);
-                                }
-                                if ($popped->captures[0]->name !== null) {
-                                    array_pop($this->scopeStack);
-                                }
-                            }
-
-                            if ($popped->contentName !== null) {
+                            // If the original rule was an end pattern the one just popped will be its begin
+                            // pattern. Pop its content name if it exists.
+                            if ($rule->endPattern && $popped->contentName !== null) {
                                 array_pop($this->scopeStack);
                             }
                             if ($popped->name !== null) {
@@ -272,30 +223,6 @@ class Tokenizer {
                                 $this->activeInjection = null;
                             }
                         }
-
-                        /*
-                        // Remove the name and contentName from the scope stack if present.
-                        if ($rule->contentName !== null) {
-                            array_pop($this->scopeStack);
-                        }
-                        if ($rule->name !== null) {
-                            array_pop($this->scopeStack);
-                        }
-
-                        // If the rule has a whole match capture (0) then remove its name and
-                        // contentName, too.
-                        $j = 0;
-                        while ($j++ < $wholeMatchCaptureScopeCount) {
-                            array_pop($this->scopeStack);
-                        }
-
-                        // And remove the rule from the rule stack, too.
-                        $popped = array_pop($this->ruleStack);
-
-                        // If what was just popped is the active injection then remove it, too.
-                        if ($popped === $this->activeInjection) {
-                            $this->activeInjection = null;
-                        }*/
 
                         break 2;
                     }

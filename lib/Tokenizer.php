@@ -118,7 +118,7 @@ class Tokenizer {
                             // Iterate through each of the matched subpatterns and create tokens from the
                             // captures.
                             foreach ($match as $k => $m) {
-                                if ($m[0] === '') {
+                                if ($m[0] === '' || ($k === 0 && !isset($rule->captures[0]))) {
                                     continue;
                                 }
 
@@ -138,10 +138,6 @@ class Tokenizer {
                                         substr($line, $this->offset, $m[1])
                                     );
                                     $this->offset = $m[1];
-                                }
-
-                                if ($k === 0 && !isset($rule->captures[0])) {
-                                    continue;
                                 }
 
                                 // If the capture rule has patterns of its own then
@@ -209,9 +205,9 @@ class Tokenizer {
 
                             $popped = array_pop($this->ruleStack);
 
-                            // If the original rule was an end pattern the one just popped will be its begin
-                            // pattern. Pop its content name if it exists.
-                            if ($rule->endPattern && $popped->contentName !== null) {
+                            // If what was just popped is a begin pattern and has a content name pop it off
+                            // the scope stack.
+                            if ($popped->beginPattern && $popped->contentName !== null) {
                                 array_pop($this->scopeStack);
                             }
                             if ($popped->name !== null) {

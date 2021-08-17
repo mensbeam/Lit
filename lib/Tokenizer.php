@@ -23,7 +23,7 @@ class Tokenizer {
     protected ?Pattern $activeInjection = null;
     protected array $ruleStack;
     protected array $scopeStack;
-    protected $debug = false;
+    protected int $debug = 0;
 
 
     public function __construct(\Generator $data, Grammar $grammar) {
@@ -36,6 +36,7 @@ class Tokenizer {
 
     public function tokenize(): \Generator {
         foreach ($this->data as $lineNumber => $line) {
+            $this->debug = $lineNumber;
             $this->offset = 0;
             $tokens = $this->tokenizeLine($line);
 
@@ -97,6 +98,12 @@ class Tokenizer {
                     // If the rule is a Pattern and matches the line at the offset then tokenize the
                     // matches.
                     if ($rule instanceof Pattern && preg_match($rule->match, $line, $match, PREG_OFFSET_CAPTURE, $this->offset)) {
+                        // ¡TEMPORARY! Haven't implemented begin and end line
+                        // anchors, so let's toss them completely.
+                        if (preg_match('/\\\(?:A|G)/', $rule->match)) {
+                            continue 2;
+                        }
+
                         // Add the name and contentName to the scope stack
                         // if present.
                         if ($rule->name !== null) {
@@ -106,7 +113,6 @@ class Tokenizer {
                             $this->scopeStack[] = $this->resolveScopeName($rule->contentName, $match);
                         }
 
-                        $wholeMatchCaptureScopeCount = 0;
                         if ($rule->captures !== null) {
                             // Iterate through each of the matched subpatterns and create tokens from the
                             // captures.
@@ -140,8 +146,7 @@ class Tokenizer {
 
                                 // The first match is the whole match, and if there are captures for it the name
                                 // and contentName should be added to the stack regardless of whether it has
-                                // patterns or not. However, keep count of how many were added to the stack so
-                                // they may be removed when this rule has finished tokenizing.
+                                // patterns or not.
                                 if ($k === 0) {
                                     if (!isset($rule->captures[0])) {
                                         continue;
@@ -149,11 +154,9 @@ class Tokenizer {
 
                                     if ($rule->captures[0]->name !== null) {
                                         $this->scopeStack[] = $this->resolveScopeName($rule->captures[0]->name, $match);
-                                        $wholeMatchCaptureScopeCount++;
                                     }
                                     if ($rule->captures[0]->contentName !== null) {
                                         $this->scopeStack[] = $this->resolveScopeName($rule->captures[0]->contentName, $match);
-                                        $wholeMatchCaptureScopeCount++;
                                     }
                                 }
 
@@ -164,7 +167,7 @@ class Tokenizer {
 
                                     // The scope stack for the whole match is handled above, so only handle that for
                                     // other captures.
-                                    if ($k !== 0) {
+                                    if ($k > 0) {
                                         if ($rule->captures[$k]->name !== null) {
                                             $this->scopeStack[] = $this->resolveScopeName($rule->captures[$k]->name, $match);
                                         }
@@ -177,7 +180,7 @@ class Tokenizer {
 
                                     // The scope stack for the whole match is handled above, so only handle that for
                                     // other captures.
-                                    if ($k !== 0) {
+                                    if ($k > 0) {
                                         if ($rule->captures[$k]->contentName !== null) {
                                             array_pop($this->scopeStack);
                                         }
@@ -188,8 +191,21 @@ class Tokenizer {
 
                                     array_pop($this->ruleStack);
                                 } else {
+                                    // If it's not the 0 capture and a capture without any patterns add the name
+                                    // and content names if they exist to the token's scope stack but not to the
+                                    // global one.
+                                    $scopeStack = $this->scopeStack;
+                                    if ($k > 0) {
+                                        if ($rule->captures[$k]->name !== null) {
+                                            $scopeStack[] = $this->resolveScopeName($rule->captures[$k]->name, $match);
+                                        }
+                                        if ($rule->captures[$k]->contentName !== null) {
+                                            $scopeStack[] = $this->resolveScopeName($rule->captures[$k]->contentName, $match);
+                                        }
+                                    }
+
                                     $tokens[] = new Token(
-                                        [ ...$this->scopeStack, $this->resolveScopeName($rule->captures[$k]->name, $match) ],
+                                        $scopeStack,
                                         $m[0]
                                     );
                                 }
@@ -201,10 +217,63 @@ class Tokenizer {
 
                         $this->ruleStack[] = $rule;
 
-                        if ($rule->patterns !== null) {
+                        if ($rule->patterns !== null && $this->offset < $lineLength) {
                             $tokens = [ ...$tokens, ...$this->tokenizeLine($line) ];
                         }
 
+                        if (!$rule->beginPattern) {
+                            if ($rule->endPattern) {
+                                while (!end($this->ruleStack)->beginPattern) {
+                                    $popped = array_pop($this->ruleStack);
+
+                                    if ($popped->captures !== null && isset($popped->captures[0])) {
+                                        if ($popped->captures[0]->contentName !== null) {
+                                            array_pop($this->scopeStack);
+                                        }
+                                        if ($popped->captures[0]->name !== null) {
+                                            array_pop($this->scopeStack);
+                                        }
+                                    }
+
+                                    if ($popped->contentName !== null) {
+                                        array_pop($this->scopeStack);
+                                    }
+                                    if ($popped->name !== null) {
+                                        array_pop($this->scopeStack);
+                                    }
+
+                                    // If what was just popped is the active injection then remove it, too
+                                    if ($popped === $this->activeInjection) {
+                                        $this->activeInjection = null;
+                                    }
+                                }
+                            }
+
+                            $popped = array_pop($this->ruleStack);
+
+                            if ($popped->captures !== null && isset($popped->captures[0])) {
+                                if ($popped->captures[0]->contentName !== null) {
+                                    array_pop($this->scopeStack);
+                                }
+                                if ($popped->captures[0]->name !== null) {
+                                    array_pop($this->scopeStack);
+                                }
+                            }
+
+                            if ($popped->contentName !== null) {
+                                array_pop($this->scopeStack);
+                            }
+                            if ($popped->name !== null) {
+                                array_pop($this->scopeStack);
+                            }
+
+                            // If what was just popped is the active injection then remove it, too.
+                            if ($popped === $this->activeInjection) {
+                                $this->activeInjection = null;
+                            }
+                        }
+
+                        /*
                         // Remove the name and contentName from the scope stack if present.
                         if ($rule->contentName !== null) {
                             array_pop($this->scopeStack);
@@ -222,22 +291,22 @@ class Tokenizer {
 
                         // And remove the rule from the rule stack, too.
                         $popped = array_pop($this->ruleStack);
+
                         // If what was just popped is the active injection then remove it, too.
                         if ($popped === $this->activeInjection) {
                             $this->activeInjection = null;
-                        }
+                        }*/
 
                         break 2;
                     }
                     // Otherwise, if the rule is a Reference then retrieve its patterns, splice into
                     // the rule list, and reprocess the rule.
                     elseif ($rule instanceof Reference && $obj = $rule->get()) {
-                        if ($obj instanceof Grammar || $rule instanceof RepositoryReference) {
+                        if ($obj instanceof Grammar || ($rule instanceof RepositoryReference && $obj->match === null)) {
                             $obj = $obj->patterns;
                         }
 
                         array_splice($currentRules, $i, 1, $obj);
-
                         $currentRulesCount = count($currentRules);
                         continue;
                     }

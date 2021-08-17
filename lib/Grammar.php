@@ -148,6 +148,7 @@ class Grammar {
             'match' => null,
             'patterns' => null,
             'captures' => null,
+            'beginPattern' => false,
             'endPattern' => (isset($pattern['endPattern']) && $pattern['endPattern'])
         ];
 
@@ -238,6 +239,7 @@ class Grammar {
                     $modified = true;
                 break;
                 case 'begin':
+                    $p['beginPattern'] = true;
                 case 'match':
                     $value = str_replace('/', '\/', $value);
                     $value = preg_replace_callback('/\\\(x|o)\{([0-9a-fA-F]{5,})\}/', function($matches) {

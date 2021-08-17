@@ -10,6 +10,7 @@ use dW\Lit\Grammar;
 
 /** Contains patterns responsible for matching a portion of the document */
 class Pattern extends Rule {
+    protected bool $_beginPattern = false;
     protected ?array $_captures;
     protected ?string $_contentName;
     protected bool $_endPattern = false;
@@ -19,7 +20,8 @@ class Pattern extends Rule {
     protected ?array $_patterns;
 
 
-    public function __construct(Grammar $ownerGrammar, ?string $name = null, ?string $contentName = null, ?string $match = null, ?array $patterns = null, ?array $captures = null, bool $endPattern = false) {
+    public function __construct(Grammar $ownerGrammar, ?string $name = null, ?string $contentName = null, ?string $match = null, ?array $patterns = null, ?array $captures = null, bool $beginPattern = false, bool $endPattern = false) {
+        $this->_beginPattern = $beginPattern;
         $this->_name = $name;
         $this->_contentName = $contentName;
         $this->_match = $match;
@@ -37,7 +39,7 @@ class Pattern extends Rule {
                 $p = $p->withOwnerGrammar($ownerGrammar);
             }
         }
-        
+
         return $new;
     }
 }

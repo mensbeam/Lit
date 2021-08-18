@@ -43,12 +43,10 @@ class Tokenizer {
             // If after tokenizing the line the entire line still hasn't been tokenized then
             // create a token of the rest of the line.
             $lineLength = strlen($line);
-            if ($this->offset < $lineLength) {
-                $tokens[] = new Token(
-                    $this->scopeStack,
-                    substr($line, $this->offset, $lineLength)
-                );
-            }
+            $tokens[] = new Token(
+                $this->scopeStack,
+                ($this->offset < $lineLength) ? substr($line, $this->offset, $lineLength) . "\n" : "\n"
+            );
 
             yield $lineNumber => $tokens;
         }
@@ -140,29 +138,17 @@ class Tokenizer {
                                     $this->offset = $m[1];
                                 }
 
-                                // If the capture rule has patterns of its own then
-                                // those must be matched, too.
+                                if ($rule->captures[$k]->name !== null) {
+                                    $this->scopeStack[] = $this->resolveScopeName($rule->captures[$k]->name, $match);
+                                }
+
                                 if ($rule->captures[$k]->patterns !== null) {
                                     $this->ruleStack[] = $rule->captures[$k];
-
-                                    if ($rule->captures[$k]->name !== null) {
-                                        $this->scopeStack[] = $this->resolveScopeName($rule->captures[$k]->name, $match);
-                                    }
-
                                     $tokens = [ ...$tokens, ...$this->tokenizeLine($line) ];
-
                                     array_pop($this->ruleStack);
                                 } else {
-                                    // If it's not the 0 capture and a capture without any patterns add the name
-                                    // and content names if they exist to the token's scope stack but not to the
-                                    // global one.
-                                    $scopeStack = $this->scopeStack;
-                                    if ($rule->captures[$k]->name !== null) {
-                                        $scopeStack[] = $this->resolveScopeName($rule->captures[$k]->name, $match);
-                                    }
-
                                     $tokens[] = new Token(
-                                        $scopeStack,
+                                        $this->scopeStack,
                                         $m[0]
                                     );
                                 }

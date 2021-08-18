@@ -2,7 +2,7 @@
 /deps/
 /node_modules/
 /vendor/
-test*.php
+test*.*
 *-old.php
 yarn-error.log
 

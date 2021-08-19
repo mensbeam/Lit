@@ -38,6 +38,7 @@ class Tokenizer {
     public function tokenize(): \Generator {
         foreach ($this->data as $lineNumber => $line) {
             $this->debug = $lineNumber;
+            $this->debugCount = 0;
             $this->offset = 0;
 
             $lineLength = strlen($line);
@@ -93,30 +94,32 @@ class Tokenizer {
 
             $currentRules = end($this->ruleStack)->patterns;
             $currentRulesCount = count($currentRules);
-            $nextMatch = null;
+            $closestMatch = null;
 
+            // Iterate through the rules to find matches for the line at the current offset.
             for ($i = 0; $i < $currentRulesCount; $i++) {
                 while (true) {
                     $rule = $currentRules[$i];
 
-                    if ($this->debug === 6 && $this->debugCount === 12) {
-                        if ($rule instanceof Pattern) {
-                            echo "Match: {$rule->match}\n";
-                        }
-                    }
-
                     // If the rule is a Pattern and matches the line at the offset then...
                     if ($rule instanceof Pattern && preg_match($rule->match, $line, $match, PREG_OFFSET_CAPTURE, $this->offset)) {
-                        $match = [
-                            'match' => $match,
-                            'pattern' => $rule
-                        ];
-
-                        if ($match['match'][0][1] === $this->offset) {
-                            $nextMatch = $match;
+                        // If the match's offset is the same as the current offset then it is the
+                        // closest match. There's no need to iterate anymore through the patterns.
+                        if ($match[0][1] === $this->offset) {
+                            $closestMatch = [
+                                'match' => $match,
+                                'pattern' => $rule
+                            ];
                             break 2;
-                        } elseif ($match['match'][0][1] < $nextMatch['match'][0][1]) {
-                            $nextMatch = $match;
+                        }
+                        // Otherwise, if the closest match is currently null or the match's offset is
+                        // less than the closest match's offset then set the match as the closest match
+                        // and continue looking for a closer one.
+                        elseif ($closestMatch === null || $match[0][1] < $closestMatch['match'][0][1]) {
+                            $closestMatch = [
+                                'match' => $match,
+                                'pattern' => $rule
+                            ];
                         }
                     }
                     // Otherwise, if the rule is a Reference then retrieve its patterns, splice into
@@ -136,15 +139,20 @@ class Tokenizer {
             }
 
             // If there were a match above...
-            if ($nextMatch !== null) {
-                $match = $nextMatch['match'];
-                $pattern = $nextMatch['pattern'];
+            if ($closestMatch !== null) {
+                $match = $closestMatch['match'];
+                $pattern = $closestMatch['pattern'];
+
+                if ($this->debug === 7) {
+                    var_export($closestMatch);
+                    echo "\n";
+                }
 
                 // **¡TEMPORARY!** Haven't implemented begin and end line
                 // anchors, so let's toss patterns with them completely for now.
-                if (preg_match('/\\\(?:A|G|Z)/', $rule->match)) {
-                    continue;
-                }
+                //if (preg_match('/\\\(?:A|G|Z)/', $rule->match)) {
+                //    continue;
+                //}
 
                 // If the subpattern begins after the offset then create a token from the bits
                 // of the line in-between the last token and the one(s) about to be created.
@@ -257,6 +265,7 @@ class Tokenizer {
                     }
                 }
 
+                // If the offset isn't at the end of the line then look for more matches.
                 if ($this->offset !== $lineLength) {
                     continue;
                 }

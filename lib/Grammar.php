@@ -25,7 +25,6 @@ use dW\Lit\Grammar\{
 class Grammar {
     use FauxReadOnly;
     protected ?string $_contentName;
-    protected ?string $_firstLineMatch;
     protected ?array $_injections;
     protected ?string $_name;
     protected ?\WeakReference $_ownerGrammar;
@@ -34,11 +33,10 @@ class Grammar {
     protected ?string $_scopeName;
 
 
-    public function __construct(?string $scopeName = null, ?array $patterns = null, ?string $name = null, ?string $firstLineMatch = null, ?array $injections = null, ?array $repository = null, ?Grammar $ownerGrammar = null) {
+    public function __construct(?string $scopeName = null, ?array $patterns = null, ?string $name = null, ?array $injections = null, ?array $repository = null, ?Grammar $ownerGrammar = null) {
         $this->_name = $name;
         $this->_scopeName = $scopeName;
         $this->_patterns = $patterns;
-        $this->_firstLineMatch = $firstLineMatch;
         $this->_injections = $injections;
         $this->_repository = $repository;
         $this->_ownerGrammar = (is_null($ownerGrammar)) ? null : \WeakReference::create($ownerGrammar);
@@ -96,13 +94,6 @@ class Grammar {
 
         $this->_name = $json['name'] ?? null;
         $this->_scopeName = $json['scopeName'];
-
-        if (isset($json['firstLineMatch'])) {
-            $value = str_replace('/', '\/', $json['firstLineMatch']);
-            $this->_firstLineMatch = $value;
-        } else {
-            $this->_firstLineMatch = null;
-        }
 
         $repository = null;
         if (isset($json['repository'])) {

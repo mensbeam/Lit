@@ -9,11 +9,11 @@ namespace dW\Lit;
 class Token {
     use FauxReadOnly;
     protected array $_scopes;
-    protected string $_string;
+    protected string $_text;
 
 
-    public function __construct(array $scopes, string $string) {
+    public function __construct(array $scopes, string $text) {
         $this->_scopes = $scopes;
-        $this->string = $string;
+        $this->text = $text;
     }
 }

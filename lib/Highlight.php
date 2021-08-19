@@ -30,7 +30,7 @@ class Highlight {
         foreach ($tokenList as $lineNumber => $tokens) {
             var_export($tokens);
             echo "\n";
-            if ($lineNumber === 2) {
+            if ($lineNumber === 6) {
                 die();
             }
         }

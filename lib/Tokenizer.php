@@ -143,11 +143,6 @@ class Tokenizer {
                 $match = $closestMatch['match'];
                 $pattern = $closestMatch['pattern'];
 
-                if ($this->debug === 7) {
-                    var_export($closestMatch);
-                    echo "\n";
-                }
-
                 // **¡TEMPORARY!** Haven't implemented begin and end line
                 // anchors, so let's toss patterns with them completely for now.
                 //if (preg_match('/\\\(?:A|G|Z)/', $rule->match)) {
@@ -178,6 +173,17 @@ class Tokenizer {
                             continue;
                         }
 
+                        // If the capture begins after the offset then create a token from the bits of
+                        // the line in-between the last token and the one(s) about to be created.
+                        if ($k > 0 && $m[1] > $this->offset) {
+                            $tokens[] = new Token(
+                                $this->scopeStack,
+                                substr($line, $this->offset, $m[1] - $this->offset)
+                            );
+                            $this->debugCount++;
+                            $this->offset = $m[1];
+                        }
+
                         // If the capture has a name add it to the scope stack.
                         if ($pattern->captures[$k]->name !== null) {
                             $this->scopeStack[] = $this->resolveScopeName($pattern->captures[$k]->name, $match);
@@ -188,6 +194,19 @@ class Tokenizer {
                         if ($pattern->captures[$k]->patterns !== null) {
                             $this->ruleStack[] = $pattern->captures[$k];
                             $tokens = [ ...$tokens, ...$this->tokenizeLine($line) ];
+
+                            // If the offset is before the end of the capture then create a token from the
+                            // bits of the capture from the offset until the end of the capture.
+                            $endOffset = $m[1] + strlen($m[0]);
+                            if ($endOffset > $this->offset) {
+                                $tokens[] = new Token(
+                                    $this->scopeStack,
+                                    substr($line, $this->offset, $endOffset - $this->offset)
+                                );
+                                $this->debugCount++;
+                                $this->offset = $endOffset;
+                            }
+
                             array_pop($this->ruleStack);
                         }
                         // Otherwise, create a token for the capture.
@@ -230,6 +249,18 @@ class Tokenizer {
                 // If the rule has patterns process tokens from its subpatterns.
                 if ($pattern->patterns !== null && $this->offset < $lineLength) {
                     $tokens = [ ...$tokens, ...$this->tokenizeLine($line) ];
+                }
+
+                // If the offset is before the end of the match then create a token from the
+                // bits of the match from the offset until the end of the match.
+                $endOffset = $match[0][1] + strlen($match[0][0]);
+                if ($endOffset > $this->offset) {
+                    $tokens[] = new Token(
+                        $this->scopeStack,
+                        substr($line, $this->offset, $endOffset - $this->offset)
+                    );
+                    $this->debugCount++;
+                    $this->offset = $endOffset;
                 }
 
                 if (!$pattern->beginPattern) {

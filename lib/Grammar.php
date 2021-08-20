@@ -234,10 +234,12 @@ class Grammar {
                 case 'match':
                     // Escape forward slashes that aren't escaped in regexes.
                     $value = preg_replace('/(?<!\\\)\//', '\/', $value);
-                    // Truncate unicode character codes that are too long.
-                    $value = preg_replace_callback('/\\\x\{([0-9A-Fa-f]{6,})\}/', function($matches) {
-                        $code = ((int)base_convert($matches[1], 16, 10) > 0x10ffff) ? '10ffff' : $matches[1];
-                        return "\\x{"."$code}";
+                    // Fix oniguruma long character codes.
+                    $value = preg_replace_callback('/\\\x\{(7[0-9A-Fa-f]+)\}/', function($matches) {
+                        // Remove the 7
+                        $code = substr($matches[1], 1);
+                        $code = ((int)base_convert($matches[1], 16, 10) > 0x10ffff) ? '10ffff' : $code;
+                        return "\\x$code";
                     }, $value);
                     $p['match'] = "/$value/u";
 

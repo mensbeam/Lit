@@ -5,7 +5,16 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
+use dW\Lit\FauxReadOnly;
 
 
 /** Acts as a catch-all type for references */
-abstract class Reference extends Rule {}
+abstract class Reference extends Rule {
+    use FauxReadOnly;
+    protected string $_ownerGrammarScopeName;
+
+
+    public function __construct(string $ownerGrammarScopeName) {
+        $this->_ownerGrammarScopeName = $ownerGrammarScopeName;
+    }
+}

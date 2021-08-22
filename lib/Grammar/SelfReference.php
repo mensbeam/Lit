@@ -5,16 +5,14 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
-use dW\Lit\Grammar;
+use dW\Lit\{
+    Grammar,
+    GrammarRegistry
+};
 
-/** A weak reference to a grammar's self. */
+/** A reference to a grammar's self. */
 class SelfReference extends Reference {
-    public function __construct(Grammar $grammar) {
-        parent::__construct($grammar);
-    }
-
-
     public function get(): Grammar {
-        return $this->_ownerGrammar->get();
+        return GrammarRegistry::get($this->_ownerGrammarScopeName);
     }
 }

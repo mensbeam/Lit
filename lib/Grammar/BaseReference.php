@@ -5,26 +5,10 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
-use dW\Lit\Grammar;
 
 /**
- * Acts as a sort of lazy weak reference for a base grammar in a grammar.
+ * Base references in this implementation are simply used as a type. The
+ * tokenizer stores the base grammar because it's simply the lowest item on the
+ * stack and simply uses it when encountering a Base reference.
  */
-class BaseReference extends Reference {
-    protected ?\WeakReference $object;
-
-
-    public function get(): Grammar {
-        if ($this->object !== null) {
-            return $this->object->get();
-        }
-
-        $grammar = $this->_ownerGrammar->get();
-        do {
-            $result = $grammar;
-        } while ($grammar = $grammar->ownerGrammar);
-
-        $this->object = $result;
-        return $result->get();
-    }
-}
+class BaseReference extends Reference {}

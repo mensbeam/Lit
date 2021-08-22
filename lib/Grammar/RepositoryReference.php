@@ -5,37 +5,29 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
-use dW\Lit\Grammar;
+use dW\Lit\GrammarRegistry;
 
 
 /**
- * Acts as a sort of lazy reference for repository items in grammars.
+ * Repository references act as a placeholder for named repository patterns in
+ * rule lists
  */
 class RepositoryReference extends Reference {
     protected string $_name;
-    protected PatternList|Pattern|null|false $object = null;
 
 
-    public function __construct(string $name, Grammar $ownerGrammar) {
+    public function __construct(string $name, string $ownerGrammarScopeName) {
         $this->_name = $name;
-        parent::__construct($ownerGrammar);
+        parent::__construct($ownerGrammarScopeName);
     }
 
 
-    public function get(): PatternList|Pattern|null {
-        if ($this->object === false) {
-            return null;
-        } elseif ($this->object !== null) {
-            return $this->object;
-        }
-
-        $grammar = $this->_ownerGrammar->get();
-        if (!isset($grammar->repository[$this->name])) {
-            $this->object = false;
+    public function get(): ?Pattern {
+        $grammar = GrammarRegistry::get($this->_ownerGrammarScopeName);
+        if ($grammar->repository === null) {
             return null;
         }
 
-        $this->object = $grammar->repository[$this->name];
-        return $this->object;
+        return (isset($grammar->repository[$this->_name])) ? $grammar->repository[$this->_name] : null;
     }
 }

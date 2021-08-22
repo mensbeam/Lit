@@ -5,7 +5,6 @@
 
 declare(strict_types=1);
 namespace dW\Lit;
-use dW\Lit\Grammar\ChildGrammarRegistry;
 
 
 /** Static storage for grammars; a map of a scope string and a Grammar object */
@@ -13,8 +12,6 @@ class GrammarRegistry {
     protected static array $storage = [];
 
     public static function clear(): bool {
-        // Clear all the child grammars, too.
-        ChildGrammarRegistry::clear();
         self::$storage = [];
         return true;
     }

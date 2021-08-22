@@ -5,38 +5,26 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
-use dW\Lit\Grammar,
-    dW\Lit\GrammarRegistry;
+use dW\Lit\{
+    Grammar,
+    GrammarRegistry
+};
 
 
 /**
- * Acts as a sort of lazy reference for entire grammars in grammars.
+ * Grammar references act as a placeholder for grammars in rule lists
  */
 class GrammarReference extends Reference {
-    protected ?Grammar $object = null;
     protected string $_scopeName;
 
 
-    public function __construct(string $scopeName, Grammar $ownerGrammar) {
+    public function __construct(string $scopeName, string $ownerGrammarScopeName) {
         $this->_scopeName = $scopeName;
-        parent::__construct($ownerGrammar);
+        parent::__construct($ownerGrammarScopeName);
     }
 
 
     public function get(): Grammar {
-        if ($this->object !== null) {
-            return $this->object;
-        } elseif ($this->object === false) {
-            return null;
-        }
-
-        $grammar = GrammarRegistry::get($this->_scopeName);
-        if ($grammar === null) {
-            $this->object = false;
-            return null;
-        }
-
-        $this->object = $grammar->withOwnerGrammar($this->_ownerGrammar->get());
-        return $this->object;
+        return GrammarRegistry::get($this->_scopeName);
     }
 }

@@ -16,11 +16,10 @@ class Pattern extends Rule {
     protected bool $_endPattern = false;
     protected ?string $_match;
     protected ?string $_name;
-    protected \WeakReference $_ownerGrammar;
     protected ?array $_patterns;
 
 
-    public function __construct(Grammar $ownerGrammar, ?string $name = null, ?string $contentName = null, ?string $match = null, ?array $patterns = null, ?array $captures = null, bool $beginPattern = false, bool $endPattern = false) {
+    public function __construct(?string $name = null, ?string $contentName = null, ?string $match = null, ?array $patterns = null, ?array $captures = null, bool $beginPattern = false, bool $endPattern = false) {
         $this->_beginPattern = $beginPattern;
         $this->_name = $name;
         $this->_contentName = $contentName;
@@ -28,18 +27,5 @@ class Pattern extends Rule {
         $this->_patterns = $patterns;
         $this->_captures = $captures;
         $this->_endPattern = $endPattern;
-        $this->_ownerGrammar = ($ownerGrammar === null) ? null : \WeakReference::create($ownerGrammar);
-    }
-
-    // Used when adopting to change the $ownerGrammar property.
-    public function withOwnerGrammar(Grammar $ownerGrammar): self {
-        $new = parent::withOwnerGrammar($ownerGrammar);
-        if ($new->_patterns !== null) {
-            foreach ($new->_patterns as &$p) {
-                $p = $p->withOwnerGrammar($ownerGrammar);
-            }
-        }
-
-        return $new;
     }
 }

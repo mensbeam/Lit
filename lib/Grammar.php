@@ -7,9 +7,7 @@ declare(strict_types=1);
 namespace dW\Lit;
 use dW\Lit\Grammar\{
     BaseReference,
-    ChildGrammarRegistry,
     Exception,
-    FauxReadOnly,
     GrammarReference,
     Pattern,
     Reference,
@@ -27,49 +25,17 @@ class Grammar {
     protected ?string $_contentName;
     protected ?array $_injections;
     protected ?string $_name;
-    protected ?\WeakReference $_ownerGrammar;
     protected ?array $_patterns;
     protected ?array $_repository;
     protected ?string $_scopeName;
 
 
-    public function __construct(?string $scopeName = null, ?array $patterns = null, ?string $name = null, ?array $injections = null, ?array $repository = null, ?Grammar $ownerGrammar = null) {
+    public function __construct(?string $scopeName = null, ?array $patterns = null, ?string $name = null, ?array $injections = null, ?array $repository = null) {
         $this->_name = $name;
         $this->_scopeName = $scopeName;
         $this->_patterns = $patterns;
         $this->_injections = $injections;
         $this->_repository = $repository;
-        $this->_ownerGrammar = (is_null($ownerGrammar)) ? null : \WeakReference::create($ownerGrammar);
-    }
-
-    // Used when adopting to change the $ownerGrammar property.
-    public function withOwnerGrammar(Grammar $ownerGrammar): self {
-        if ($new = ChildGrammarRegistry::get($this->_scopeName, $ownerGrammar)) {
-            return $new;
-        }
-
-        $new = clone $this;
-        if ($new->_patterns !== null) {
-            foreach ($new->_patterns as &$p) {
-                $p = $p->withOwnerGrammar($new);
-            }
-        }
-
-        if ($new->_injections !== null) {
-            foreach ($new->_injections as &$i) {
-                $i = $i->withOwnerGrammar($new);
-            }
-        }
-
-        if ($new->_repository !== null) {
-            foreach ($new->_repository as &$r) {
-                $r = $r->withOwnerGrammar($new);
-            }
-        }
-
-        $new->_ownerGrammar = \WeakReference::create($ownerGrammar);
-        ChildGrammarRegistry::set($this->_scopeName, $new);
-        return $new;
     }
 
 
@@ -105,7 +71,7 @@ class Grammar {
         }
         $this->_repository = $repository;
 
-        $this->_patterns = $this->parseJSONPatternList($json['patterns'], $filename);
+        $this->_patterns = $this->parseJSONPatternArray($json['patterns'], $filename);
 
         $injections = null;
         if (isset($json['injections'])) {
@@ -122,18 +88,17 @@ class Grammar {
     protected function parseJSONPattern(array $pattern, string $filename): Pattern|Reference|null {
         if (isset($pattern['include'])) {
             if ($pattern['include'][0] === '#') {
-                return new RepositoryReference(substr($pattern['include'], 1), $this);
+                return new RepositoryReference(substr($pattern['include'], 1), $this->_scopeName);
             } elseif ($pattern['include'] === '$base') {
-                return new BaseReference($this);
+                return new BaseReference($this->_scopeName);
             } elseif ($pattern['include'] === '$self') {
-                return new SelfReference($this);
+                return new SelfReference($this->_scopeName);
             } else {
-                return new GrammarReference($pattern['include'], $this);
+                return new GrammarReference($pattern['include'], $this->_scopeName);
             }
         }
 
         $p = [
-            'ownerGrammar' => $this,
             'name' => null,
             'contentName' => null,
             'match' => null,
@@ -255,7 +220,7 @@ class Grammar {
                         throw new Exception(Exception::JSON_INVALID_TYPE, 'Array', $key, gettype($value), $filename);
                     }
 
-                    $p[$key] = $this->parseJSONPatternList($value, $filename);
+                    $p[$key] = $this->parseJSONPatternArray($value, $filename);
                     $modified = true;
                 break;
             }
@@ -264,7 +229,7 @@ class Grammar {
         return ($modified) ? new Pattern(...$p) : null;
     }
 
-    protected function parseJSONPatternList(array $list, string $filename): ?array {
+    protected function parseJSONPatternArray(array $list, string $filename): ?array {
         $result = [];
         foreach ($list as $pattern) {
             $p = $this->parseJSONPattern($pattern, $filename);

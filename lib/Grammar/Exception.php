@@ -25,10 +25,6 @@ class Exception extends \Exception {
     const JSON_MISSING_PROPERTY = 210;
     const JSON_INVALID_TYPE = 211;
 
-    const LIST_IMMUTABLE = 300;
-    const LIST_INVALID_INDEX = 301;
-    const LIST_INVALID_TYPE = 302;
-
     const GRAMMAR_MISSING = 400;
 
     protected static $messages = [
@@ -50,11 +46,7 @@ class Exception extends \Exception {
         210 => '"%1$s" does not have the required %2$s property',
         211 => '%1$s expected for %2$s, found %3$s in "%4$s"',
 
-        300 => '%s is immutable',
-        301 => 'Invalid %1$s index at offset %2$s',
-        302 => '%1$s expected for %2$s, found %3$s',
-
-        400 => 'A grammar for scope %s does not exist; one may be added using GrammarRegistry::set'
+        300 => 'A grammar for scope %s does not exist; one may be added using GrammarRegistry::set'
     ];
 
     public function __construct(int $code, ...$args) {

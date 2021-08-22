@@ -6,6 +6,7 @@
 declare(strict_types=1);
 namespace dW\Lit;
 use dW\Lit\Grammar\{
+        BaseReference,
         Pattern,
         Reference,
         RepositoryReference
@@ -112,11 +113,6 @@ class Tokenizer {
                 while (true) {
                     $rule = $currentRules[$i];
 
-                    if ($this->debug === 19 && $this->debugCount === 3) {
-                        $rule->get();
-                        die(var_export($rule->ownerGrammar));
-                    }
-
                     // If the rule is a Pattern
                     if ($rule instanceof Pattern) {
                         // Throw out pattern regexes with anchors that should match the current line.
@@ -158,9 +154,14 @@ class Tokenizer {
                     }
                     // Otherwise, if the rule is a Reference then retrieve its patterns, splice into
                     // the rule list, and reprocess the rule.
-                    elseif ($rule instanceof Reference && $obj = $rule->get()) {
-                        if ($obj instanceof Grammar || ($rule instanceof RepositoryReference && $obj->match === null)) {
-                            $obj = $obj->patterns;
+                    elseif ($rule instanceof Reference) {
+                        if (!$rule instanceof BaseReference) {
+                            $obj = $rule->get();
+                            if ($obj instanceof Grammar || ($rule instanceof RepositoryReference && $obj->match === null)) {
+                                $obj = $obj->patterns;
+                            }
+                        } else {
+                            $obj = $this->grammar->patterns;
                         }
 
                         array_splice($currentRules, $i, 1, ($obj instanceof Pattern) ? [ $obj ] : $obj);

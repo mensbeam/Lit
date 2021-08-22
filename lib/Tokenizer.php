@@ -17,7 +17,7 @@ use dW\Lit\Scope\{
 
 
 class Tokenizer {
-    protected \Generator $data;
+    protected Data $data;
     protected Grammar $grammar;
     protected int $offset = 0;
     protected ?Pattern $activeInjection = null;
@@ -26,8 +26,11 @@ class Tokenizer {
     protected int $debug = 0;
     protected int $debugCount = 0;
 
+    protected const SCOPE_RESOLVE_REGEX = '/\$(\d+)|\${(\d+):\/(downcase|upcase)}/S';
+    protected const ANCHOR_CHECK_REGEX = '/(?<!\\\)\\\([AGzZ])/S';
 
-    public function __construct(\Generator $data, Grammar $grammar) {
+
+    public function __construct(Data $data, Grammar $grammar) {
         $this->data = $data;
         $this->grammar = $grammar;
         $this->ruleStack = [ $this->grammar ];
@@ -36,7 +39,7 @@ class Tokenizer {
 
 
     public function tokenize(): \Generator {
-        foreach ($this->data as $lineNumber => $line) {
+        foreach ($this->data->get() as $lineNumber => $line) {
             $this->debug = $lineNumber;
             $this->debugCount = 0;
             $this->offset = 0;
@@ -46,11 +49,19 @@ class Tokenizer {
 
             // Output a token for everything else contained on the line including the
             // newline or just a newline if there weren't any spare characters left on the
-            // line.
-            $tokens[] = new Token(
-                $this->scopeStack,
-                ($this->offset < $lineLength) ? substr($line, $this->offset, $lineLength - $this->offset) . "\n" : "\n"
-            );
+            // line. If it is the last line, and there's nothing else remaining on the line
+            // then output no additional token.
+            if ($this->offset < $lineLength) {
+                $tokens[] = new Token(
+                    $this->scopeStack,
+                    substr($line, $this->offset, $lineLength - $this->offset) . ((!$this->data->lastLine) ? "\n" : '')
+                );
+            } elseif (!$this->data->lastLine) {
+                $tokens[] = new Token(
+                    $this->scopeStack,
+                    "\n"
+                );
+            }
 
             $this->debugCount++;
 
@@ -60,7 +71,7 @@ class Tokenizer {
 
 
     protected function resolveScopeName(string $scopeName, array $match): string {
-        return preg_replace_callback('/\$(\d+)|\${(\d+):\/(downcase|upcase)}/', function($m) use ($match) {
+        return preg_replace_callback(self::SCOPE_RESOLVE_REGEX, function($m) use($match) {
             $replacement = $match[(int)$m[1]][0] ?? $m[1];
             $command = $m[2] ?? null;
             switch ($command) {
@@ -101,25 +112,42 @@ class Tokenizer {
                 while (true) {
                     $rule = $currentRules[$i];
 
-                    // If the rule is a Pattern and matches the line at the offset then...
-                    if ($rule instanceof Pattern && preg_match($rule->match, $line, $match, PREG_OFFSET_CAPTURE, $this->offset)) {
-                        // If the match's offset is the same as the current offset then it is the
-                        // closest match. There's no need to iterate anymore through the patterns.
-                        if ($match[0][1] === $this->offset) {
-                            $closestMatch = [
-                                'match' => $match,
-                                'pattern' => $rule
-                            ];
-                            break 2;
+                    // If the rule is a Pattern
+                    if ($rule instanceof Pattern) {
+                        // Throw out pattern regexes with anchors that cannot match the current line.
+                        if (preg_match(self::ANCHOR_CHECK_REGEX, $rule->match, $validRegexMatch) === 1) {
+                            if (
+                                // \A anchors match the beginning of the whole string, not just this line
+                                ($validRegexMatch[1] === 'A' && !$this->data->firstLine) ||
+                                // \z anchors match the end of the whole string, not just this line
+                                ($validRegexMatch[1] === 'z' && !$this->data->lastLine) ||
+                                // \Z anchors match the end of the whole string or before the final newline if
+                                // there's a trailing newline in the string
+                                ($validRegexMatch[1] === 'Z' && !$this->data->lastLineBeforeFinalNewLine)
+                            ) {
+                                continue 2;
+                            }
                         }
-                        // Otherwise, if the closest match is currently null or the match's offset is
-                        // less than the closest match's offset then set the match as the closest match
-                        // and continue looking for a closer one.
-                        elseif ($closestMatch === null || $match[0][1] < $closestMatch['match'][0][1]) {
-                            $closestMatch = [
-                                'match' => $match,
-                                'pattern' => $rule
-                            ];
+
+                        if (preg_match($rule->match, "$line\n", $match, PREG_OFFSET_CAPTURE, $this->offset)) {
+                            // If the match's offset is the same as the current offset then it is the
+                            // closest match. There's no need to iterate anymore through the patterns.
+                            if ($match[0][1] === $this->offset) {
+                                $closestMatch = [
+                                    'match' => $match,
+                                    'pattern' => $rule
+                                ];
+                                break 2;
+                            }
+                            // Otherwise, if the closest match is currently null or the match's offset is
+                            // less than the closest match's offset then set the match as the closest match
+                            // and continue looking for a closer one.
+                            elseif ($closestMatch === null || $match[0][1] < $closestMatch['match'][0][1]) {
+                                $closestMatch = [
+                                    'match' => $match,
+                                    'pattern' => $rule
+                                ];
+                            }
                         }
                     }
                     // Otherwise, if the rule is a Reference then retrieve its patterns, splice into
@@ -129,7 +157,7 @@ class Tokenizer {
                             $obj = $obj->patterns;
                         }
 
-                        array_splice($currentRules, $i, 1, $obj);
+                        array_splice($currentRules, $i, 1, ($obj instanceof Pattern) ? [ $obj ] : $obj);
                         $currentRulesCount = count($currentRules);
                         continue;
                     }
@@ -142,12 +170,6 @@ class Tokenizer {
             if ($closestMatch !== null) {
                 $match = $closestMatch['match'];
                 $pattern = $closestMatch['pattern'];
-
-                // **¡TEMPORARY!** Haven't implemented begin and end line
-                // anchors, so let's toss patterns with them completely for now.
-                //if (preg_match('/\\\(?:A|G|Z)/', $rule->match)) {
-                //    continue;
-                //}
 
                 // If the subpattern begins after the offset then create a token from the bits
                 // of the line in-between the last token and the one(s) about to be created.
@@ -227,8 +249,8 @@ class Tokenizer {
                     }
                 }
                 // Otherwise, if the rule doesn't have captures then a token is created from the
-                // entire match.
-                else {
+                // entire match, but only if the matched text isn't empty.
+                elseif ($match[0][0] !== '') {
                     $tokens[] = new Token(
                         $this->scopeStack,
                         $match[0][0]

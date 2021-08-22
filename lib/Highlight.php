@@ -9,26 +9,22 @@ use dW\Lit\Grammar\Exception;
 
 
 class Highlight {
-    public static function withFile(string $filepath, string $scopeName) {
-        return self::highlight(Data::fileToGenerator($filepath), $scopeName);
-    }
-
-    public static function withString(string $string, string $scopeName) {
-        return self::highlight(Data::stringToGenerator($string), $scopeName);
+    public static function toDOM(string $data, string $scopeName) {
+        self::highlight($data, $scopeName);
     }
 
 
-    protected static function highlight(\Generator $data, string $scopeName) {
+    protected static function highlight(string $data, string $scopeName) {
         $grammar = GrammarRegistry::get($scopeName);
         if ($grammar === false) {
             throw new Exception(Exception::GRAMMAR_MISSING, $scopeName);
         }
 
-        $tokenizer = new Tokenizer($data, $grammar);
+        $tokenizer = new Tokenizer(new Data($data), $grammar);
         $tokenList = $tokenizer->tokenize();
 
         foreach ($tokenList as $lineNumber => $tokens) {
-            if ($lineNumber === 7) {
+            if ($lineNumber === 19) {
                 var_export($tokens);
                 echo "\n";
                 die();

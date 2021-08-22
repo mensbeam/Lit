@@ -56,14 +56,14 @@ class Tokenizer {
                     $this->scopeStack,
                     substr($line, $this->offset, $lineLength - $this->offset) . ((!$this->data->lastLine) ? "\n" : '')
                 );
+                $this->debugCount++;
             } elseif (!$this->data->lastLine) {
                 $tokens[] = new Token(
                     $this->scopeStack,
                     "\n"
                 );
+                $this->debugCount++;
             }
-
-            $this->debugCount++;
 
             yield $lineNumber => $tokens;
         }
@@ -112,9 +112,15 @@ class Tokenizer {
                 while (true) {
                     $rule = $currentRules[$i];
 
+                    if ($this->debug === 19 && $this->debugCount === 3) {
+                        $rule->get();
+                        die(var_export($rule->ownerGrammar));
+                    }
+
                     // If the rule is a Pattern
                     if ($rule instanceof Pattern) {
-                        // Throw out pattern regexes with anchors that cannot match the current line.
+                        // Throw out pattern regexes with anchors that should match the current line.
+                        // This is necessary because the tokenizer is fed data line by line.
                         if (preg_match(self::ANCHOR_CHECK_REGEX, $rule->match, $validRegexMatch) === 1) {
                             if (
                                 // \A anchors match the beginning of the whole string, not just this line

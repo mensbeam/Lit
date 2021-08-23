@@ -224,6 +224,10 @@ class Tokenizer {
                         // If the capture has patterns of its own add the capture to the rule stack,
                         // process the patterns, and then pop the capture off the stack.
                         if ($pattern->captures[$k]->patterns !== null) {
+                            if ($m[1] < $this->offset) {
+                                die("MOTHERFUCKER!\n");
+                            }
+
                             $this->ruleStack[] = $pattern->captures[$k];
                             // Only tokenize the part of the line that's contains the match.
                             $captureLength = $m[1] + strlen($m[0]);
@@ -242,22 +246,79 @@ class Tokenizer {
                             }
 
                             array_pop($this->ruleStack);
+                            $this->offset = $m[1] + strlen($m[0]);
                         }
                         // Otherwise, create a token for the capture.
                         else {
-                            $tokens[] = [
-                                'scopes' => $this->scopeStack,
-                                'text' => $m[0]
-                            ];
-                            $this->debugCount++;
+                            // If the capture's offset is before the current offset then the new token needs
+                            // to be spliced within previously emitted ones.
+                            if ($m[1] < $this->offset) {
+                                $curOffset = $this->offset;
+                                // Go backwards through the tokens, find the token the current capture is
+                                // within, and splice new tokens into the token array
+                                for ($tokensLength = count($tokens), $i = $tokensLength - 1; $i >= 0; $i--) {
+                                    $cur = $tokens[$i];
+                                    $curOffset -= strlen($cur['text']);
+                                    if ($m[1] >= $curOffset) {
+                                        // If the length of the new capture would put part of it outside the previous
+                                        // token then toss the token.
+                                        if ($m[1] + strlen($m[0]) > $curOffset + strlen($cur['text'])) {
+                                            // TODO: trigger a warning or something here maybe?
+                                            break;
+                                        }
+
+                                        $t = [];
+
+                                        // Add in token for anything before the new capture token within the token being
+                                        // spliced
+                                        $preMatchText = substr($cur['text'], 0, $m[1] - $curOffset);
+                                        if ($preMatchText !== '') {
+                                            $t[] = [
+                                                'scopes' => $cur['scopes'],
+                                                'text' => $preMatchText
+                                            ];
+                                        }
+
+                                        // The new capture's scope needs to be added to the prior token's scope stack to
+                                        // make the stack for the new one.
+                                        $scopeStack = $cur['scopes'];
+                                        $scopeStack[] = $pattern->captures[$k]->name;
+                                        $t[] = [
+                                            'scopes' => $scopeStack,
+                                            'text' => $m[0]
+                                        ];
+
+                                        // Add in token for anything after the new capture token within the token being
+                                        // spliced
+                                        $postMatchText = substr($cur['text'], $m[1] - $curOffset + strlen($m[0]));
+                                        if ($postMatchText !== '') {
+                                            $t[] = [
+                                                'scopes' => $cur['scopes'],
+                                                'text' => $postMatchText
+                                            ];
+                                        }
+
+                                        array_splice($tokens, $i, 1, $t);
+                                        $this->offset = $match[$k - 1][1] + strlen($match[$k - 1][0]);
+                                        break;
+                                    }
+                                }
+
+                                $this->debugCount = count($tokens);
+                            } else {
+                                $tokens[] = [
+                                    'scopes' => $this->scopeStack,
+                                    'text' => $m[0]
+                                ];
+                                $this->debugCount++;
+                                $this->offset = $m[1] + strlen($m[0]);
+                            }
                         }
 
                         // Pop the capture's name off the scope stack.
                         if ($pattern->captures[$k]->name !== null) {
                             array_pop($this->scopeStack);
                         }
-
-                        $this->offset = $m[1] + strlen($m[0]);
                     }
                 }
                 // Otherwise, if the rule doesn't have captures then a token is created from the

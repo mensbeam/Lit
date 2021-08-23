@@ -53,16 +53,16 @@ class Tokenizer {
             // line. If it is the last line, and there's nothing else remaining on the line
             // then output no additional token.
             if ($this->offset < $lineLength) {
-                $tokens[] = new Token(
-                    $this->scopeStack,
-                    substr($line, $this->offset, $lineLength - $this->offset) . ((!$this->data->lastLine) ? "\n" : '')
-                );
+                $tokens[] = [
+                    'scopes' => $this->scopeStack,
+                    'text' => substr($line, $this->offset, $lineLength - $this->offset) . ((!$this->data->lastLine) ? "\n" : '')
+                ];
                 $this->debugCount++;
             } elseif (!$this->data->lastLine) {
-                $tokens[] = new Token(
-                    $this->scopeStack,
-                    "\n"
-                );
+                $tokens[] = [
+                    'scopes' => $this->scopeStack,
+                    'text' => "\n"
+                ];
                 $this->debugCount++;
             }
 
@@ -85,9 +85,12 @@ class Tokenizer {
         }, $scopeName);
     }
 
-    protected function tokenizeLine(string $line): array {
+    protected function tokenizeLine(string $line, int $lineLength = 0): array {
         $tokens = [];
-        $lineLength = strlen($line);
+        // When processing subpatterns a linelength is specified based upon the parent
+        // match's string length (like with captures), otherwise set the line length to
+        // the entire line.
+        $lineLength = ($lineLength === 0) ? strlen($line) : $lineLength;
 
         while (true) {
             if ($this->activeInjection === null && $this->grammar->injections !== null) {
@@ -181,10 +184,10 @@ class Tokenizer {
                 // If the subpattern begins after the offset then create a token from the bits
                 // of the line in-between the last token and the one(s) about to be created.
                 if ($match[0][1] > $this->offset) {
-                    $tokens[] = new Token(
-                        $this->scopeStack,
-                        substr($line, $this->offset, $match[0][1] - $this->offset)
-                    );
+                    $tokens[] = [
+                        'scopes' => $this->scopeStack,
+                        'text' => substr($line, $this->offset, $match[0][1] - $this->offset)
+                    ];
                     $this->debugCount++;
                     $this->offset = $match[0][1];
                 }
@@ -205,10 +208,10 @@ class Tokenizer {
                         // If the capture begins after the offset then create a token from the bits of
                         // the line in-between the last token and the one(s) about to be created.
                         if ($k > 0 && $m[1] > $this->offset) {
-                            $tokens[] = new Token(
-                                $this->scopeStack,
-                                substr($line, $this->offset, $m[1] - $this->offset)
-                            );
+                            $tokens[] = [
+                                'scopes' => $this->scopeStack,
+                                'text' => substr($line, $this->offset, $m[1] - $this->offset)
+                            ];
                             $this->debugCount++;
                             $this->offset = $m[1];
                         }
@@ -222,16 +225,18 @@ class Tokenizer {
                         // process the patterns, and then pop the capture off the stack.
                         if ($pattern->captures[$k]->patterns !== null) {
                             $this->ruleStack[] = $pattern->captures[$k];
-                            $tokens = [ ...$tokens, ...$this->tokenizeLine($line) ];
+                            // Only tokenize the part of the line that's contains the match.
+                            $captureLength = $m[1] + strlen($m[0]);
+                            $tokens = [ ...$tokens, ...$this->tokenizeLine($line, $captureLength) ];
 
                             // If the offset is before the end of the capture then create a token from the
                             // bits of the capture from the offset until the end of the capture.
-                            $endOffset = $m[1] + strlen($m[0]);
+                            $endOffset = $captureLength;
                             if ($endOffset > $this->offset) {
-                                $tokens[] = new Token(
-                                    $this->scopeStack,
-                                    substr($line, $this->offset, $endOffset - $this->offset)
-                                );
+                                $tokens[] = [
+                                    'scopes' => $this->scopeStack,
+                                    'text' => substr($line, $this->offset, $endOffset - $this->offset)
+                                ];
                                 $this->debugCount++;
                                 $this->offset = $endOffset;
                             }
@@ -240,10 +245,10 @@ class Tokenizer {
                         }
                         // Otherwise, create a token for the capture.
                         else {
-                            $tokens[] = new Token(
-                                $this->scopeStack,
-                                $m[0]
-                            );
+                            $tokens[] = [
+                                'scopes' => $this->scopeStack,
+                                'text' => $m[0]
+                            ];
                             $this->debugCount++;
                         }
 
@@ -258,10 +263,10 @@ class Tokenizer {
                 // Otherwise, if the rule doesn't have captures then a token is created from the
                 // entire match, but only if the matched text isn't empty.
                 elseif ($match[0][0] !== '') {
-                    $tokens[] = new Token(
-                        $this->scopeStack,
-                        $match[0][0]
-                    );
+                    $tokens[] = [
+                        'scopes' => $this->scopeStack,
+                        'text' => $match[0][0]
+                    ];
 
                     $this->offset = $match[0][1] + strlen($match[0][0]);
                     $this->debugCount++;
@@ -277,17 +282,20 @@ class Tokenizer {
 
                 // If the rule has patterns process tokens from its subpatterns.
                 if ($pattern->patterns !== null && $this->offset < $lineLength) {
-                    $tokens = [ ...$tokens, ...$this->tokenizeLine($line) ];
+                    // If the pattern has just a regular match (meaning neither a begin nor an end
+                    // pattern) but has subpatterns then only tokenize the part of the line that's
+                    // within the match.
+                    $tokens = [ ...$tokens, ...$this->tokenizeLine($line, (!$pattern->beginPattern && !$pattern->endPattern) ? strlen($match[0][0]) : 0) ];
                 }
 
                 // If the offset is before the end of the match then create a token from the
                 // bits of the match from the offset until the end of the match.
                 $endOffset = $match[0][1] + strlen($match[0][0]);
                 if ($endOffset > $this->offset) {
-                    $tokens[] = new Token(
-                        $this->scopeStack,
-                        substr($line, $this->offset, $endOffset - $this->offset)
-                    );
+                    $tokens[] = [
+                        'scopes' => $this->scopeStack,
+                        'text' => substr($line, $this->offset, $endOffset - $this->offset)
+                    ];
                     $this->debugCount++;
                     $this->offset = $endOffset;
                 }

@@ -24,8 +24,6 @@ class Tokenizer {
     protected ?Pattern $activeInjection = null;
     protected array $ruleStack;
     protected array $scopeStack;
-    protected int $debug = 0;
-    protected int $debugCount = 0;
 
     protected const SCOPE_RESOLVE_REGEX = '/\$(\d+)|\${(\d+):\/(downcase|upcase)}/S';
     protected const ANCHOR_CHECK_REGEX = '/(?<!\\\)\\\([AGzZ])/S';
@@ -41,8 +39,6 @@ class Tokenizer {
 
     public function tokenize(): \Generator {
         foreach ($this->data->get() as $lineNumber => $line) {
-            $this->debug = $lineNumber;
-            $this->debugCount = 0;
             $this->offset = 0;
 
             $lineLength = strlen($line);
@@ -57,13 +53,11 @@ class Tokenizer {
                     'scopes' => $this->scopeStack,
                     'text' => substr($line, $this->offset, $lineLength - $this->offset) . ((!$this->data->lastLine) ? "\n" : '')
                 ];
-                $this->debugCount++;
             } elseif (!$this->data->lastLine) {
                 $tokens[] = [
                     'scopes' => $this->scopeStack,
                     'text' => "\n"
                 ];
-                $this->debugCount++;
             }
 
             yield $lineNumber => $tokens;
@@ -190,7 +184,6 @@ class Tokenizer {
                         'scopes' => $this->scopeStack,
                         'text' => substr($line, $this->offset, $match[0][1] - $this->offset)
                     ];
-                    $this->debugCount++;
                     $this->offset = $match[0][1];
                 }
 
@@ -217,7 +210,6 @@ class Tokenizer {
                                 'scopes' => $this->scopeStack,
                                 'text' => substr($line, $this->offset, $m[1] - $this->offset)
                             ];
-                            $this->debugCount++;
                             $this->offset = $m[1];
                         }
 
@@ -235,19 +227,17 @@ class Tokenizer {
 
                             $this->ruleStack[] = $pattern->captures[$k];
                             // Only tokenize the part of the line that's contains the match.
-                            $captureLength = $m[1] + strlen($m[0]);
-                            $tokens = [ ...$tokens, ...$this->tokenizeLine($line, $captureLength) ];
+                            $captureEndOffset = $m[1] + strlen($m[0]);
+                            $tokens = [ ...$tokens, ...$this->tokenizeLine($line, $captureEndOffset) ];
 
                             // If the offset is before the end of the capture then create a token from the
                             // bits of the capture from the offset until the end of the capture.
-                            $endOffset = $captureLength;
-                            if ($endOffset > $this->offset) {
+                            if ($captureEndOffset > $this->offset) {
                                 $tokens[] = [
                                     'scopes' => $this->scopeStack,
-                                    'text' => substr($line, $this->offset, $endOffset - $this->offset)
+                                    'text' => substr($line, $this->offset, $captureEndOffset - $this->offset)
                                 ];
-                                $this->debugCount++;
-                                $this->offset = $endOffset;
+                                $this->offset = $captureEndOffset;
                             }
 
                             array_pop($this->ruleStack);
@@ -315,7 +305,6 @@ class Tokenizer {
                                     'scopes' => $this->scopeStack,
                                     'text' => $m[0]
                                 ];
-                                $this->debugCount++;
                                 $this->offset = $m[1] + strlen($m[0]);
                             }
                         }
@@ -335,7 +324,6 @@ class Tokenizer {
                     ];
 
                     $this->offset = $match[0][1] + strlen($match[0][0]);
-                    $this->debugCount++;
                 }
 
                 // If the pattern is a begin pattern and has a content name then add that to the
@@ -364,7 +352,6 @@ class Tokenizer {
                         'scopes' => $this->scopeStack,
                         'text' => substr($line, $this->offset, $endOffset - $this->offset)
                     ];
-                    $this->debugCount++;
                     $this->offset = $endOffset;
                 }
 

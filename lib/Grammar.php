@@ -203,7 +203,7 @@ class Grammar {
                     $value = preg_replace_callback('/\\\x\{([0-9A-Fa-f]+)\}/', function($matches) {
                         return "\x{" . (((int)base_convert($matches[1], 16, 10) > 0x10ffff) ? '10ffff' : $matches[1]) . "}";
                     }, $value);
-                    $p['match'] = "/$value/u";
+                    $p['match'] = "/$value/Su";
 
                     $modified = true;
                 break;

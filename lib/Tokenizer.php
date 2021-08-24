@@ -118,8 +118,10 @@ class Tokenizer {
 
                     // If the rule is a Pattern
                     if ($rule instanceof Pattern) {
-                        // Throw out pattern regexes with anchors that should match the current line.
-                        // This is necessary because the tokenizer is fed data line by line.
+                        // Throw out pattern regexes with anchors that shouldn't match the current line.
+                        // This is necessary because the tokenizer is fed data line by line and
+                        // therefore anchors that match the beginning of the document and the end won't
+                        // do anything.
                         if (preg_match(self::ANCHOR_CHECK_REGEX, $rule->match, $validRegexMatch) === 1) {
                             if (
                                 // \A anchors match the beginning of the whole string, not just this line
@@ -201,7 +203,10 @@ class Tokenizer {
                 // create tokens from the captures.
                 if ($pattern->captures !== null) {
                     foreach ($match as $k => $m) {
-                        if ($m[0] === '' || ($k === 0 && !isset($pattern->captures[0]))) {
+                        // If either the capture match is empty, there's no pattern capture for this
+                        // match, or the match being processed is the first one and there are no
+                        // captures for it then continue onto the next one.
+                        if ($m[0] === '' || $m[1] < 0 || !isset($pattern->captures[$k]) || ($k === 0 && !isset($pattern->captures[0]))) {
                             continue;
                         }
 
@@ -345,8 +350,10 @@ class Tokenizer {
                 if ($pattern->patterns !== null && $this->offset < $lineLength) {
                     // If the pattern has just a regular match (meaning neither a begin nor an end
                     // pattern) but has subpatterns then only tokenize the part of the line that's
-                    // within the match.
-                    $tokens = [ ...$tokens, ...$this->tokenizeLine($line, (!$pattern->beginPattern && !$pattern->endPattern) ? strlen($match[0][0]) : 0) ];
+                    // within the match. Otherwise, tokenize up to the line's length. Because of
+                    // recursion, the line length could be set by this step before or within the
+                    // capture tokenization process.
+                    $tokens = [ ...$tokens, ...$this->tokenizeLine($line, (!$pattern->beginPattern && !$pattern->endPattern) ? strlen($match[0][0]) : $lineLength) ];
                 }
 
                 // If the offset is before the end of the match then create a token from the

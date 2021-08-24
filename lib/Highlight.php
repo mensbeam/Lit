@@ -24,7 +24,7 @@ class Highlight {
         $tokenList = $tokenizer->tokenize();
 
         foreach ($tokenList as $lineNumber => $tokens) {
-            if ($lineNumber === 20) {
+            if ($lineNumber === 24) {
                 var_export($tokens);
                 echo "\n";
                 die();

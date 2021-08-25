@@ -25,8 +25,8 @@ class Highlight {
 
         foreach ($tokenList as $lineNumber => $tokens) {
             if ($lineNumber === 26) {
-                var_export($tokens);
-                echo "\n";
+                //var_export($tokens);
+                //echo "\n";
                 die();
             }
         }

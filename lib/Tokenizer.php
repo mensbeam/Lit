@@ -18,6 +18,8 @@ use dW\Lit\Scope\{
 
 
 class Tokenizer {
+    public static bool $debug = false;
+
     protected Data $data;
     protected Grammar $grammar;
     protected int $offset = 0;
@@ -26,7 +28,7 @@ class Tokenizer {
     protected array $scopeStack;
 
     protected const SCOPE_RESOLVE_REGEX = '/\$(\d+)|\${(\d+):\/(downcase|upcase)}/S';
-    protected const ANCHOR_CHECK_REGEX = '/(?<!\\\)\\\([AGzZ])/S';
+    protected const ANCHOR_CHECK_REGEX = '/(?<!\\\)\\\([AGZz])/S';
 
 
     public function __construct(Data $data, Grammar $grammar) {
@@ -39,6 +41,8 @@ class Tokenizer {
 
     public function tokenize(): \Generator {
         foreach ($this->data->get() as $lineNumber => $line) {
+            assert($this->debugLine($lineNumber, $line));
+
             $this->offset = 0;
 
             $lineLength = strlen($line);
@@ -59,6 +63,8 @@ class Tokenizer {
                     'text' => "\n"
                 ];
             }
+
+            assert($this->debugTokens($tokens));
 
             yield $lineNumber => $tokens;
         }
@@ -171,6 +177,8 @@ class Tokenizer {
                     break;
                 }
             }
+
+            assert($this->debugClosestMatch($closestMatch));
 
             // If there were a match above...
             if ($closestMatch !== null) {
@@ -413,5 +421,68 @@ class Tokenizer {
         }
 
         return $tokens;
+    }
+
+
+    private function debugClosestMatch(?array $closestMatch): bool {
+        if (self::$debug) {
+            $message = <<<DEBUG
+            Regex: %s
+            Scope: %s
+            BeginPattern: %s
+            EndPattern: %s
+            Match: %s
+            DEBUG;
+
+            $message = sprintf($message,
+                $closestMatch['pattern']->match ?? 'NULL',
+                $closestMatch['pattern']->name ?? 'NULL',
+                var_export($closestMatch['pattern']->beginPattern ?? null, true),
+                var_export($closestMatch['pattern']->endPattern ?? null, true),
+                var_export($closestMatch['match'] ?? null, true)
+            );
+
+            echo $this->debug_indentLines($message) . "\n\n";
+        }
+
+        return true;
+    }
+
+    private function debug_indentLines(string $message): string {
+        $backtrace = debug_backtrace();
+        array_shift($backtrace);
+        array_shift($backtrace);
+
+        $count = -1;
+        foreach ($backtrace as $b) {
+            if ($b['function'] === 'tokenizeLine') {
+                $count++;
+            }
+        }
+
+        return ($count > 0) ? preg_replace('/^/m', str_repeat('|', $count) . ' ', $message) : $message;
+    }
+
+    private function debugLine(int $lineNumber, string $line): bool {
+        if (self::$debug) {
+            $message = <<<DEBUG
+            %s
+            Line: %s
+
+
+            DEBUG;
+
+            printf($message, str_pad("$lineNumber ", 80, '-'), var_export($line, true));
+        }
+
+        return true;
+    }
+
+    public function debugTokens(array $tokens): bool {
+        if (self::$debug) {
+            echo 'Tokens: ' . var_export($tokens, true) . "\n\n";
+        }
+
+        return true;
     }
 }

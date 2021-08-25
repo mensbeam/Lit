@@ -8,6 +8,11 @@ namespace dW\Lit\Scope;
 
 /** Parses strings into a scope selector */
 class Parser {
+    // Flag for turning on debugging on the class. Assertions must be enabled for
+    // it to work. This allows for parsing of scopes to be debugged separately from
+    // tokenization of input text.
+    public static bool $debug = false;
+
     // Used to cache parsed scopes and selectors
     protected static array $cache = [
         'selector' => [],
@@ -71,7 +76,7 @@ class Parser {
 
 
     protected static function parseComposite(): Composite {
-        assert((fn() => self::debug())());
+        assert((fn() => self::debugStart())());
 
         $expressions = [ self::parseExpression() ];
 
@@ -97,7 +102,7 @@ class Parser {
     }
 
     protected static function parseExpression(int $operator = Expression::OPERATOR_NONE): Expression {
-        assert((fn() => self::debug())());
+        assert((fn() => self::debugStart())());
 
         $peek = self::$instance->data->peek();
         $negate = false;
@@ -121,7 +126,7 @@ class Parser {
     }
 
     protected static function parseFilter(string $prefix): Filter {
-        assert((fn() => self::debug())());
+        assert((fn() => self::debugStart())());
 
         $peek = self::$instance->data->peek();
         if ($peek === '(') {
@@ -136,7 +141,7 @@ class Parser {
     }
 
     protected static function parseGroup(): Group {
-        assert((fn() => self::debug())());
+        assert((fn() => self::debugStart())());
 
         $token = self::$instance->data->consume();
         if ($token !== '(') {
@@ -156,7 +161,7 @@ class Parser {
     }
 
     protected static function parsePath(): Path {
-        assert((fn() => self::debug())());
+        assert((fn() => self::debugStart())());
 
         $anchorStart = false;
         if (self::$instance->data->peek() === '^') {
@@ -204,7 +209,7 @@ class Parser {
     }
 
     protected static function _parseSelector(): Selector {
-        assert((fn() => self::debug())());
+        assert((fn() => self::debugStart())());
 
         $composites = [ self::parseComposite() ];
         $peek = self::$instance->data->peek();
@@ -220,7 +225,7 @@ class Parser {
     }
 
     protected static function _parseScope(?Scope $parent = null, bool $anchorToPrevious = false): Scope {
-        assert((fn() => self::debug())());
+        assert((fn() => self::debugStart())());
 
         $atoms = [];
         $first = true;
@@ -244,43 +249,48 @@ class Parser {
         return $result;
     }
 
-    protected static function debug(): bool {
-        $message = <<<DEBUG
-        ------------------------------
-        %s
-        Method: %s
-        Position: %s
-        Token: %s
 
-        DEBUG;
+    private static function debugStart(): bool {
+        if (self::$debug) {
+            $message = <<<DEBUG
+            ------------------------------
+            %s
+            Method: %s
+            Position: %s
+            Token: %s
 
-        $methodTree = '';
-        $backtrace = debug_backtrace();
-        // Shift two off because it's executed in an assert closure
-        array_shift($backtrace);
-        array_shift($backtrace);
-        // And, pop this method off the backtrace
-        array_pop($backtrace);
-        foreach ($backtrace as $b) {
-            $methodTree = "->{$b['function']}$methodTree";
+            DEBUG;
+
+            $methodTree = '';
+            $backtrace = debug_backtrace();
+            // Shift two off because it's executed in an assert closure
+            array_shift($backtrace);
+            array_shift($backtrace);
+            // And, pop this method off the backtrace
+            array_pop($backtrace);
+            foreach ($backtrace as $b) {
+                $methodTree = "->{$b['function']}$methodTree";
+            }
+
+            printf($message,
+                self::$instance->debugCount++,
+                ltrim($methodTree, '->'),
+                self::$instance->data->position + 1,
+                var_export(self::$instance->data->peek(), true)
+            );
         }
-
-        printf($message,
-            self::$instance->debugCount++,
-            ltrim($methodTree, '->'),
-            self::$instance->data->position + 1,
-            var_export(self::$instance->data->peek(), true)
-        );
 
         return true;
     }
 
-    protected static function debugResult($result): bool {
-        printf("%s Result: %s\n",
-            debug_backtrace()[2]['function'],
-            // Removes bullshit from var_exported classes for easier reading
-            str_replace([ '::__set_state(array', __NAMESPACE__.'\\', '))' ], [ '', '', ')' ], var_export($result, true))
-        );
+    private static function debugResult($result): bool {
+        if (self::$debug) {
+            printf("%s Result: %s\n",
+                debug_backtrace()[2]['function'],
+                // Removes bullshit from var_exported classes for easier reading
+                str_replace([ '::__set_state(array', __NAMESPACE__.'\\', '))' ], [ '', '', ')' ], var_export($result, true))
+            );
+        }
 
         return true;
     }

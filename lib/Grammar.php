@@ -131,17 +131,17 @@ class Grammar {
 
             $modified = true;
 
-            if (isset($pattern['beginCaptures'])) {
-                $pattern['captures'] = $pattern['beginCaptures'];
-            } elseif (isset($pattern['captures'])) {
-                $pattern['captures'] = $pattern['captures'];
-            }
-
             $endCaptures = null;
             if (isset($pattern['endCaptures'])) {
                 $endCaptures = $pattern['endCaptures'];
             } elseif (isset($pattern['captures'])) {
                 $endCaptures = $pattern['captures'];
+            }
+
+            if (isset($pattern['beginCaptures'])) {
+                $pattern['captures'] = $pattern['beginCaptures'];
+            } elseif (isset($pattern['captures'])) {
+                $pattern['captures'] = $pattern['captures'];
             }
 
             $endPattern = [

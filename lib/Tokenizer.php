@@ -21,9 +21,11 @@ class Tokenizer {
     public static bool $debug = false;
 
     protected Data $data;
+    protected int $debugCount = 0;
     protected Grammar $grammar;
     protected int $offset = 0;
     protected ?Pattern $activeInjection = null;
+    protected int $lineNumber = 1;
     protected array $ruleStack;
     protected array $scopeStack;
 
@@ -43,6 +45,7 @@ class Tokenizer {
         foreach ($this->data->get() as $lineNumber => $line) {
             assert($this->debugLine($lineNumber, $line));
 
+            $this->lineNumber = $lineNumber;
             $this->offset = 0;
 
             $lineLength = strlen($line);
@@ -218,6 +221,7 @@ class Tokenizer {
                                 'scopes' => $this->scopeStack,
                                 'text' => substr($line, $this->offset, $m[1] - $this->offset)
                             ];
+
                             $this->offset = $m[1];
                         }
 
@@ -302,17 +306,25 @@ class Tokenizer {
                                         }
 
                                         array_splice($tokens, $i, 1, $t);
-                                        $this->offset = $match[$k - 1][1] + strlen($match[$k - 1][0]);
+
+                                        // Find the nearest index to the match that doesn't have an invalid offset value
+                                        // (meaning that particular capture matched nothing) and set the offset to the
+                                        // end of that match.
+                                        $j = count($match) - 2;
+                                        while ($match[$j][1] === -1 || $match[$j][1] === null) {
+                                            $j--;
+                                        }
+
+                                        $this->offset = $match[$j][1] + strlen($match[$j][0]);
                                         break;
                                     }
                                 }
-
-                                $this->debugCount = count($tokens);
                             } else {
                                 $tokens[] = [
                                     'scopes' => $this->scopeStack,
                                     'text' => $m[0]
                                 ];
+
                                 $this->offset = $m[1] + strlen($m[0]);
                             }
                         }
@@ -365,6 +377,7 @@ class Tokenizer {
 
                 if (!$pattern->beginPattern) {
                     if ($pattern->endPattern) {
+                        // Pop everything off both stacks until a begin pattern is reached.
                         while (!end($this->ruleStack)->beginPattern) {
                             $popped = array_pop($this->ruleStack);
 
@@ -396,8 +409,9 @@ class Tokenizer {
                     }
                 }
 
-                // If the offset isn't at the end of the line then look for more matches.
-                if ($this->offset !== $lineLength) {
+                // If the offset isn't at the end of the line then look for more matches but
+                // only if the currently tokenized pattern wasn't an end pattern.
+                if (!$pattern->endPattern && $this->offset < $lineLength) {
                     continue;
                 }
             }
@@ -427,16 +441,20 @@ class Tokenizer {
     private function debugClosestMatch(?array $closestMatch): bool {
         if (self::$debug) {
             $message = <<<DEBUG
+            Offset: %s
             Regex: %s
             Scope: %s
+            HasCaptures: %s
             BeginPattern: %s
             EndPattern: %s
             Match: %s
             DEBUG;
 
             $message = sprintf($message,
+                $this->offset,
                 $closestMatch['pattern']->match ?? 'NULL',
                 $closestMatch['pattern']->name ?? 'NULL',
+                ($closestMatch !== null && $closestMatch['pattern']->captures !== null) ? 'yes' : 'no',
                 var_export($closestMatch['pattern']->beginPattern ?? null, true),
                 var_export($closestMatch['pattern']->endPattern ?? null, true),
                 var_export($closestMatch['match'] ?? null, true)

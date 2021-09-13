@@ -24,9 +24,6 @@ class Highlight {
         $tokenList = $tokenizer->tokenize();
 
         foreach ($tokenList as $lineNumber => $tokens) {
-            if ($lineNumber === 38) {
-                die();
-            }
         }
     }
 }

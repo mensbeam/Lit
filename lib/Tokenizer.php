@@ -25,6 +25,7 @@ class Tokenizer {
     protected Grammar $grammar;
     protected int $offset = 0;
     protected ?Pattern $activeInjection = null;
+    protected string $line = '';
     protected int $lineNumber = 1;
     protected array $ruleStack;
     protected array $scopeStack;
@@ -43,13 +44,13 @@ class Tokenizer {
 
     public function tokenize(): \Generator {
         foreach ($this->data->get() as $lineNumber => $line) {
-            assert($this->debugLine($lineNumber, $line));
-
             $this->lineNumber = $lineNumber;
+            $this->line = $line;
+            assert($this->debugLine());
             $this->offset = 0;
 
             $lineLength = strlen($line);
-            $tokens = ($lineLength > 0) ? $this->tokenizeLine($line) : [];
+            $tokens = ($lineLength > 0) ? $this->tokenizeLine($lineLength) : [];
 
             // Output a token for everything else contained on the line including the
             // newline or just a newline if there weren't any spare characters left on the
@@ -68,7 +69,6 @@ class Tokenizer {
             }
 
             assert($this->debugTokens($tokens));
-
             yield $lineNumber => $tokens;
         }
     }
@@ -88,12 +88,8 @@ class Tokenizer {
         }, $scopeName);
     }
 
-    protected function tokenizeLine(string $line, int $lineLength = 0): array {
+    protected function tokenizeLine(int $lineLength): array {
         $tokens = [];
-        // When processing subpatterns a linelength is specified based upon the parent
-        // match's string length (like with captures), otherwise set the line length to
-        // the entire line.
-        $lineLength = ($lineLength === 0) ? strlen($line) : $lineLength;
 
         while (true) {
             if ($this->activeInjection === null && $this->grammar->injections !== null) {
@@ -139,7 +135,7 @@ class Tokenizer {
                             }
                         }
 
-                        if (preg_match($rule->match, "$line\n", $match, PREG_OFFSET_CAPTURE, $this->offset)) {
+                        if (preg_match($rule->match, "{$this->line}\n", $match, PREG_OFFSET_CAPTURE, $this->offset)) {
                             // If the match's offset is the same as the current offset then it is the
                             // closest match. There's no need to iterate anymore through the patterns.
                             if ($match[0][1] === $this->offset) {
@@ -193,7 +189,7 @@ class Tokenizer {
                 if ($match[0][1] > $this->offset) {
                     $tokens[] = [
                         'scopes' => $this->scopeStack,
-                        'text' => substr($line, $this->offset, $match[0][1] - $this->offset)
+                        'text' => substr($this->line, $this->offset, $match[0][1] - $this->offset)
                     ];
                     $this->offset = $match[0][1];
                 }
@@ -219,7 +215,7 @@ class Tokenizer {
                         if ($k > 0 && $m[1] > $this->offset) {
                             $tokens[] = [
                                 'scopes' => $this->scopeStack,
-                                'text' => substr($line, $this->offset, $m[1] - $this->offset)
+                                'text' => substr($this->line, $this->offset, $m[1] - $this->offset)
                             ];
 
                             $this->offset = $m[1];
@@ -240,14 +236,14 @@ class Tokenizer {
                             $this->ruleStack[] = $pattern->captures[$k];
                             // Only tokenize the part of the line that's contains the match.
                             $captureEndOffset = $m[1] + strlen($m[0]);
-                            $tokens = [ ...$tokens, ...$this->tokenizeLine($line, $captureEndOffset) ];
+                            $tokens = [ ...$tokens, ...$this->tokenizeLine($captureEndOffset) ];
 
                             // If the offset is before the end of the capture then create a token from the
                             // bits of the capture from the offset until the end of the capture.
                             if ($captureEndOffset > $this->offset) {
                                 $tokens[] = [
                                     'scopes' => $this->scopeStack,
-                                    'text' => substr($line, $this->offset, $captureEndOffset - $this->offset)
+                                    'text' => substr($this->line, $this->offset, $captureEndOffset - $this->offset)
                                 ];
                                 $this->offset = $captureEndOffset;
                             }
@@ -361,7 +357,7 @@ class Tokenizer {
                     // within the match. Otherwise, tokenize up to the line's length. Because of
                     // recursion, the line length could be set by this step before or within the
                     // capture tokenization process.
-                    $tokens = [ ...$tokens, ...$this->tokenizeLine($line, (!$pattern->beginPattern && !$pattern->endPattern) ? strlen($match[0][0]) : $lineLength) ];
+                    $tokens = [ ...$tokens, ...$this->tokenizeLine((!$pattern->beginPattern && !$pattern->endPattern) ? strlen($match[0][0]) : $lineLength) ];
                 }
 
                 // If the offset is before the end of the match then create a token from the
@@ -370,7 +366,7 @@ class Tokenizer {
                 if ($endOffset > $this->offset) {
                     $tokens[] = [
                         'scopes' => $this->scopeStack,
-                        'text' => substr($line, $this->offset, $endOffset - $this->offset)
+                        'text' => substr($this->line, $this->offset, $endOffset - $this->offset)
                     ];
                     $this->offset = $endOffset;
                 }
@@ -409,9 +405,8 @@ class Tokenizer {
                     }
                 }
 
-                // If the offset isn't at the end of the line then look for more matches but
-                // only if the currently tokenized pattern wasn't an end pattern.
-                if (!$pattern->endPattern && $this->offset < $lineLength) {
+                // If the offset isn't at the end of the line then look for more matches.
+                if ($this->offset < $lineLength) {
                     continue;
                 }
             }
@@ -481,7 +476,7 @@ class Tokenizer {
         return ($count > 0) ? preg_replace('/^/m', str_repeat('|', $count) . ' ', $message) : $message;
     }
 
-    private function debugLine(int $lineNumber, string $line): bool {
+    private function debugLine(): bool {
         if (self::$debug) {
             $message = <<<DEBUG
             %s
@@ -490,7 +485,11 @@ class Tokenizer {
 
             DEBUG;
 
-            printf($message, str_pad("$lineNumber ", 80, '-'), var_export($line, true));
+            printf(
+                $message,
+                str_pad("{$this->lineNumber} ", 80, '-'),
+                preg_replace('/\\\\{2}/', '\\', var_export($this->line, true))
+            );
         }
 
         return true;
@@ -498,7 +497,7 @@ class Tokenizer {
 
     public function debugTokens(array $tokens): bool {
         if (self::$debug) {
-            echo 'Tokens: ' . var_export($tokens, true) . "\n\n";
+            echo 'Tokens: ' . preg_replace('/\\\\{2}/', '\\', var_export($tokens, true)) . "\n\n";
         }
 
         return true;

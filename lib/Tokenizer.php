@@ -43,7 +43,7 @@ class Tokenizer {
 
 
     public function tokenize(): \Generator {
-        foreach ($this->data->get() as $lineNumber => $line) {
+        foreach ($this->data->generator as $lineNumber => $line) {
             $this->lineNumber = $lineNumber;
             $this->line = $line;
             assert($this->debugLine());
@@ -76,7 +76,7 @@ class Tokenizer {
 
     protected function resolveScopeName(string $scopeName, array $match): string {
         return preg_replace_callback(self::SCOPE_RESOLVE_REGEX, function($m) use($match) {
-            $replacement = $match[(int)$m[1]][0] ?? $m[1];
+            $replacement = trim($match[(int)$m[1]][0] ?? $m[1]);
             $command = $m[2] ?? null;
             switch ($command) {
                 case 'downcase': return strtolower($replacement);
@@ -88,7 +88,7 @@ class Tokenizer {
         }, $scopeName);
     }
 
-    protected function tokenizeLine(int $lineLength): array {
+    protected function tokenizeLine(int $stopOffset): array {
         $tokens = [];
 
         while (true) {
@@ -117,25 +117,25 @@ class Tokenizer {
 
                     // If the rule is a Pattern
                     if ($rule instanceof Pattern) {
-                        // Throw out pattern regexes with anchors that shouldn't match the current line.
-                        // This is necessary because the tokenizer is fed data line by line and
-                        // therefore anchors that match the beginning of the document and the end won't
-                        // do anything.
-                        if (preg_match(self::ANCHOR_CHECK_REGEX, $rule->match, $validRegexMatch) === 1) {
-                            if (
-                                // \A anchors match the beginning of the whole string, not just this line
-                                ($validRegexMatch[1] === 'A' && !$this->data->firstLine) ||
-                                // \z anchors match the end of the whole string, not just this line
-                                ($validRegexMatch[1] === 'z' && !$this->data->lastLine) ||
-                                // \Z anchors match the end of the whole string or before the final newline if
-                                // there's a trailing newline in the string
-                                ($validRegexMatch[1] === 'Z' && !$this->data->lastLineBeforeFinalNewLine)
-                            ) {
+                        if (preg_match($rule->match, $this->line . ((!$this->data->lastLine) ? "\n" : ''), $match, PREG_OFFSET_CAPTURE, $this->offset) === 1) {
+                            // Throw out pattern regexes with anchors that shouldn't match the current line.
+                            // This is necessary because the tokenizer is fed data line by line and
+                            // therefore anchors that match the beginning of the document and the end won't
+                            // do anything.
+                            if (preg_match(
+                                    self::ANCHOR_CHECK_REGEX, $rule->match, $validRegexMatch) === 1 && (
+                                        // \A anchors match the beginning of the whole string, not just this line
+                                        ($validRegexMatch[1] === 'A' && !$this->data->firstLine) ||
+                                        // \z anchors match the end of the whole string, not just this line
+                                        ($validRegexMatch[1] === 'z' && !$this->data->lastLine) ||
+                                        // \Z anchors match the end of the whole string or before the final newline if
+                                        // there's a trailing newline in the string
+                                        ($validRegexMatch[1] === 'Z' && !$this->data->lastLineBeforeFinalNewLine)
+                                    )
+                                ) {
                                 continue 2;
                             }
-                        }
 
-                        if (preg_match($rule->match, "{$this->line}\n", $match, PREG_OFFSET_CAPTURE, $this->offset)) {
                             // If the match's offset is the same as the current offset then it is the
                             // closest match. There's no need to iterate anymore through the patterns.
                             if ($match[0][1] === $this->offset) {
@@ -351,13 +351,13 @@ class Tokenizer {
                 $this->ruleStack[] = $pattern;
 
                 // If the rule has patterns process tokens from its subpatterns.
-                if ($pattern->patterns !== null && $this->offset < $lineLength) {
+                if ($pattern->patterns !== null && $this->offset < $stopOffset) {
                     // If the pattern has just a regular match (meaning neither a begin nor an end
                     // pattern) but has subpatterns then only tokenize the part of the line that's
-                    // within the match. Otherwise, tokenize up to the line's length. Because of
-                    // recursion, the line length could be set by this step before or within the
+                    // within the match. Otherwise, tokenize up to the stop offset. Because of
+                    // recursion, the stop offset could be set by this step before or within the
                     // capture tokenization process.
-                    $tokens = [ ...$tokens, ...$this->tokenizeLine((!$pattern->beginPattern && !$pattern->endPattern) ? strlen($match[0][0]) : $lineLength) ];
+                    $tokens = [ ...$tokens, ...$this->tokenizeLine((!$pattern->beginPattern && !$pattern->endPattern) ? strlen($match[0][0]) : $stopOffset) ];
                 }
 
                 // If the offset is before the end of the match then create a token from the
@@ -406,7 +406,7 @@ class Tokenizer {
                 }
 
                 // If the offset isn't at the end of the line then look for more matches.
-                if ($this->offset < $lineLength) {
+                if ($this->offset < $stopOffset) {
                     continue;
                 }
             }
@@ -419,7 +419,7 @@ class Tokenizer {
                         $this->ruleStack[] = $injection;
                         $this->activeInjection = $injection;
 
-                        if ($this->offset < $lineLength) {
+                        if ($this->offset < $stopOffset) {
                             continue 2;
                         }
                     }

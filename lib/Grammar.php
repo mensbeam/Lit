@@ -29,6 +29,9 @@ class Grammar {
     protected ?array $_repository;
     protected ?string $_scopeName;
 
+    protected const ESCAPE_SLASHES_REGEX = '/(?<!\\\)\//S';
+    protected const LONG_CHARACTER_CODE_REGEX = '/\\\x\{([0-9A-Fa-f]+)\}/S';
+
 
     public function __construct(?string $scopeName = null, ?array $patterns = null, ?string $name = null, ?array $injections = null, ?array $repository = null) {
         $this->_name = $name;
@@ -198,11 +201,12 @@ class Grammar {
                     $p['beginPattern'] = true;
                 case 'match':
                     // Escape forward slashes that aren't escaped in regexes.
-                    $value = preg_replace('/(?<!\\\)\//', '\/', $value);
+                    $value = preg_replace(self::ESCAPE_SLASHES_REGEX, '\/', $value);
                     // Fix oniguruma long character codes.
-                    $value = preg_replace_callback('/\\\x\{([0-9A-Fa-f]+)\}/', function($matches) {
+                    $value = preg_replace_callback(self::LONG_CHARACTER_CODE_REGEX, function($matches) {
                         return "\x{" . (((int)base_convert($matches[1], 16, 10) > 0x10ffff) ? '10ffff' : $matches[1]) . "}";
                     }, $value);
+
                     $p['match'] = "/$value/Su";
 
                     $modified = true;

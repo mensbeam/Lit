@@ -21,12 +21,17 @@ class Tokenizer {
     public static bool $debug = false;
 
     protected Data $data;
-    protected int $debugCount = 0;
     protected Grammar $grammar;
     protected int $offset = 0;
     protected ?Pattern $activeInjection = null;
     protected string $line = '';
     protected int $lineNumber = 1;
+    // Cache of rule lists which have had references spliced to keep from having to
+    // repeatedly splice in the same reference. It needs to be in two arrays because
+    // PHP doesn't have a functioning Map object; the index needs to be an array
+    // itself.
+    protected array $ruleCacheIndexes = [];
+    protected array $ruleCacheValues = [];
     protected array $ruleStack;
     protected array $scopeStack;
 
@@ -43,9 +48,16 @@ class Tokenizer {
 
 
     public function tokenize(): \Generator {
-        foreach ($this->data->generator as $lineNumber => $line) {
+        foreach ($this->data->get() as $lineNumber => $line) {
             $this->lineNumber = $lineNumber;
             $this->line = $line;
+
+            // Because of how this tokenizes if the final line is just a new line it will
+            // yield an empty token set; just end the generator instead.
+            if ($this->data->lastLine && $line === '') {
+                return;
+            }
+
             assert($this->debugLine());
             $this->offset = 0;
 
@@ -106,7 +118,11 @@ class Tokenizer {
                 }
             }
 
-            $currentRules = end($this->ruleStack)->patterns;
+            // Grab the current rule list from the cache if available to prevent having to
+            // splice in references repeatedly.
+            $cacheIndex = array_search(end($this->ruleStack)->patterns, $this->ruleCacheIndexes);
+            $currentRules = ($cacheIndex !== false) ? $this->ruleCacheValues[$cacheIndex] : end($this->ruleStack)->patterns;
+
             $currentRulesCount = count($currentRules);
             $closestMatch = null;
 
@@ -170,6 +186,14 @@ class Tokenizer {
 
                         array_splice($currentRules, $i, 1, ($obj instanceof Pattern) ? [ $obj ] : $obj);
                         $currentRulesCount = count($currentRules);
+
+                        // When the current rule list changes write it to the cache.
+                        if ($cacheIndex === false) {
+                            $this->ruleCacheIndexes[] = end($this->ruleStack)->patterns;
+                            $cacheIndex = count($this->ruleCacheIndexes) - 1;
+                        }
+                        $this->ruleCacheValues[$cacheIndex] = $currentRules;
+
                         continue;
                     }
 

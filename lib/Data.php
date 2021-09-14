@@ -12,7 +12,7 @@ class Data {
     // True if on the first line
     protected bool $_firstLine = true;
     // The stored generator
-    protected \Generator $_generator;
+    protected \Generator $generator;
     // True if on the last line.
     protected bool $_lastLine = false;
     // Some matches will check for the last line before the final newline, so this
@@ -28,7 +28,11 @@ class Data {
     public function __construct(string $data) {
         $this->lines = explode("\n", $data);
         $this->linesLength = count($this->lines);
-        $this->_generator = $this->lineGenerator();
+        $this->generator = $this->lineGenerator();
+    }
+
+    public function get(): \Generator {
+        return $this->generator;
     }
 
 

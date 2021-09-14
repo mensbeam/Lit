@@ -45,13 +45,12 @@ class Highlight {
         $scopeStack = [ $scopeName ];
 
         foreach ($tokenList as $lineNumber => $tokens) {
-            continue;
             foreach ($tokens as $token) {
                 $lastKey = count($token['scopes']) - 1;
                 foreach ($token['scopes'] as $key => $scope) {
                     $keyExists = array_key_exists($key, $scopeStack);
                     if (!$keyExists || $scopeStack[$key] !== $scope) {
-                        if ($keyExists && $scopeStack[$key] !== $scope) {
+                        if ($keyExists) {
                             $scopeStack = array_slice($scopeStack, 0, $key);
                             $elementStack = array_slice($elementStack, 0, $key);
                         }

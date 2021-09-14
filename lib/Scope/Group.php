@@ -16,9 +16,7 @@ class Group extends Node {
 
 
     public function getPrefix(array $scopes): ?int {
-        if ($this->matches($scopes)) {
-            return $this->_child->getPrefix($scopes);
-        }
+        return ($this->matches($scopes)) ? $this->_child->getPrefix($scopes) : null;
     }
 
     public function matches(array $scopes): bool {

@@ -5,7 +5,6 @@
 
 declare(strict_types=1);
 namespace dW\Lit\Grammar;
-use dW\Lit\Grammar;
 
 
 /** Contains patterns responsible for matching a portion of the document */
@@ -14,12 +13,13 @@ class Pattern extends Rule {
     protected ?array $_captures;
     protected ?string $_contentName;
     protected bool $_endPattern = false;
+    protected bool $_injection = false;
     protected ?string $_match;
     protected ?string $_name;
     protected ?array $_patterns;
 
 
-    public function __construct(?string $name = null, ?string $contentName = null, ?string $match = null, ?array $patterns = null, ?array $captures = null, bool $beginPattern = false, bool $endPattern = false) {
+    public function __construct(?string $name = null, ?string $contentName = null, ?string $match = null, ?array $patterns = null, ?array $captures = null, bool $beginPattern = false, bool $endPattern = false, bool $injection = false) {
         $this->_beginPattern = $beginPattern;
         $this->_name = $name;
         $this->_contentName = $contentName;
@@ -27,5 +27,6 @@ class Pattern extends Rule {
         $this->_patterns = $patterns;
         $this->_captures = $captures;
         $this->_endPattern = $endPattern;
+        $this->_injection = $injection;
     }
 }

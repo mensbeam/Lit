@@ -80,7 +80,7 @@ class Grammar {
         if (isset($json['injections'])) {
             $injections = [];
             foreach ($json['injections'] as $key => $injection) {
-                $injections[$key] = $this->parseJSONPattern($injection, $filename);
+                $injections[$key] = $this->parseJSONPattern($injection, $filename, true);
             }
             $injections = (count($injections) > 0) ? $injections : null;
         }
@@ -88,7 +88,7 @@ class Grammar {
     }
 
 
-    protected function parseJSONPattern(array $pattern, string $filename): Pattern|Reference|null {
+    protected function parseJSONPattern(array $pattern, string $filename, bool $isInjection = false): Pattern|Reference|null {
         if (isset($pattern['include'])) {
             if ($pattern['include'][0] === '#') {
                 return new RepositoryReference(substr($pattern['include'], 1), $this->_scopeName);
@@ -108,7 +108,8 @@ class Grammar {
             'patterns' => null,
             'captures' => null,
             'beginPattern' => false,
-            'endPattern' => (isset($pattern['endPattern']) && $pattern['endPattern'])
+            'endPattern' => (isset($pattern['endPattern']) && $pattern['endPattern']),
+            'injection' => $isInjection
         ];
 
         $modified = false;

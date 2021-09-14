@@ -102,9 +102,10 @@ class Tokenizer {
 
     protected function tokenizeLine(int $stopOffset): array {
         $tokens = [];
+        $injected = false;
 
         while (true) {
-            if ($this->activeInjection === null && $this->grammar->injections !== null) {
+            /*if ($this->activeInjection === null && $this->grammar->injections !== null) {
                 foreach ($this->grammar->injections as $selector => $injection) {
                     $selector = ScopeParser::parseSelector($selector);
                     if ($selector->matches($this->scopeStack)) {
@@ -116,12 +117,37 @@ class Tokenizer {
                         }
                     }
                 }
-            }
+            }*/
 
             // Grab the current rule list from the cache if available to prevent having to
             // splice in references repeatedly.
             $cacheIndex = array_search(end($this->ruleStack)->patterns, $this->ruleCacheIndexes);
-            $currentRules = ($cacheIndex !== false) ? $this->ruleCacheValues[$cacheIndex] : end($this->ruleStack)->patterns;
+            if ($cacheIndex !== false) {
+                $currentRules = $this->ruleCacheValues[$cacheIndex];
+            } else {
+                $currentRules = end($this->ruleStack)->patterns;
+
+                if ($this->grammar->injections !== null) {
+                    foreach ($this->grammar->injections as $selector => $injection) {
+                        $selector = ScopeParser::parseSelector($selector);
+                        if ($selector->matches($this->scopeStack)) {
+                            $prefix = $selector->getPrefix($this->scopeStack);
+                            if ($prefix === Filter::PREFIX_LEFT || $prefix === Filter::PREFIX_BOTH) {
+                                $currentRules = [ ...$injection->patterns, ...$currentRules ];
+                                if ($prefix === Filter::PREFIX_LEFT) {
+                                    break;
+                                }
+                            }
+                            if ($prefix === Filter::PREFIX_RIGHT || $prefix === Filter::PREFIX_BOTH) {
+                                $currentRules = [ ...$currentRules, ...$injection->patterns ];
+                            }
+
+                            $injected = true;
+                            break;
+                        }
+                    }
+                }
+            }
 
             $currentRulesCount = count($currentRules);
             $closestMatch = null;
@@ -198,7 +224,18 @@ class Tokenizer {
                             $this->ruleCacheIndexes[] = end($this->ruleStack)->patterns;
                             $cacheIndex = count($this->ruleCacheIndexes) - 1;
                         }
-                        $this->ruleCacheValues[$cacheIndex] = $currentRules;
+
+                        if ($injected) {
+                            $temp = $currentRules;
+                            foreach ($temp as $k => $r) {
+                                if ($r instanceof Pattern && $r->injection) {
+                                    unset($temp[$k]);
+                                }
+                            }
+                            $this->ruleCacheValues[$cacheIndex] = array_values($temp);
+                        } else {
+                            $this->ruleCacheValues[$cacheIndex] = $currentRules;
+                        }
 
                         continue;
                     }
@@ -430,9 +467,9 @@ class Tokenizer {
                     }
 
                     // If what was just popped is the active injection then remove it, too.
-                    if ($popped === $this->activeInjection) {
+                    /*if ($popped === $this->activeInjection) {
                         $this->activeInjection = null;
-                    }
+                    }*/
                 }
 
                 // If the offset isn't at the end of the line then look for more matches.
@@ -442,7 +479,7 @@ class Tokenizer {
             }
 
 
-            if ($this->activeInjection === null && $this->grammar->injections !== null) {
+            /*if ($this->activeInjection === null && $this->grammar->injections !== null) {
                 foreach ($this->grammar->injections as $selector => $injection) {
                     $selector = ScopeParser::parseSelector($selector);
                     if ($selector->matches($this->scopeStack) && $selector->getPrefix($this->scopeStack) !== Filter::PREFIX_LEFT) {
@@ -454,7 +491,7 @@ class Tokenizer {
                         }
                     }
                 }
-            }
+            }*/
 
             break;
         }

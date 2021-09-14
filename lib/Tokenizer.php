@@ -110,7 +110,7 @@ class Tokenizer {
                     if ($selector->matches($this->scopeStack)) {
                         $prefix = $selector->getPrefix($this->scopeStack);
                         if ($prefix === Filter::PREFIX_LEFT || $prefix === Filter::PREFIX_BOTH) {
-                            $this->scopeStack[] = $injection;
+                            $this->ruleStack[] = $injection;
                             $this->activeInjection = $injection;
                             break;
                         }
@@ -130,6 +130,12 @@ class Tokenizer {
             for ($i = 0; $i < $currentRulesCount; $i++) {
                 while (true) {
                     $rule = $currentRules[$i];
+
+                    // Grammar references can return false if the grammar does not exist, so
+                    // continue on if the current rule is false.
+                    if ($rule === false) {
+                        continue 2;
+                    }
 
                     // If the rule is a Pattern
                     if ($rule instanceof Pattern) {

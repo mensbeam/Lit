@@ -16,7 +16,7 @@ class GrammarRegistry {
         return true;
     }
 
-    public static function get(string $scopeName): Grammar|bool {
+    public static function get(string $scopeName): Grammar|false {
         if (array_key_exists($scopeName, self::$storage)) {
             return self::$storage[$scopeName];
         } else {

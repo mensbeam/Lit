@@ -24,7 +24,7 @@ class GrammarReference extends Reference {
     }
 
 
-    public function get(): Grammar {
+    public function get(): Grammar|false {
         return GrammarRegistry::get($this->_scopeName);
     }
 }

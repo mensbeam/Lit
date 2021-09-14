@@ -1,5 +1,5 @@
 {
-    "name": "dw/highlighter",
+    "name": "dw/lit",
     "type": "library",
     "description": "TextMate-like syntax highlighting in PHP",
     "license": "MIT",
@@ -10,18 +10,22 @@
             "homepage": "https://dustinwilson.com/"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://code.mensbeam.com/MensBeam/HTML"
+        }
+    ],
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-dom": "*",
         "ext-intl": "*",
         "ext-json": "*",
-        "ext-mbstring": "*",
-        "docopt/docopt": "^1.0"
+        "mensbeam/html": "dev-master"
     },
     "autoload": {
         "psr-4": {
-            "dW\\Lit\\": "lib/",
-            "dW\\Lit\\Scope\\": "lib/Scope/Matchers/"
+            "dW\\Lit\\": "lib/"
         }
     }
 }

@@ -4,33 +4,105 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7f3c88aa5023ebb6ebad3e513973d927",
+    "content-hash": "4adc23361d14315afd30b4dd2846557e",
     "packages": [
         {
-            "name": "docopt/docopt",
-            "version": "1.0.4",
+            "name": "mensbeam/html",
+            "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/docopt/docopt.php.git",
-                "reference": "bf3683a16e09fa1665e493eb4d5a29469e132a4f"
+                "url": "https://code.mensbeam.com/MensBeam/HTML",
+                "reference": "4a7511dd49e85ad1865a3252176047266d62b087"
+            },
+            "require": {
+                "ext-dom": "*",
+                "mensbeam/intl": ">=0.9.0",
+                "mensbeam/mimesniff": "^0.2.0",
+                "php": ">=7.1"
+            },
+            "require-dev": {
+                "bamarni/composer-bin-plugin": "^1.3",
+                "daux/daux.io": "^0.16.0",
+                "masterminds/html5": "^2.7"
+            },
+            "suggest": {
+                "ext-ctype": "Improved performance"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "MensBeam\\HTML\\": [
+                        "lib/",
+                        "lib/DOM",
+                        "lib/DOM/traits"
+                    ]
+                },
+                "classmap": [
+                    "lib/Token.php"
+                ],
+                "files": [
+                    "lib/ctype.php"
+                ]
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "MensBeam\\HTML\\Test\\": "tests/lib/",
+                    "MensBeam\\HTML\\TestCase\\": "tests/cases/"
+                }
+            },
+            "scripts": {
+                "post-install-cmd": [
+                    "@composer bin all install"
+                ],
+                "post-update-cmd": [
+                    "@composer bin all update"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dustin Wilson",
+                    "email": "dustin@dustinwilson.com",
+                    "homepage": "https://dustinwilson.com/"
+                },
+                {
+                    "name": "J. King",
+                    "email": "jking@jkingweb.ca",
+                    "homepage": "https://jkingweb.ca/"
+                }
+            ],
+            "description": "Parses modern HTML text into a PHP DOMDocument",
+            "time": "2021-04-26T21:07:13+00:00"
+        },
+        {
+            "name": "mensbeam/intl",
+            "version": "0.9.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mensbeam/intl.git",
+                "reference": "de037b182ce99aaa90ebc09b0ee0457ddf1d07bc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/docopt/docopt.php/zipball/bf3683a16e09fa1665e493eb4d5a29469e132a4f",
-                "reference": "bf3683a16e09fa1665e493eb4d5a29469e132a4f",
+                "url": "https://api.github.com/repos/mensbeam/intl/zipball/de037b182ce99aaa90ebc09b0ee0457ddf1d07bc",
+                "reference": "de037b182ce99aaa90ebc09b0ee0457ddf1d07bc",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.0"
+                "php": ">=7.1"
             },
             "require-dev": {
-                "phpunit/phpunit": "4.1.*"
+                "bamarni/composer-bin-plugin": "*",
+                "ext-intl": "*"
             },
             "type": "library",
             "autoload": {
-                "classmap": [
-                    "src/docopt.php"
-                ]
+                "psr-4": {
+                    "MensBeam\\Intl\\": "lib/"
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -38,37 +110,146 @@
             ],
             "authors": [
                 {
-                    "name": "Blake Williams",
-                    "email": "code@shabbyrobe.org",
-                    "homepage": "http://docopt.org/",
-                    "role": "Developer"
+                    "name": "J. King",
+                    "email": "jking@jkingweb.ca",
+                    "homepage": "https://jkingweb.ca/"
                 }
             ],
-            "description": "Port of Python's docopt for PHP >=5.3",
-            "homepage": "http://github.com/docopt/docopt.php",
+            "description": "A set of dependency-free basic internationalization tools",
             "keywords": [
-                "cli",
-                "docs"
+                "WHATWG",
+                "charset",
+                "encoding",
+                "internationalization",
+                "intl",
+                "unicode",
+                "utf-8",
+                "utf8"
             ],
             "support": {
-                "issues": "https://github.com/docopt/docopt.php/issues",
-                "source": "https://github.com/docopt/docopt.php/tree/1.0.4"
+                "issues": "https://github.com/mensbeam/intl/issues",
+                "source": "https://github.com/mensbeam/intl/tree/0.9.0"
             },
-            "time": "2019-12-03T02:48:46+00:00"
+            "time": "2021-03-25T19:08:04+00:00"
+        },
+        {
+            "name": "mensbeam/mimesniff",
+            "version": "0.2.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mensbeam/mime.git",
+                "reference": "c19be2496ab1e27fbf9c3483c2a9faa2781796cd"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/mensbeam/mime/zipball/c19be2496ab1e27fbf9c3483c2a9faa2781796cd",
+                "reference": "c19be2496ab1e27fbf9c3483c2a9faa2781796cd",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1",
+                "psr/http-message": "^1.0"
+            },
+            "require-dev": {
+                "bamarni/composer-bin-plugin": "^1.3",
+                "ext-intl": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "MensBeam\\Mime\\": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "J. King",
+                    "email": "jking@jkingweb.ca",
+                    "homepage": "https://jkingweb.ca/"
+                }
+            ],
+            "description": "An implementation of the WHATWG MIME Sniffing specification",
+            "keywords": [
+                "WHATWG",
+                "mime",
+                "mimesniff"
+            ],
+            "support": {
+                "issues": "https://github.com/mensbeam/mime/issues",
+                "source": "https://github.com/mensbeam/mime/tree/0.2.1"
+            },
+            "time": "2021-03-07T03:58:00+00:00"
+        },
+        {
+            "name": "psr/http-message",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-fig/http-message.git",
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-fig/http-message/zipball/f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "reference": "f6561bf28d520154e4b0ec72be95418abe6d9363",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\Http\\Message\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "http://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for HTTP messages",
+            "homepage": "https://github.com/php-fig/http-message",
+            "keywords": [
+                "http",
+                "http-message",
+                "psr",
+                "psr-7",
+                "request",
+                "response"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/http-message/tree/master"
+            },
+            "time": "2016-08-06T14:39:51+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "mensbeam/html": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": "^7.4 || ^8.0",
         "ext-dom": "*",
         "ext-intl": "*",
-        "ext-json": "*",
-        "ext-mbstring": "*"
+        "ext-json": "*"
     },
     "platform-dev": [],
     "plugin-api-version": "2.0.0"

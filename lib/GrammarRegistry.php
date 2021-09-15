@@ -16,6 +16,12 @@ class GrammarRegistry {
         return true;
     }
 
+    /**
+     * Retrieves a grammar from the registry
+     *
+     * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that is being requested
+     * @return dW\Lit\Grammar|false
+     */
     public static function get(string $scopeName): Grammar|false {
         if (array_key_exists($scopeName, self::$storage)) {
             return self::$storage[$scopeName];
@@ -31,6 +37,13 @@ class GrammarRegistry {
         return false;
     }
 
+    /**
+     * Sets a grammar in the registry.
+     *
+     * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that is being set
+     * @param dW\Lit\Grammar - The grammar to be put into the registry
+     * @return bool
+     */
     public static function set(string $scopeName, Grammar $grammar): bool {
         try {
             self::$storage[$scopeName] = $grammar;

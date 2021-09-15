@@ -17,14 +17,22 @@ use dW\Lit\Scope\{
 };
 
 
+/** Class for tokenizing input data */
 class Tokenizer {
+    // Used for debugging; assertions (`ini_set('zend.assertions', '1')`) must be
+    // enabled to see debug output.
     public static bool $debug = false;
-
+    // The input Data class.
     protected Data $data;
+    // The supplied Grammar used to highlight the input data.
     protected Grammar $grammar;
+    // The offset/position on the line the tokenizer is currently at.
     protected int $offset = 0;
+    // Flag used to tell the tokenizer an injection is on the rule stack.
     protected bool $activeInjection = false;
+    // The current line being tokenized.
     protected string $line = '';
+    // The current line number of the input data being tokenized.
     protected int $lineNumber = 1;
     // Cache of rule lists which have had references spliced to keep from having to
     // repeatedly splice in the same reference. It needs to be in two arrays because
@@ -32,7 +40,9 @@ class Tokenizer {
     // itself.
     protected array $ruleCacheIndexes = [];
     protected array $ruleCacheValues = [];
+    // The stack of rules
     protected array $ruleStack;
+    // The stack of scopes
     protected array $scopeStack;
 
     protected const SCOPE_RESOLVE_REGEX = '/\$(\d+)|\${(\d+):\/(downcase|upcase)}/S';
@@ -46,7 +56,7 @@ class Tokenizer {
         $this->scopeStack = [ $this->grammar->scopeName ];
     }
 
-
+    /** Receives lines from the Data object and yields an array of tokens */
     public function tokenize(): \Generator {
         foreach ($this->data->get() as $lineNumber => $line) {
             $this->lineNumber = $lineNumber;

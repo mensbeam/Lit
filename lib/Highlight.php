@@ -13,10 +13,27 @@ use MensBeam\HTML\{
 
 
 class Highlight {
-    public static function toDOM(string $data, string $scopeName, ?Document $document = null, string $encoding = 'windows-1252'): Element {
+    /**
+     * Highlights incoming string data and outputs an HTML DOM Mensbeam\HTML\Element.
+     *
+     * @param string $data - The input data string.
+     * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data.
+     * @param ?Mensbeam\HTML\Document [$document = null] - An existing MensBeam\HTML\Document to use as the owner document of the returned MensBeam\HTML\Element; if omitted one will be created instead.
+     * @param string [$encoding = 'windows-1252'] - If a document isn't provided an encoding may be provided for the new document; the HTML standard default windows-1252 is used if no encoding is provided.
+     * @return Mensbeam\HTML\Element
+     */
+    public static function toElement(string $data, string $scopeName, ?Document $document = null, string $encoding = 'windows-1252'): Element {
         return self::highlight($data, $scopeName, $document, $encoding);
     }
 
+    /**
+     * Highlights incoming string data and outputs an HTML string.
+     *
+     * @param string $data - The input data string.
+     * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data.
+     * @param string [$encoding = 'windows-1252'] - Encoding for the input string data; the HTML standard default windows-1252 is used if no encoding is provided.
+     * @return string
+     */
     public static function toString(string $data, string $scopeName, string $encoding = 'windows-1252'): string {
         return (string)self::highlight($data, $scopeName, null, $encoding);
     }
@@ -38,7 +55,7 @@ class Highlight {
 
         $pre = $document->createElement('pre');
         $code = $document->createElement('code');
-        $code->setAttribute('class', str_replace('.', ' ', $scopeName));
+        $code->setAttribute('class', implode(' ', array_unique(explode('.', $scopeName))));
         $pre->appendChild($code);
 
         $elementStack = [ $code ];
@@ -56,7 +73,7 @@ class Highlight {
                         }
 
                         $span = $document->createElement('span');
-                        $span->setAttribute('class', str_replace('.', ' ', $scope));
+                        $span->setAttribute('class', implode(' ', array_unique(explode('.', $scope))));
                         end($elementStack)->appendChild($span);
                         $scopeStack[] = $scope;
                         $elementStack[] = $span;

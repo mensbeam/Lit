@@ -42,7 +42,11 @@ class Grammar {
     }
 
 
-    /** Imports an Atom JSON grammar into the Grammar object */
+    /**
+     * Imports an Atom JSON grammar into the Grammar object
+     *
+     * @param string $filename - The JSON file to be imported
+     */
     public function loadJSON(string $filename) {
         if (!is_file($filename)) {
             throw new Exception(Exception::JSON_INVALID_FILE, $filename);

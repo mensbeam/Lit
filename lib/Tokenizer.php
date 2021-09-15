@@ -84,10 +84,15 @@ class Tokenizer {
                     'text' => substr($line, $this->offset, $lineLength - $this->offset) . ((!$this->data->lastLine) ? "\n" : '')
                 ];
             } elseif (!$this->data->lastLine) {
-                $tokens[] = [
-                    'scopes' => $this->scopeStack,
-                    'text' => "\n"
-                ];
+                // Some matches can grab the new line, so check to see if it's already present
+                // before appending another token.
+                $lastToken = end($tokens);
+                if ($lastToken === false || substr($lastToken['text'], -1) !== "\n") {
+                    $tokens[] = [
+                        'scopes' => $this->scopeStack,
+                        'text' => "\n"
+                    ];
+                }
             }
 
             assert($this->debugTokens($tokens));

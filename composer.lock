@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4adc23361d14315afd30b4dd2846557e",
+    "content-hash": "a1e7abc5ea4187862ef68f682eabf335",
     "packages": [
         {
             "name": "mensbeam/html",
@@ -252,5 +252,5 @@
         "ext-json": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.1.0"
 }

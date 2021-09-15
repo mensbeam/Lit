@@ -23,7 +23,7 @@ class Tokenizer {
     protected Data $data;
     protected Grammar $grammar;
     protected int $offset = 0;
-    protected ?Pattern $activeInjection = null;
+    protected bool $activeInjection = false;
     protected string $line = '';
     protected int $lineNumber = 1;
     // Cache of rule lists which have had references spliced to keep from having to
@@ -105,20 +105,6 @@ class Tokenizer {
         $injected = false;
 
         while (true) {
-            /*if ($this->activeInjection === null && $this->grammar->injections !== null) {
-                foreach ($this->grammar->injections as $selector => $injection) {
-                    $selector = ScopeParser::parseSelector($selector);
-                    if ($selector->matches($this->scopeStack)) {
-                        $prefix = $selector->getPrefix($this->scopeStack);
-                        if ($prefix === Filter::PREFIX_LEFT || $prefix === Filter::PREFIX_BOTH) {
-                            $this->ruleStack[] = $injection;
-                            $this->activeInjection = $injection;
-                            break;
-                        }
-                    }
-                }
-            }*/
-
             // Grab the current rule list from the cache if available to prevent having to
             // splice in references repeatedly.
             $cacheIndex = array_search(end($this->ruleStack)->patterns, $this->ruleCacheIndexes);
@@ -127,7 +113,7 @@ class Tokenizer {
             } else {
                 $currentRules = end($this->ruleStack)->patterns;
 
-                if ($this->grammar->injections !== null) {
+                if (!$this->activeInjection && $this->grammar->injections !== null) {
                     foreach ($this->grammar->injections as $selector => $injection) {
                         $selector = ScopeParser::parseSelector($selector);
                         if ($selector->matches($this->scopeStack)) {
@@ -138,7 +124,7 @@ class Tokenizer {
                                     break;
                                 }
                             }
-                            if ($prefix === Filter::PREFIX_RIGHT || $prefix === Filter::PREFIX_BOTH) {
+                            if ($prefix === null || $prefix === Filter::PREFIX_RIGHT || $prefix === Filter::PREFIX_BOTH) {
                                 $currentRules = [ ...$currentRules, ...$injection->patterns ];
                             }
 
@@ -226,6 +212,8 @@ class Tokenizer {
                         }
 
                         if ($injected) {
+                            // Injections need to be re-evaluated against the scope stack every time they're
+                            // injected so don't cache them.
                             $temp = $currentRules;
                             foreach ($temp as $k => $r) {
                                 if ($r instanceof Pattern && $r->injection) {
@@ -301,6 +289,9 @@ class Tokenizer {
                             }
 
                             $this->ruleStack[] = $pattern->captures[$k];
+                            // Don't do injections on capture lists.
+                            $activeInjection = $this->activeInjection;
+                            $this->activeInjection = true;
                             // Only tokenize the part of the line that's contains the match.
                             $captureEndOffset = $m[1] + strlen($m[0]);
                             $tokens = [ ...$tokens, ...$this->tokenizeLine($captureEndOffset) ];
@@ -316,6 +307,8 @@ class Tokenizer {
                             }
 
                             array_pop($this->ruleStack);
+                            // Return to the original active injection state.
+                            $this->activeInjection = $activeInjection;
                             $this->offset = $m[1] + strlen($m[0]);
                         }
                         // Otherwise, create a token for the capture.
@@ -416,6 +409,7 @@ class Tokenizer {
                 }
 
                 $this->ruleStack[] = $pattern;
+                $this->activeInjection = ($pattern->injection);
 
                 // If the rule has patterns process tokens from its subpatterns.
                 if ($pattern->patterns !== null && $this->offset < $stopOffset) {
@@ -449,8 +443,8 @@ class Tokenizer {
                             }
 
                             // If what was just popped is the active injection then remove it, too.
-                            if ($popped === $this->activeInjection) {
-                                $this->activeInjection = null;
+                            if ($popped->injection) {
+                                $this->activeInjection = false;
                             }
                         }
                     }
@@ -467,9 +461,9 @@ class Tokenizer {
                     }
 
                     // If what was just popped is the active injection then remove it, too.
-                    /*if ($popped === $this->activeInjection) {
-                        $this->activeInjection = null;
-                    }*/
+                    if ($popped->injection) {
+                        $this->activeInjection = false;
+                    }
                 }
 
                 // If the offset isn't at the end of the line then look for more matches.

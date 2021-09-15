@@ -249,6 +249,15 @@ class Tokenizer {
                     $this->offset = $match[0][1];
                 }
 
+                // If the pattern is an end pattern and its corresponding begin pattern has a
+                // content name remove that from the scope stack before continuing.
+                if ($pattern->endPattern) {
+                    $previousRule = end($this->ruleStack);
+                    if ($previousRule->beginPattern && $previousRule->contentName !== null) {
+                        array_pop($this->scopeStack);
+                    }
+                }
+
                 // Add the name to the scope stack if present.
                 if ($pattern->name !== null) {
                     $this->scopeStack[] = $this->resolveScopeName($pattern->name, $match);
@@ -450,12 +459,7 @@ class Tokenizer {
                     }
 
                     $popped = array_pop($this->ruleStack);
-
-                    // If what was just popped is a begin pattern and has a content name pop it off
-                    // the scope stack.
-                    if ($popped->beginPattern && $popped->contentName !== null) {
-                        array_pop($this->scopeStack);
-                    }
+                    // Pop the rule's name from the stack.
                     if ($popped->name !== null) {
                         array_pop($this->scopeStack);
                     }
@@ -471,21 +475,6 @@ class Tokenizer {
                     continue;
                 }
             }
-
-
-            /*if ($this->activeInjection === null && $this->grammar->injections !== null) {
-                foreach ($this->grammar->injections as $selector => $injection) {
-                    $selector = ScopeParser::parseSelector($selector);
-                    if ($selector->matches($this->scopeStack) && $selector->getPrefix($this->scopeStack) !== Filter::PREFIX_LEFT) {
-                        $this->ruleStack[] = $injection;
-                        $this->activeInjection = $injection;
-
-                        if ($this->offset < $stopOffset) {
-                            continue 2;
-                        }
-                    }
-                }
-            }*/
 
             break;
         }

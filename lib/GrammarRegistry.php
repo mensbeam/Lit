@@ -4,7 +4,7 @@
  * See LICENSE file for details */
 
 declare(strict_types=1);
-namespace dW\Lit;
+namespace MensBeam\Lit;
 
 
 /** Static storage for grammars; a map of a scope string and a Grammar object */
@@ -21,7 +21,7 @@ class GrammarRegistry {
      * Retrieves a grammar from the registry
      *
      * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that is being requested
-     * @return dW\Lit\Grammar|false
+     * @return MensBeam\Lit\Grammar|false
      */
     public static function get(string $scopeName): Grammar|false {
         if (array_key_exists($scopeName, self::$storage)) {
@@ -43,7 +43,7 @@ class GrammarRegistry {
      * Sets a grammar in the registry.
      *
      * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that is being set
-     * @param dW\Lit\Grammar - The grammar to be put into the registry
+     * @param MensBeam\Lit\Grammar - The grammar to be put into the registry
      */
     public static function set(string $scopeName, Grammar $grammar) {
         self::$storage[$scopeName] = $grammar;

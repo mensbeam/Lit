@@ -1,5 +1,5 @@
 {
-    "name": "dw/lit",
+    "name": "mensbeam/lit",
     "type": "library",
     "description": "TextMate-like syntax highlighting in PHP",
     "license": "MIT",
@@ -19,12 +19,11 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-dom": "*",
-        "ext-json": "*",
-        "mensbeam/html": "dev-master"
+        "ext-json": "*"
     },
     "autoload": {
         "psr-4": {
-            "dW\\Lit\\": "lib/"
+            "MensBeam\\Lit\\": "lib/"
         }
     }
 }

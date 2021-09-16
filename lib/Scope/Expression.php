@@ -4,7 +4,7 @@
  * See LICENSE file for details */
 
 declare(strict_types=1);
-namespace dW\Lit\Scope;
+namespace MensBeam\Lit\Scope;
 
 class Expression extends Node {
     protected Filter|Group|Path $_child;

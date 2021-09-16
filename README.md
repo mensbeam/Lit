@@ -10,17 +10,17 @@ Lit is a multilanguage syntax highlighter written in PHP. It takes code as input
 
 ## Documentation ##
 
-### dW\\Lit\\Grammar::__construct ###
+### MensBeam\\Lit\\Grammar::__construct ###
 
-Creates a new `dW\Lit\Grammar` object.
+Creates a new `MensBeam\Lit\Grammar` object.
 
 ```php
-public function dW\Lit\Grammar::__construct(?string $scopeName = null, ?array $patterns = null, ?string $name = null, ?array $injections = null, ?array $repository = null)
+public function MensBeam\Lit\Grammar::__construct(?string $scopeName = null, ?array $patterns = null, ?string $name = null, ?array $injections = null, ?array $repository = null)
 ```
 
 #### Parameters ####
 
-In normal usage of the library the parameters won't be used (see `dW\Lit\Grammar::loadJSON` and examples below for more information), but they are listed below for completeness' sake.
+In normal usage of the library the parameters won't be used (see `MensBeam\Lit\Grammar::loadJSON` and examples below for more information), but they are listed below for completeness' sake.
 
 ***scopeName*** - The scope name of the grammar  
 ***patterns*** - The list of patterns in the grammar  
@@ -29,12 +29,12 @@ In normal usage of the library the parameters won't be used (see `dW\Lit\Grammar
 ***repository*** - The list of repository items in the grammar
 
 
-### dW\\Lit\\Grammar::loadJSON ###
+### MensBeam\\Lit\\Grammar::loadJSON ###
 
-Imports an Atom JSON grammar into the `dW\Lit\Grammar` object.
+Imports an Atom JSON grammar into the `MensBeam\Lit\Grammar` object.
 
 ```php
-public function dW\Lit\Grammar::loadJSON(string $filename)
+public function MensBeam\Lit\Grammar::loadJSON(string $filename)
 ```
 
 #### Parameters ####
@@ -42,21 +42,21 @@ public function dW\Lit\Grammar::loadJSON(string $filename)
 ***filename*** - The JSON file to be imported
 
 
-### dW\\Lit\\GrammarRegistry::clear ###
+### MensBeam\\Lit\\GrammarRegistry::clear ###
 
 Clears all grammars from the registry
 
 ```php
-public static function dW\Lit\GrammarRegistry::clear()
+public static function MensBeam\Lit\GrammarRegistry::clear()
 ```
 
 
-### dW\\Lit\\GrammarRegistry::get ###
+### MensBeam\\Lit\\GrammarRegistry::get ###
 
 Retrieves a grammar from the registry
 
 ```php
-public static function dW\Lit\GrammarRegistry::get(string $scopeName): Grammar|false
+public static function MensBeam\Lit\GrammarRegistry::get(string $scopeName): Grammar|false
 ```
 
 #### Parameters ####
@@ -65,15 +65,15 @@ public static function dW\Lit\GrammarRegistry::get(string $scopeName): Grammar|f
 
 #### Return Values ####
 
-Returns a `dW\Lit\Grammar` object on success and `false` on failure.
+Returns a `MensBeam\Lit\Grammar` object on success and `false` on failure.
 
 
-### dW\\Lit\\GrammarRegistry::set ###
+### MensBeam\\Lit\\GrammarRegistry::set ###
 
 Retrieves a grammar from the registry
 
 ```php
-public static function dW\Lit\GrammarRegistry::set(string $scopeName, dW\Lit\Grammar $grammar): bool
+public static function MensBeam\Lit\GrammarRegistry::set(string $scopeName, MensBeam\Lit\Grammar $grammar): bool
 ```
 
 #### Parameters ####
@@ -86,12 +86,12 @@ public static function dW\Lit\GrammarRegistry::set(string $scopeName, dW\Lit\Gra
 Returns `true` on success and `false` on failure.
 
 
-### dW\\Lit\\Highlight::toElement ###
+### MensBeam\\Lit\\Highlight::toElement ###
 
 Highlights incoming string data and outputs a PHP `DOMElement`.
 
 ```php
-public static dW\Lit\Highlight::toElement(string $data, string $scopeName, ?\DOMDocument $document = null, string $encoding = 'windows-1252'): \DOMElement
+public static MensBeam\Lit\Highlight::toElement(string $data, string $scopeName, ?\DOMDocument $document = null, string $encoding = 'windows-1252'): \DOMElement
 ```
 
 #### Parameters ####
@@ -106,12 +106,12 @@ public static dW\Lit\Highlight::toElement(string $data, string $scopeName, ?\DOM
 Returns a `pre` `DOMElement`.
 
 
-### dW\\Lit\\Highlight::toString ###
+### MensBeam\\Lit\\Highlight::toString ###
 
 Highlights incoming string data and outputs a string containing serialized HTML.
 
 ```php
-public static dW\Lit\Highlight::toString(string $data, string $scopeName, string $encoding = 'windows-1252'): string
+public static MensBeam\Lit\Highlight::toString(string $data, string $scopeName, string $encoding = 'windows-1252'): string
 ```
 
 #### Parameters ####
@@ -137,7 +137,7 @@ echo "🐵 OOK! 🐵";
 CODE;
 
 // Use UTF-8 as the encoding to preserve the emojis.
-$element = dW\Lit\Highlight::toElement($code, 'text.html.php', null, 'UTF-8');
+$element = MensBeam\Lit\Highlight::toElement($code, 'text.html.php', null, 'UTF-8');
 $element->setAttribute('class', 'highlighted');
 
 // Use PHP DOM's DOMDocument::saveHTML method to print the highlighted markup
@@ -159,7 +159,7 @@ An already existing `DOMDocument` may be used as the owner document of the retur
 ...
 $document = new DOMDocument();
 // $element will be owned by $document.
-$element = dW\Lit\Highlight::toElement($code, 'text.html.php', $document);
+$element = MensBeam\Lit\Highlight::toElement($code, 'text.html.php', $document);
 ```
 
 Other DOM libraries which inherit from PHP's DOM such as [`MensBeam\HTML`][d] may also be used:
@@ -168,7 +168,7 @@ Other DOM libraries which inherit from PHP's DOM such as [`MensBeam\HTML`][d] ma
 ...
 $document = new MensBeam\HTML\Document();
 // $element will be owned by $document.
-$element = dW\Lit\Highlight::toElement($code, 'text.html.php', $document);
+$element = MensBeam\Lit\Highlight::toElement($code, 'text.html.php', $document);
 // MensBeam\HTML\Element can simply be cast to a string to serialize.
 $string = (string)$element;
 ```
@@ -177,7 +177,7 @@ Of course Lit can simply output a string, too:
 
 ```php
 ...
-$string = dW\Lit\Highlight::toString($code, 'text.html.php');
+$string = MensBeam\Lit\Highlight::toString($code, 'text.html.php');
 ```
 
 Lit has quite a long list of out-of-the-bag supported languages, but sometimes other languages need to be highlighted:
@@ -186,12 +186,12 @@ Lit has quite a long list of out-of-the-bag supported languages, but sometimes o
 ...
 // Import a hypothetical Ook Atom JSON language grammar into a Grammar object
 // and add it to the registry.
-$grammar = new dW\Lit\Grammar;
+$grammar = new MensBeam\Lit\Grammar;
 $grammar->loadJSON('/path/to/source.ook.json');
-dW\Lit\GrammarRegistry::set($grammar->scopeName, $grammar);
+MensBeam\Lit\GrammarRegistry::set($grammar->scopeName, $grammar);
 
 // Now the grammar can be used to highlight code
-$element = dW\Lit\Highlight::toElement($code, $grammar->scopeName);
+$element = MensBeam\Lit\Highlight::toElement($code, $grammar->scopeName);
 ```
 
 

@@ -4,8 +4,8 @@
  * See LICENSE file for details */
 
 declare(strict_types=1);
-namespace dW\Lit\Grammar;
-use dW\Lit\GrammarRegistry;
+namespace MensBeam\Lit\Grammar;
+use MensBeam\Lit\GrammarRegistry;
 
 
 /**

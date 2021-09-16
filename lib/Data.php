@@ -4,7 +4,7 @@
  * See LICENSE file for details */
 
 declare(strict_types=1);
-namespace dW\Lit;
+namespace MensBeam\Lit;
 
 
 class Data {

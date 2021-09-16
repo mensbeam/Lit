@@ -4,7 +4,7 @@
  * See LICENSE and AUTHORS files for details */
 
 declare(strict_types=1);
-namespace dW\Lit\Grammar;
+namespace MensBeam\Lit\Grammar;
 
 class Exception extends \Exception {
     const INVALID_CODE = 100;

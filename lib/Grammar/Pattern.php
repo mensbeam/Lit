@@ -4,7 +4,7 @@
  * See LICENSE file for details */
 
 declare(strict_types=1);
-namespace dW\Lit\Grammar;
+namespace MensBeam\Lit\Grammar;
 
 
 /** Contains patterns responsible for matching a portion of the document */

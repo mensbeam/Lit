@@ -4,8 +4,8 @@
  * See LICENSE file for details */
 
 declare(strict_types=1);
-namespace dW\Lit\Scope;
-use dW\Lit\FauxReadOnly;
+namespace MensBeam\Lit\Scope;
+use MensBeam\Lit\FauxReadOnly;
 
 class Node {
     use FauxReadOnly;

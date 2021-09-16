@@ -53,7 +53,12 @@ class Tokenizer {
         $this->data = $data;
         $this->grammar = $grammar;
         $this->ruleStack = [ $this->grammar ];
-        $this->scopeStack = [ $this->grammar->scopeName ];
+
+        // Grammar scope names can contain spaces (eg: source.js.rails
+        // source.js.jquery), meaning more than one needs to be added to the stack. It
+        // doesn't look like anything does it elsewhere, so spaces in scope names only
+        // work here.
+        $this->scopeStack = preg_split('/\s+/', $this->grammar->scopeName);
     }
 
     /** Receives lines from the Data object and yields an array of tokens */

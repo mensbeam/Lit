@@ -1,6 +1,7 @@
 [a]: https://atom.io
 [b]: https://github.com/atom/highlights
 [c]: https://macromates.com
+[d]: https://code.mensbeam.com/MensBeam/HTML
 
 # Lit #
 
@@ -29,9 +30,9 @@ public static dW\Lit\Highlight::toElement(string $data, string $scopeName, ?\DOM
 Returns a `pre` `\DOMElement`.
 
 
-## Usage ##
+## Examples ##
 
-Here's an example of highlighting PHP code:
+Here's an example of simply highlighting PHP code:
 
 ```php
 $code = <<<CODE
@@ -43,4 +44,34 @@ CODE;
 $element = dW\Lit\Highlight::toElement($code, 'text.html.php');
 // Use PHP DOM's DOMDocument::saveHTML method to print the highlighted markup.
 $string = $element->ownerDocument->saveHTML($element);
+```
+
+An existing `\DOMDocument` may be used as the owner document of the returned pre element:
+
+```php
+$code = <<<CODE
+<?php
+echo "OOK!";
+?>
+CODE;
+
+$document = new DOMDocument();
+// $element will be owned by $document.
+$element = dW\Lit\Highlight::toElement($code, 'text.html.php', $document);
+```
+
+Other DOM classes which inherit from PHP's DOM such as [`MensBeam\HTML`][d] may also be used:
+
+```php
+$code = <<<CODE
+<?php
+echo "OOK!";
+?>
+CODE;
+
+$document = new MensBeam\HTML\Document();
+// $element will be owned by $document.
+$element = dW\Lit\Highlight::toElement($code, 'text.html.php', $document);
+// MensBeam\HTML\Element can simply be cast to a string to serialize.
+$string = (string)$element;
 ```

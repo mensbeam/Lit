@@ -241,7 +241,6 @@ $element = dW\Lit\Highlight::toElement($code, $grammar->scopeName);
 * SCSS
 * Shell (Bash)
 * Shell session (Bash)
-* Smarty
 * SQL
 * SQL (Mustache)
 * Textile

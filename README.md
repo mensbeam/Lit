@@ -136,6 +136,7 @@ echo "🐵 OOK! 🐵";
 ?>
 CODE;
 
+// Use UTF-8 as the encoding to preserve the emojis.
 $element = dW\Lit\Highlight::toElement($code, 'text.html.php', null, 'UTF-8');
 $element->setAttribute('class', 'highlighted');
 
@@ -178,3 +179,72 @@ Of course Lit can simply output a string, too:
 ...
 $string = dW\Lit\Highlight::toString($code, 'text.html.php');
 ```
+
+Lit has quite a long list of out-of-the-bag supported languages, but sometimes other languages need to be highlighted:
+
+```php
+...
+// Import a hypothetical Ook Atom JSON language grammar into a Grammar object
+// and add it to the registry.
+$grammar = new dW\Lit\Grammar;
+$grammar->loadJSON('/path/to/source.ook.json');
+dW\Lit\GrammarRegistry::set($grammar->scopeName, $grammar);
+
+// Now the grammar can be used to highlight code
+$element = dW\Lit\Highlight::toElement($code, $grammar->scopeName);
+```
+
+
+## Supported Languages & Formats ##
+
+* AppleScript
+* C
+* C#
+* C# Cake file
+* C# Script file
+* C++
+* CoffeeScript
+* CSS
+* Diff
+* Github Flavored Markdown
+* Git config
+* Go
+* Go modules
+* Go templates
+* Java
+* Java expression language
+* Java properties
+* JavaScript
+* JavaScript Regular Expressions
+* JSDoc
+* JSON
+* Less
+* Lua
+* Makefile
+* Markdown (CommonMark)
+* Objective C
+* Perl
+* Perl 6
+* PHP
+* Plist
+* Plist (XML, old-style)
+* Python
+* Python console
+* Python Regular Expressions
+* Python traceback
+* Ruby
+* Ruby gemfile
+* Ruby on Rails (RJS)
+* Rust
+* Sass
+* SassDoc
+* SCSS
+* Shell (Bash)
+* Shell session (Bash)
+* Smarty
+* SQL
+* SQL (Mustache)
+* Textile
+* Todo
+* XML
+* XSL

@@ -19,7 +19,6 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-dom": "*",
-        "ext-intl": "*",
         "ext-json": "*",
         "mensbeam/html": "dev-master"
     },

@@ -55,16 +55,35 @@ public static dW\Lit\Highlight::toElement(string $data, string $scopeName, ?\DOM
 ***data*** - The input data string.  
 ***scopeName*** - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data.  
 ***document*** - An existing `DOMDocument` to use as the owner document of the returned `DOMElement`; if omitted one will be created instead.  
-***encoding*** - If a document isn't provided an encoding may be provided for the new document; the HTML standard default windows-1252 is used if no encoding is provided.  
+***encoding*** - The encoding of the input data string; only used if a document wasn't provided in the previous parameter, otherwise it uses the encoding of the existing `DOMDocument`
 
 #### Return Values ####
 
 Returns a `pre` `DOMElement`.
 
 
+### dW\\Lit\\Highlight::toString ###
+
+Highlights incoming string data and outputs a string containing serialized HTML.
+
+```php
+public static dW\Lit\Highlight::toString(string $data, string $scopeName, string $encoding = 'windows-1252'): string
+```
+
+#### Parameters ####
+
+***data*** - The input data string  
+***scopeName*** - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data  
+***encoding*** - The encoding of the input data string  
+
+#### Return Values ####
+
+Returns a string.
+
+
 ## Examples ##
 
-Here's an example of simply highlighting PHP code:
+Here's an example of highlighting PHP code:
 
 ```php
 $code = <<<CODE
@@ -74,7 +93,10 @@ echo "OOK!";
 CODE;
 
 $element = dW\Lit\Highlight::toElement($code, 'text.html.php');
-// Use PHP DOM's DOMDocument::saveHTML method to print the highlighted markup.
+$element->setAttribute('class', 'highlighted');
+
+// Use PHP DOM's DOMDocument::saveHTML method to print the highlighted markup
+// when finished with manipulating it.
 echo $element->ownerDocument->saveHTML($element);
 ```
 
@@ -86,15 +108,10 @@ This will produce:
 </span><span class="punctuation section embedded end php"><span class="source php">?</span>&gt;</span></span></code></pre>
 ```
 
-An existing `DOMDocument` may be used as the owner document of the returned `pre` element:
+An already existing `DOMDocument` may be used as the owner document of the returned `pre` element:
 
 ```php
-$code = <<<CODE
-<?php
-echo "OOK!";
-?>
-CODE;
-
+...
 $document = new DOMDocument();
 // $element will be owned by $document.
 $element = dW\Lit\Highlight::toElement($code, 'text.html.php', $document);
@@ -103,15 +120,17 @@ $element = dW\Lit\Highlight::toElement($code, 'text.html.php', $document);
 Other DOM libraries which inherit from PHP's DOM such as [`MensBeam\HTML`][d] may also be used:
 
 ```php
-$code = <<<CODE
-<?php
-echo "OOK!";
-?>
-CODE;
-
+...
 $document = new MensBeam\HTML\Document();
 // $element will be owned by $document.
 $element = dW\Lit\Highlight::toElement($code, 'text.html.php', $document);
 // MensBeam\HTML\Element can simply be cast to a string to serialize.
 $string = (string)$element;
+```
+
+Of course Lit can simply output a string, too:
+
+```php
+...
+$string = dW\Lit\Highlight::toString($code, 'text.html.php');
 ```

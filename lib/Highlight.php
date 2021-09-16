@@ -15,7 +15,7 @@ class Highlight {
      * @param string $data - The input data string.
      * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data.
      * @param ?\DOMDocument $document = null - An existing DOMDocument to use as the owner document of the returned DOMElement; if omitted one will be created instead.
-     * @param string $encoding = 'windows-1252' - If a document isn't provided an encoding may be provided for the new document; the HTML standard default windows-1252 is used if no encoding is provided.
+     * @param string $encoding = 'windows-1252' - The encoding of the input data string; only used if a document wasn't provided in the previous parameter, otherwise it uses the encoding of the existing DOMDocument
      * @return \DOMElement
      */
     public static function toElement(string $data, string $scopeName, ?\DOMDocument $document = null, string $encoding = 'windows-1252'): \DOMElement {
@@ -71,6 +71,19 @@ class Highlight {
         }
 
         return $pre;
+    }
+
+    /**
+     * Highlights incoming string data and outputs a string containing serialized HTML.
+     *
+     * @param string $data - The input data string
+     * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data
+     * @param string $encoding = 'windows-1252' - The encoding of the input data string
+     * @return string
+     */
+    public static function toString(string $data, string $scopeName, string $encoding = 'windows-1252'): string {
+        $pre = self::toElement($data, $scopeName, null, $encoding);
+        return $pre->ownerDocument->saveHTML($pre);
     }
 
 

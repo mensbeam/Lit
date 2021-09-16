@@ -11,6 +11,12 @@ namespace dW\Lit;
 class GrammarRegistry {
     protected static array $storage = [];
 
+
+    /**
+     * Clears all grammars from the registry
+     *
+     * @return bool
+     */
     public static function clear(): bool {
         self::$storage = [];
         return true;
@@ -30,6 +36,7 @@ class GrammarRegistry {
             if (file_exists($filename)) {
                 $grammar = new Grammar();
                 $grammar->loadJSON($filename);
+                self::$storage[$scopeName] = $grammar;
                 return $grammar;
             }
         }
@@ -45,12 +52,7 @@ class GrammarRegistry {
      * @return bool
      */
     public static function set(string $scopeName, Grammar $grammar): bool {
-        try {
-            self::$storage[$scopeName] = $grammar;
-        } catch (\Exception $e) {
-            return false;
-        }
-
+        self::$storage[$scopeName] = $grammar;
         return true;
     }
 }

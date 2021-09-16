@@ -6,40 +6,19 @@
 declare(strict_types=1);
 namespace dW\Lit;
 use dW\Lit\Grammar\Exception;
-use MensBeam\HTML\{
-        Document,
-        Element
-};
 
 
 class Highlight {
     /**
-     * Highlights incoming string data and outputs an HTML DOM Mensbeam\HTML\Element.
+     * Highlights incoming string data and outputs a PHP DOMElement.
      *
      * @param string $data - The input data string.
      * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data.
-     * @param ?Mensbeam\HTML\Document [$document = null] - An existing MensBeam\HTML\Document to use as the owner document of the returned MensBeam\HTML\Element; if omitted one will be created instead.
-     * @param string [$encoding = 'windows-1252'] - If a document isn't provided an encoding may be provided for the new document; the HTML standard default windows-1252 is used if no encoding is provided.
-     * @return Mensbeam\HTML\Element
+     * @param ?\DOMDocument $document = null - An existing DOMDocument to use as the owner document of the returned DOMElement; if omitted one will be created instead.
+     * @param string $encoding = 'windows-1252' - If a document isn't provided an encoding may be provided for the new document; the HTML standard default windows-1252 is used if no encoding is provided.
+     * @return \DOMElement
      */
-    public static function toElement(string $data, string $scopeName, ?Document $document = null, string $encoding = 'windows-1252'): Element {
-        return self::highlight($data, $scopeName, $document, $encoding);
-    }
-
-    /**
-     * Highlights incoming string data and outputs an HTML string.
-     *
-     * @param string $data - The input data string.
-     * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data.
-     * @param string [$encoding = 'windows-1252'] - Encoding for the input string data; the HTML standard default windows-1252 is used if no encoding is provided.
-     * @return string
-     */
-    public static function toString(string $data, string $scopeName, string $encoding = 'windows-1252'): string {
-        return (string)self::highlight($data, $scopeName, null, $encoding);
-    }
-
-
-    protected static function highlight(string $data, string $scopeName, ?Document $document = null, string $encoding = 'windows-1252'): Element {
+    public static function toElement(string $data, string $scopeName, ?\DOMDocument $document = null, string $encoding = 'windows-1252'): \DOMElement {
         $grammar = GrammarRegistry::get($scopeName);
         if ($grammar === false) {
             throw new Exception(Exception::GRAMMAR_MISSING, $scopeName);
@@ -49,13 +28,13 @@ class Highlight {
         $tokenList = $tokenizer->tokenize();
 
         if ($document === null) {
-            $document = new Document();
+            $document = new \DOMDocument();
             $document->encoding = $encoding;
         }
 
         $pre = $document->createElement('pre');
         $code = $document->createElement('code');
-        $code->setAttribute('class', implode(' ', array_unique(explode('.', $scopeName))));
+        $code->setAttribute('class', self::scopeNameToCSSClassList($scopeName));
         $pre->appendChild($code);
 
         $elementStack = [ $code ];
@@ -73,7 +52,7 @@ class Highlight {
                         }
 
                         $span = $document->createElement('span');
-                        $span->setAttribute('class', implode(' ', array_unique(explode('.', $scope))));
+                        $span->setAttribute('class', self::scopeNameToCSSClassList($scope));
                         end($elementStack)->appendChild($span);
                         $scopeStack[] = $scope;
                         $elementStack[] = $span;
@@ -92,5 +71,10 @@ class Highlight {
         }
 
         return $pre;
+    }
+
+
+    protected static function scopeNameToCSSClassList(string $scopeName): string {
+        return implode(' ', array_unique(explode('.', $scopeName)));
     }
 }

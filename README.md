@@ -42,6 +42,50 @@ public function dW\Lit\Grammar::loadJSON(string $filename)
 ***filename*** - The JSON file to be imported
 
 
+### dW\\Lit\\GrammarRegistry::clear ###
+
+Clears all grammars from the registry
+
+```php
+public static function dW\Lit\GrammarRegistry::clear()
+```
+
+
+### dW\\Lit\\GrammarRegistry::get ###
+
+Retrieves a grammar from the registry
+
+```php
+public static function dW\Lit\GrammarRegistry::get(string $scopeName): Grammar|false
+```
+
+#### Parameters ####
+
+***scopeName*** - The scope name (eg: text.html.php) of the grammar that is being requested
+
+#### Return Values ####
+
+Returns a `dW\Lit\Grammar` object on success and `false` on failure.
+
+
+### dW\\Lit\\GrammarRegistry::set ###
+
+Retrieves a grammar from the registry
+
+```php
+public static function dW\Lit\GrammarRegistry::set(string $scopeName, dW\Lit\Grammar $grammar): bool
+```
+
+#### Parameters ####
+
+***scopeName*** - The scope name (eg: text.html.php) of the grammar that is being set  
+***grammar*** - The grammar to be put into the registry
+
+#### Return Values ####
+
+Returns `true` on success and `false` on failure.
+
+
 ### dW\\Lit\\Highlight::toElement ###
 
 Highlights incoming string data and outputs a PHP `DOMElement`.
@@ -52,10 +96,10 @@ public static dW\Lit\Highlight::toElement(string $data, string $scopeName, ?\DOM
 
 #### Parameters ####
 
-***data*** - The input data string.  
-***scopeName*** - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data.  
-***document*** - An existing `DOMDocument` to use as the owner document of the returned `DOMElement`; if omitted one will be created instead.  
-***encoding*** - The encoding of the input data string; only used if a document wasn't provided in the previous parameter, otherwise it uses the encoding of the existing `DOMDocument`
+***data*** - The input data string  
+***scopeName*** - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data  
+***document*** - An existing `DOMDocument` to use as the owner document of the returned `DOMElement`; if omitted one will be created instead  
+***encoding*** - The encoding of the input data string; only used if a document wasn't provided in the previous parameter, otherwise it uses the encoding of the existing `DOMDocument`; defaults to HTML standard default windows-1252
 
 #### Return Values ####
 
@@ -74,7 +118,7 @@ public static dW\Lit\Highlight::toString(string $data, string $scopeName, string
 
 ***data*** - The input data string  
 ***scopeName*** - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data  
-***encoding*** - The encoding of the input data string  
+***encoding*** - The encoding of the input data string; defaults to HTML standard default windows-1252
 
 #### Return Values ####
 
@@ -88,11 +132,11 @@ Here's an example of highlighting PHP code:
 ```php
 $code = <<<CODE
 <?php
-echo "OOK!";
+echo "🐵 OOK! 🐵";
 ?>
 CODE;
 
-$element = dW\Lit\Highlight::toElement($code, 'text.html.php');
+$element = dW\Lit\Highlight::toElement($code, 'text.html.php', null, 'UTF-8');
 $element->setAttribute('class', 'highlighted');
 
 // Use PHP DOM's DOMDocument::saveHTML method to print the highlighted markup
@@ -104,7 +148,7 @@ This will produce:
 
 ```html
 <pre class="highlighted"><code class="text html php"><span class="meta embedded block php"><span class="punctuation section embedded begin php">&lt;?php</span><span class="source php">
-<span class="support function construct output php">echo</span> <span class="string quoted double php"><span class="punctuation definition string begin php">"</span>OOK!<span class="punctuation definition string end php">"</span></span><span class="punctuation terminator expression php">;</span>
+<span class="support function construct output php">echo</span> <span class="string quoted double php"><span class="punctuation definition string begin php">"</span>🐵 OOK! 🐵<span class="punctuation definition string end php">"</span></span><span class="punctuation terminator expression php">;</span>
 </span><span class="punctuation section embedded end php"><span class="source php">?</span>&gt;</span></span></code></pre>
 ```
 

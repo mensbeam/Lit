@@ -12,14 +12,9 @@ class GrammarRegistry {
     protected static array $storage = [];
 
 
-    /**
-     * Clears all grammars from the registry
-     *
-     * @return bool
-     */
-    public static function clear(): bool {
+    /** Clears all grammars from the registry */
+    public static function clear() {
         self::$storage = [];
-        return true;
     }
 
     /**
@@ -49,10 +44,8 @@ class GrammarRegistry {
      *
      * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that is being set
      * @param dW\Lit\Grammar - The grammar to be put into the registry
-     * @return bool
      */
-    public static function set(string $scopeName, Grammar $grammar): bool {
+    public static function set(string $scopeName, Grammar $grammar) {
         self::$storage[$scopeName] = $grammar;
-        return true;
     }
 }

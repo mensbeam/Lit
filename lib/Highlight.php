@@ -15,7 +15,7 @@ class Highlight {
      * @param string $data - The input data string.
      * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data.
      * @param ?\DOMDocument $document = null - An existing DOMDocument to use as the owner document of the returned DOMElement; if omitted one will be created instead.
-     * @param string $encoding = 'windows-1252' - The encoding of the input data string; only used if a document wasn't provided in the previous parameter, otherwise it uses the encoding of the existing DOMDocument
+     * @param string $encoding = 'windows-1252' - The encoding of the input data string; only used if a document wasn't provided in the previous parameter, otherwise it uses the encoding of the existing DOMDocument; defaults to HTML standard default windows-1252
      * @return \DOMElement
      */
     public static function toElement(string $data, string $scopeName, ?\DOMDocument $document = null, string $encoding = 'windows-1252'): \DOMElement {
@@ -78,7 +78,7 @@ class Highlight {
      *
      * @param string $data - The input data string
      * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that's needed to highlight the input data
-     * @param string $encoding = 'windows-1252' - The encoding of the input data string
+     * @param string $encoding = 'windows-1252' - The encoding of the input data string; defaults to HTML standard default windows-1252
      * @return string
      */
     public static function toString(string $data, string $scopeName, string $encoding = 'windows-1252'): string {

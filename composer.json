@@ -10,12 +10,6 @@
             "homepage": "https://dustinwilson.com/"
         }
     ],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://code.mensbeam.com/MensBeam/HTML"
-        }
-    ],
     "require": {
         "php": "^7.4 || ^8.0",
         "ext-dom": "*",

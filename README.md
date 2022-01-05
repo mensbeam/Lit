@@ -7,6 +7,9 @@
 
 Lit is a multilanguage syntax highlighter written in PHP. It takes code as input and returns an HTML pre element containing the code highlighted using span elements with classes based upon tokens in the code. It is loosely based upon [Atom][a]'s [Highlights][b] which is used in the Atom text editor to syntax highlight code. Atom's Highlights is in turn based upon [TextMate][c]'s syntax highlighting using its concepts of scope selectors and common keywords for components of programming languages. Lit is not a port of Atom's Highlights but instead an independent implementation of what I can understand of TextMate's grammar syntax, parsing, and tokenization by analyzing other implementations. It aims to at least have feature parity or better with Atom's Highlights.
 
+## Warning Before Using ##
+
+This library is experimental. The code is not tested at all, and writing tests for it will be an incredible undertaking because there's no specification whatsoever to test against. It would require creating a specification as well which is beyond the scope of a project that exists just to scratch an itch. Atom's Highlights is also barely tested itself. There's numerous PHP libraries out there without a test suite; not having one is not up to our usual standards. So, that's why this warning exists.
 
 ## Documentation ##
 

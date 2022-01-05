@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 namespace MensBeam\Lit\Grammar;
-use MensBeam\Lit\FauxReadOnly;
+use MensBeam\Framework\FauxReadOnly;
 
 /**
  * Abstract class used as a base class for Pattern and Reference classes

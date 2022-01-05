@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 namespace MensBeam\Lit\Scope;
-use MensBeam\Lit\FauxReadOnly;
+use MensBeam\Framework\FauxReadOnly;
 
 class Node {
     use FauxReadOnly;

@@ -5,6 +5,7 @@
 
 declare(strict_types=1);
 namespace MensBeam\Lit;
+use MensBeam\Framework\FauxReadOnly;
 
 
 class Data {

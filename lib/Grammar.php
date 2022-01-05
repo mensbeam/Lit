@@ -14,6 +14,7 @@ use MensBeam\Lit\Grammar\{
     RepositoryReference,
     SelfReference
 };
+use MensBeam\Framework\FauxReadOnly;
 
 
 /**

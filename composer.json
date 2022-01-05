@@ -13,7 +13,8 @@
     "require": {
         "php": "^8.0",
         "ext-dom": "*",
-        "ext-json": "*"
+        "ext-json": "*",
+        "mensbeam/framework": "^1.0"
     },
     "autoload": {
         "psr-4": {

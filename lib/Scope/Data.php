@@ -5,12 +5,15 @@
 
 declare(strict_types=1);
 namespace MensBeam\Lit\Scope;
+use MensBeam\Framework\FauxReadOnly;
 
 /**
  * Tokenizes scope strings into an array of segments of the original string and
  * provides an interface for iterating through them.
  */
 class Data {
+    use FauxReadOnly;
+
     protected array $data;
 
     protected int $_position = -1;
@@ -47,11 +50,5 @@ class Data {
         }
 
         return $this->data[$this->_position + 1][0];
-    }
-
-    public function __get(string $name) {
-        if ($name === 'position') {
-            return $this->_position;
-        }
     }
 }

@@ -40,6 +40,17 @@ class GrammarRegistry {
     }
 
     /**
+     * Retrieves whether a grammar exists in the registry or not.
+     *
+     * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that is being requested
+     * @return bool
+     */
+    public static function has(string $scopeName): bool {
+        $result = array_key_exists($scopeName, self::$storage);
+        return $result ?: file_exists(__DIR__ . "/../data/$scopeName.json");
+    }
+
+    /**
      * Sets a grammar in the registry.
      *
      * @param string $scopeName - The scope name (eg: text.html.php) of the grammar that is being set

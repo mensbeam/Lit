@@ -215,6 +215,7 @@ $element = MensBeam\Lit\Highlight::toElement($code, $grammar->scopeName);
 * Go
 * Go modules
 * Go templates
+* HTML
 * Java
 * Java expression language
 * Java properties

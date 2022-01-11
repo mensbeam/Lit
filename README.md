@@ -165,6 +165,18 @@ $document = new DOMDocument();
 $element = MensBeam\Lit\Highlight::toElement($code, 'text.html.php', $document);
 ```
 
+Other DOM libraries which inherit from and/or encapsulate PHP's DOM such as [`MensBeam\HTML-DOM`][d] may also be used:
+
+```php
+...
+$document = new MensBeam\HTML\DOM\Document();
+// $element will be owned by $document.
+$element = MensBeam\Lit\Highlight::toElement($code, 'text.html.php', $document->innerNode);
+$element = $element->ownerDocument->getWrapperNode($element);
+// MensBeam\HTML\DOM\Element can simply be cast to a string to serialize.
+$string = (string)$element;
+```
+
 Of course Lit can simply output a string, too:
 
 ```php

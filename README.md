@@ -9,7 +9,7 @@ Lit is a multilanguage syntax highlighter written in PHP. It takes code as input
 
 ## Warning Before Using ##
 
-This library is experimental. The code is not tested at all, and writing tests for it will be an incredible undertaking because there's no specification whatsoever to test against. It would require creating a specification as well which is beyond the scope of a project that exists just to scratch an itch. Atom's Highlights is also barely tested itself. There's numerous PHP libraries out there without a test suite; not having one is not up to our usual standards. So, that's why this warning exists.
+This library is experimental. The code is not tested at all, and writing tests for it will be an incredible undertaking because there's no specification whatsoever to test against. It would require creating a specification as well which is beyond the scope of a project that exists just to scratch an itch. Atom's Highlights is also barely tested itself for the same reason. There's numerous PHP libraries out there without a test suite; not having one is not up to our usual standards, though. So, that's why this warning exists.
 
 ## Documentation ##
 

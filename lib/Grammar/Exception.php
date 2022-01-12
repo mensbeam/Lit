@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 namespace MensBeam\Lit\Grammar;
-use MensBeam\Framework\Exception;
+use MensBeam\Framework\Exception as FrameworkException;
 
 class Exception extends FrameworkException {
     const JSON_INVALID_FILE = 300;

@@ -135,7 +135,7 @@ class Grammar {
         // which is used to exit matching.
         if (isset($pattern['begin'])) {
             if (!isset($pattern['end'])) {
-                throw new Exception(Exception::JSON_MISSING_PROPERTY, $filename, 'end');
+                $pattern['end'] = '\z';
             }
 
             $modified = true;

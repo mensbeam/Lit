@@ -95,8 +95,9 @@ class Grammar {
 
     protected function parseJSONPattern(array $pattern, string $filename, bool $isInjection = false): Pattern|Reference|null {
         if (isset($pattern['include'])) {
-            if ($pattern['include'][0] === '#') {
-                return new RepositoryReference(substr($pattern['include'], 1), $this->_scopeName);
+            if (str_contains(needle: '#', haystack: $pattern['include'])) {
+                $ref = explode('#', $pattern['include']);
+                return new RepositoryReference($ref[1], ($ref[0] === '') ? $this->_scopeName : $ref[0]);
             } elseif ($pattern['include'] === '$base') {
                 return new BaseReference($this->_scopeName);
             } elseif ($pattern['include'] === '$self') {

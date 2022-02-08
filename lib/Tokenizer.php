@@ -22,6 +22,7 @@ class Tokenizer {
     // Used for debugging; assertions (`ini_set('zend.assertions', '1')`) must be
     // enabled to see debug output.
     public static bool $debug = false;
+    public static int $debugCount = 0;
     // The input Data class.
     protected Data $data;
     // The supplied Grammar used to highlight the input data.
@@ -110,8 +111,8 @@ class Tokenizer {
 
 
     protected function resolveScopeName(string $scopeName, array $match): string {
-        return preg_replace_callback(self::SCOPE_RESOLVE_REGEX, function($m) use($match) {
-            $replacement = trim($match[(int)$m[1]][0] ?? $m[1]);
+        return preg_replace_callback(self::SCOPE_RESOLVE_REGEX, function($m) use($scopeName, $match) {
+            $replacement = trim($match[(int)(($m[1] !== '') ? $m[1] : $m[2])][0] ?? $m[1]);
             $command = $m[2] ?? null;
             switch ($command) {
                 case 'downcase': return strtolower($replacement);
@@ -271,16 +272,7 @@ class Tokenizer {
                                         }
 
                                         array_splice($tokens, $i, 1, $t);
-
-                                        // Find the nearest index to the match that doesn't have an invalid offset value
-                                        // (meaning that particular capture matched nothing) and set the offset to the
-                                        // end of that match.
-                                        $j = count($match) - 2;
-                                        while ($match[$j][1] === -1 || $match[$j][1] === null) {
-                                            $j--;
-                                        }
-
-                                        $this->offset = $match[$j][1] + strlen($match[$j][0]);
+                                        $this->offset = max($this->offset, $m[1] + strlen($m[0]));
                                         break;
                                     }
                                 }
@@ -362,9 +354,29 @@ class Tokenizer {
                     }
 
                     $popped = array_pop($this->ruleStack);
+
                     // Pop the rule's name from the stack.
                     if ($popped->name !== null) {
                         array_pop($this->scopeStack);
+                    }
+
+                    // This seems to be necessary sometimes because of how references are built
+                    // in this implementation. They're sometimes made into patterns with a
+                    // single subpattern. This causes some issues when popping off the stacks, so
+                    // circumvent this bit of bullshittery below... *crosses fingers*
+                    $end = end($this->ruleStack);
+                    if ($end instanceof Pattern && !$end->beginPattern && !$end->endPattern && $end->match === null && $end->patterns[0] instanceof RepositoryReference) {
+                        $rep = $end->patterns[0]->get();
+                        if ($rep->patterns[0]->endPattern) {
+                            $mmm = $this->findClosestMatch($rep);
+                            if ($mmm['pattern'] === $rep->patterns[0]) {
+                                array_pop($this->ruleStack);
+
+                                if ($rep->name !== null) {
+                                    array_pop($this->scopeStack);
+                                }
+                            }
+                        }
                     }
 
                     // If what was just popped is the active injection then remove it, too.
